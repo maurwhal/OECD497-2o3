@@ -1,0 +1,1 @@
+# Privacy\n\nAll parsing and calculations run locally in your browser.
