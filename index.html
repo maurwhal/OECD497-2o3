@@ -1,11 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OECD 497 — 2-out-of-3 Decision Helper (v4) · Marvelous Maura Model</title>
+<style>
+  :root{--bg:#f6f8fb;--ink:#0f172a;--muted:#5b6475;--card:#fff;--line:#e5e7eb;--ok:#10b981;--bad:#ef4444;--low:#f59e0b}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,Segoe UI,Roboto,Inter,Arial,sans-serif}
+  .container{max-width:1200px;margin:24px auto;padding:0 16px}
+  h1{font-size:26px;margin:0 0 6px}
+  .muted{color:var(--muted)} .small{font-size:12px;color:var(--muted)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 2px rgba(0,0,0,.06);margin:14px 0}
+  .card .hd{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .card .bd{padding:14px}
+  .grid{display:grid;gap:12px}
+  .cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  @media(max-width:1000px){.cols-3,.cols-2{grid-template-columns:1fr}}
+  label{font-size:12px;font-weight:600;display:block;margin-bottom:4px}
+  input,select,button,textarea{font:inherit}
+  input[type="text"],input[type="number"],select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  input[readonly]{background:#f8fafc}
+  .row{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+  .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:white;padding:9px 12px;border-radius:12px;cursor:pointer}
+  .btn.primary{background:#111827;color:#fff;border-color:transparent}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#e8eaff;color:#1d4ed8;border:1px solid #c7d2fe;font-size:12px}
+  table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+  .tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:#f8fafc;margin-right:6px}
+  .call{font-weight:700}.pos{color:var(--ok)}.neg{color:var(--bad)}.inc{color:var(--low)}
+  .note{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:8px;border-radius:10px}
+  pre.sig{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px;display:inline-block;text-align:left}
+  details{border:1px dashed var(--line);border-radius:12px;padding:8px}
+  summary{cursor:pointer;font-weight:700}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>OECD 497 — 2-out-of-3 Decision Helper <span class="muted">· Marvelous Maura Model (v4)</span></h1>
+  <div class="muted">Enter assay results for the three Key Events (KE1/2/3) or <b>upload a report/screenshot</b> below and let the app pre-fill fields. Privacy: everything runs in your browser; files are not uploaded or saved.</div>
 
-<!doctype html><html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OECD 497 — 2-out-of-3 Decision Helper (v7)</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-<style>body{max-width:1200px;margin-inline:auto} .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:18px} .col-4{grid-column:span 4} .card{border:1px solid #e5e7eb;border-radius:14px;padding:14px}</style>
-</head><body>
-<h1>OECD 497 — 2-out-of-3 Decision Helper <span class="muted">· Marvelous Maura Model (v7)</span></h1>
-<p>Build time: 2025-09-03 01:53 UTC</p>
-<!-- (Full v7 file trimmed in this quick zip; you can replace with the longer in-chat version if desired.) -->
-</body></html>
+  <!-- Report parser -->
+  <div class="card">
+    <div class="hd">
+      <div><b>0) Optional: upload a report/screenshot</b></div>
+      <span class="pill">Local parsing only — nothing is saved</span>
+    </div>
+    <div class="bd">
+      <div class="grid cols-3">
+        <div>
+          <label>PDF report</label>
+          <input type="file" id="pdfFile" accept="application/pdf">
+          <button type="button" class="btn" id="btnParsePDF" style="margin-top:6px">Extract from PDF</button>
+        </div>
+        <div>
+          <label>Image (PNG/JPG screenshot)</label>
+          <input type="file" id="imgFile" accept="image/*">
+          <button type="button" class="btn" id="btnOCR" style="margin-top:6px">Run OCR on image</button>
+        </div>
+        <div>
+          <label>…or paste text</label>
+          <textarea id="paste" rows="6" placeholder="Paste text from the report here, then click Parse text"></textarea>
+          <button type="button" class="btn" id="btnParseText" style="margin-top:6px">Parse text</button>
+        </div>
+      </div>
+      <div id="parseStatus" class="small" style="margin-top:8px"></div>
+      <details style="margin-top:8px"><summary>What gets recognized?</summary>
+        <div class="small">
+          <ul>
+            <li><b>kDPRA</b>: <code>log kmax</code>, <code>kDPRA logk</code></li>
+            <li><b>DPRA/ADRA</b>: cysteine / lysine % depletion, mean % depletion</li>
+            <li><b>KeratinoSens™/LuSens/EpiSensA</b>: <code>EC1.5</code>, <code>EC3</code>, <code>IC50</code> (µM or µg/mL)</li>
+            <li><b>h-CLAT / U-SENS / IL-8 Luc</b>: <code>EC150</code> (CD86), <code>EC200</code> (CD54), <code>MIT</code>, <code>CV75</code> (µM or µg/mL)</li>
+            <li><b>Flags</b>: words like <i>precipitation</i>, <i>insoluble</i>, <i>cytotoxicity</i> will set the “limitations” box to mark the assay as Inconclusive.</li>
+          </ul>
+        </div>
+      </details>
+      <div id="found" class="small" style="margin-top:8px"></div>
+      <div class="row" style="grid-template-columns:auto auto 1fr;margin-top:6px">
+        <button type="button" class="btn" id="btnApply">Apply found values</button>
+        <button type="button" class="btn" id="btnClearFound">Clear found</button>
+        <div class="small muted">You can edit anything manually after applying.</div>
+      </div>
+      <div class="note" style="margin-top:8px">
+        <b>Privacy:</b> Files are parsed <b>entirely in your browser</b> using pdf.js and Tesseract.js. Nothing is sent to a server or stored.
+      </div>
+    </div>
+  </div>
+
+  <!-- KE1 -->
+  <div class="card">
+    <div class="hd"><b>KE1 — Protein binding</b> <span class="small">(DPRA / ADRA / kDPRA)</span></div>
+    <div class="bd">
+      <div class="grid cols-3">
+        <div>
+          <label>Assay type</label>
+          <select id="ke1_type">
+            <option value="">— select —</option>
+            <option>DPRA</option>
+            <option>ADRA</option>
+            <option>kDPRA</option>
+          </select>
+        </div>
+        <div>
+          <label class="small"><input type="checkbox" id="ke1_lim"> Precipitation / insolubility / irregularity</label>
+          <div class="small muted">If checked → KE1 call becomes <b>Inconclusive</b>.</div>
+        </div>
+      </div>
+      <div id="ke1_inputs" class="grid cols-3" style="margin-top:10px">
+        <div><label>Cys depletion (%)</label><input id="dpra_cys" type="number" step="0.01"></div>
+        <div><label>Lys depletion (%)</label><input id="dpra_lys" type="number" step="0.01"></div>
+        <div><label>Mean depletion (%)</label><input id="dpra_mean" type="number" step="0.01"></div>
+        <div><label>log kmax (kDPRA)</label><input id="kdpra_logk" type="number" step="0.01" placeholder="-3.5 to 0"></div>
+      </div>
+      <div class="row" style="grid-template-columns:1fr auto">
+        <div id="ke1_call" class="small muted">—</div>
+        <button type="button" class="btn" id="btnKe1">Evaluate KE1</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KE2 -->
+  <div class="card">
+    <div class="hd"><b>KE2 — Keratinocyte activation</b> <span class="small">(KeratinoSens™ / LuSens / EpiSensA)</span></div>
+    <div class="bd">
+      <div class="grid cols-3">
+        <div>
+          <label>Assay type</label>
+          <select id="ke2_type">
+            <option value="">— select —</option>
+            <option>KeratinoSens</option>
+            <option>LuSens</option>
+            <option>EpiSensA</option>
+          </select>
+        </div>
+        <div class="row">
+          <div><label>Units</label><select id="ke2_units"><option value="uM">µM (default)</option><option value="ugml">µg/mL (convert)</option></select></div>
+          <div><label>Molecular weight (g/mol) for conversion</label><input id="mw" type="number" step="0.01"></div>
+        </div>
+        <div>
+          <label class="small"><input type="checkbox" id="ke2_lim"> Precipitation / cytotoxicity / irregularity</label>
+          <div class="small muted">If checked → KE2 call becomes <b>Inconclusive</b>.</div>
+        </div>
+      </div>
+      <div class="grid cols-3" style="margin-top:10px">
+        <div><label>EC1.5</label><input id="ke2_ec15" type="number" step="0.01"></div>
+        <div><label>EC3 (optional)</label><input id="ke2_ec3" type="number" step="0.01"></div>
+        <div><label>IC50</label><input id="ke2_ic50" type="number" step="0.01"></div>
+      </div>
+      <div class="row" style="grid-template-columns:1fr auto">
+        <div id="ke2_call" class="small muted">—</div>
+        <button type="button" class="btn" id="btnKe2">Evaluate KE2</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KE3 -->
+  <div class="card">
+    <div class="hd"><b>KE3 — Dendritic cell activation</b> <span class="small">(h-CLAT / U-SENS / IL-8 Luc / GARDskin)</span></div>
+    <div class="bd">
+      <div class="grid cols-3">
+        <div>
+          <label>Assay type</label>
+          <select id="ke3_type">
+            <option value="">— select —</option>
+            <option>h-CLAT</option>
+            <option>U-SENS</option>
+            <option>IL-8 Luc</option>
+            <option>GARDskin</option>
+          </select>
+        </div>
+        <div class="row">
+          <div><label>Units</label><select id="ke3_units"><option value="uM">µM</option><option value="ugml">µg/mL (convert)</option></select></div>
+          <div><label>Molecular weight (g/mol) for conversion</label><input id="mw2" type="number" step="0.01" placeholder="if different"></div>
+        </div>
+        <div>
+          <label class="small"><input type="checkbox" id="ke3_lim"> Precipitation / cytotoxicity / irregularity</label>
+          <div class="small muted">If checked → KE3 call becomes <b>Inconclusive</b>.</div>
+        </div>
+      </div>
+      <div class="grid cols-3" style="margin-top:10px">
+        <div><label>EC150 (CD86)</label><input id="ke3_ec150" type="number" step="0.01"></div>
+        <div><label>EC200 (CD54)</label><input id="ke3_ec200" type="number" step="0.01"></div>
+        <div><label>CV75</label><input id="ke3_cv75" type="number" step="0.01"></div>
+      </div>
+      <div class="row" style="grid-template-columns:1fr auto">
+        <div id="ke3_call" class="small muted">—</div>
+        <button type="button" class="btn" id="btnKe3">Evaluate KE3</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Final -->
+  <div class="card">
+    <div class="hd"><b>Final 2-out-of-3 call</b></div>
+    <div class="bd">
+      <div id="final_box" class="note">Enter at least two evaluable KEs and click “Evaluate” in each card, or just click “Recalculate all”.</div>
+      <div class="row" style="grid-template-columns:auto auto 1fr;margin-top:8px">
+        <button type="button" class="btn primary" id="btnAll">Recalculate all</button>
+        <button type="button" class="btn" id="btnClear">Clear</button>
+      </div>
+      <div id="rationale" class="small" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <footer style="text-align:center;margin:22px 0">
+    <pre class="sig">  (\_/)   (\_/)   (\_/)   (\_/)
+  ('.'.)  ('.'.)  ('.'.)  ('.'.)
+  (")(")  (")(")  (")(")  (")(")
+This has been a (>-.-)> Maura Lavelle <(-.-)> Production!!</pre>
+  </footer>
+</div>
+
+<script type="module">
+const Q = s => document.querySelector(s);
+
+// ---------- Parsing helpers (PDF & OCR) ----------
+let pdfjsLib = null;
+async function ensurePDFJS(){
+  if(pdfjsLib) return pdfjsLib;
+  const mod = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.mjs');
+  pdfjsLib = mod.default ?? mod;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.mjs';
+  return pdfjsLib;
+}
+
+async function extractPDFText(file){
+  const lib = await ensurePDFJS();
+  const arrayBuf = await file.arrayBuffer();
+  const doc = await lib.getDocument({data: arrayBuf}).promise;
+  let text=''; for(let i=1;i<=doc.numPages;i++){ const page=await doc.getPage(i); const c=await page.getTextContent(); text += c.items.map(it=>it.str).join(' ') + '\\n'; }
+  return text;
+}
+
+// OCR via tesseract.js
+let TESS = null;
+async function ensureTesseract(){
+  if(TESS) return TESS;
+  const mod = await import('https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.esm.min.js');
+  TESS = mod;
+  return TESS;
+}
+async function ocrImage(file){
+  const { createWorker } = await ensureTesseract();
+  const worker = await createWorker('eng');
+  const { data: { text } } = await worker.recognize(file);
+  await worker.terminate();
+  return text;
+}
+
+// Regex extraction
+function parseText(txt){
+  const out = {};
+  const u = '[\\u00B5µu]'; // micro
+  const num = '(-?(?:\\d+\\.?\\d*|\\.\\d+))';
+
+  function m(re){ const r = re.exec(txt); return r? r[1] : null; }
+
+  out.kdpra_logk = m(/log\\s*k\\s*max\\s*[:=]?\\s*(-?\\d+\\.?\\d*)/i) || m(/kDPRA\\s*logk\\s*[:=]?\\s*(-?\\d+\\.?\\d*)/i);
+
+  out.dpra_cys  = m(new RegExp(`cys(?:teine)?[^\\n]{0,20}?${num}\\s*%`,'i'));
+  out.dpra_lys  = m(new RegExp(`lys(?:ine)?[^\\n]{0,20}?${num}\\s*%`,'i'));
+  out.dpra_mean = m(/mean[^\\n]{0,10}?depletion[^\\n]{0,10}?(-?\\d+\\.?\\d*)\\s*%/i);
+
+  out.ke2_ec15 = m(new RegExp(`EC\\s*1[\\.,]?5\\s*[:=]?\\s*${num}\\s*(?:${u}M|uM|µM|ug\\/?mL|µg\\/?mL)?`,'i'));
+  out.ke2_ec3  = m(new RegExp(`EC\\s*3\\s*[:=}?\\s*${num}\\s*(?:${u}M|uM|µM|ug\\/?mL|µg\\/?mL)?`,'i'));
+  out.ke2_ic50 = m(new RegExp(`IC\\s*50\\s*[:=]?\\s*${num}\\s*(?:${u}M|uM|µM|ug\\/?mL|µg\\/?mL)?`,'i'));
+
+  out.ke3_ec150 = m(new RegExp(`EC\\s*150(?:\\s*\\(\\s*CD\\s*86\\s*\\))?\\s*[:=]?\\s*${num}`,'i'));
+  out.ke3_ec200 = m(new RegExp(`EC\\s*200(?:\\s*\\(\\s*CD\\s*54\\s*\\))?\\s*[:=]?\\s*${num}`,'i'));
+  out.ke3_cv75  = m(new RegExp(`CV\\s*75\\s*[:=]?\\s*${num}`,'i'));
+
+  const lim = /(precipitat|insolub|poorly\\s*soluble|phase\\s*separation|excessive\\s*cytotox|cytotoxicity)/i.test(txt);
+  out.ke1_lim = /dpra|adra|kdpr/i.test(txt) && lim ? true : undefined;
+  out.ke2_lim = /(keratinosens|lusens|episensa)/i.test(txt) && lim ? true : undefined;
+  out.ke3_lim = /(h-?clat|u-?sens|il-?8|gardskin)/i.test(txt) && lim ? true : undefined;
+
+  return out;
+}
+
+function showFound(obj){
+  const f = Q('#found');
+  const keys = Object.keys(obj).filter(k=>obj[k]!=null);
+  if(!keys.length){ f.innerHTML = '<span class="muted">No obvious values found yet.</span>'; return; }
+  f.innerHTML = '<b>Found:</b> ' + keys.map(k=>`${k} = <b>${obj[k]}</b>`).join(' · ');
+  f._obj = obj;
+}
+
+function applyFound(){
+  const obj = (Q('#found')._obj)||{};
+  function set(id,val){ if(val==null) return; const el = Q('#'+id); if(el) el.value = val; }
+  set('kdpra_logk', obj.kdpra_logk);
+  set('dpra_cys', obj.dpra_cys); set('dpra_lys', obj.dpra_lys); set('dpra_mean', obj.dpra_mean);
+  set('ke2_ec15', obj.ke2_ec15); set('ke2_ec3', obj.ke2_ec3); set('ke2_ic50', obj.ke2_ic50);
+  set('ke3_ec150', obj.ke3_ec150); set('ke3_ec200', obj.ke3_ec200); set('ke3_cv75', obj.ke3_cv75);
+  if(obj.ke1_lim) Q('#ke1_lim').checked = true;
+  if(obj.ke2_lim) Q('#ke2_lim').checked = true;
+  if(obj.ke3_lim) Q('#ke3_lim').checked = true;
+}
+
+document.getElementById('btnParsePDF').addEventListener('click', async ()=>{
+  const f = Q('#pdfFile').files?.[0]; if(!f){ alert('Choose a PDF first.'); return; }
+  Q('#parseStatus').textContent = 'Parsing PDF locally…';
+  try{ const txt = await extractPDFText(f); Q('#paste').value = txt; Q('#parseStatus').textContent = 'PDF text extracted. Click “Parse text”.'; }
+  catch(e){ Q('#parseStatus').textContent = 'Could not read PDF in this environment. Try a different browser or paste text manually.'; }
+});
+
+document.getElementById('btnOCR').addEventListener('click', async ()=>{
+  const f = Q('#imgFile').files?.[0]; if(!f){ alert('Choose an image first.'); return; }
+  Q('#parseStatus').textContent = 'Running OCR locally… this may take ~10–20s';
+  try{ const txt = await ocrImage(f); Q('#paste').value = txt; Q('#parseStatus').textContent = 'OCR text obtained. Click “Parse text”.'; }
+  catch(e){ Q('#parseStatus').textContent = 'OCR could not run (blocked). Try another browser or paste text.'; }
+});
+
+document.getElementById('btnParseText').addEventListener('click', ()=>{
+  const txt = (Q('#paste').value||'').trim(); if(!txt){ alert('Paste some text first.'); return; }
+  const found = parseText(txt); showFound(found);
+});
+document.getElementById('btnApply').addEventListener('click', applyFound);
+document.getElementById('btnClearFound').addEventListener('click', ()=>{ Q('#found').innerHTML=''; Q('#found')._obj={}; });
+
+// ---------- Decision logic ----------
+function convertIfNeeded(val, units, mw){
+  const x = parseFloat(val); if(!isFinite(x)) return NaN;
+  if(units==='uM') return x;
+  if(units==='ugml'){ const M = parseFloat(mw); if(!isFinite(M) || M<=0) return NaN; return x*1000/M; }
+  return x;
+}
+
+function evalKE1(){
+  if(Q('#ke1_lim').checked) return {call:'Inconclusive', cls:'inc', why:'Limitations flagged (precipitation/insolubility/etc.).'};
+  const type = Q('#ke1_type').value;
+  if(type==='kDPRA'){
+    const logk = parseFloat(Q('#kdpra_logk').value);
+    if(!isFinite(logk)) return {call:'—', cls:'', why:'Need log kmax.'};
+    const pos = logk >= -2.0; const borderline = logk > -2.3 && logk < -2.0;
+    return {call: (borderline ? 'Borderline' : (pos ? 'Positive' : 'Negative')), cls: (borderline?'inc' : (pos?'pos':'neg')), why:`log kmax = ${logk}`};
+  }else if(type==='DPRA' || type==='ADRA'){
+    const mean = parseFloat(Q('#dpra_mean').value);
+    const cys = parseFloat(Q('#dpra_cys').value);
+    const lys = parseFloat(Q('#dpra_lys').value);
+    const m = isFinite(mean)? mean : (isFinite(cys)&&isFinite(lys)? (cys+lys)/2 : NaN);
+    if(!isFinite(m)) return {call:'—', cls:'', why:'Need depletion % (mean or cys/lys).'};
+    const pos = m > 6.38; const borderline = m >= 3 && m <= 6.38;
+    return {call: (borderline ? 'Borderline' : (pos ? 'Positive' : 'Negative')), cls: (borderline?'inc': (pos?'pos':'neg')), why:`Mean depletion ≈ ${m.toFixed(2)}%`};
+  }
+  return {call:'—', cls:'', why:'Select assay and enter values.'};
+}
+
+function evalKE2(){
+  if(Q('#ke2_lim').checked) return {call:'Inconclusive', cls:'inc', why:'Limitations flagged.'};
+  const units = Q('#ke2_units').value;
+  const mw = parseFloat(Q('#mw').value);
+  const ec15 = convertIfNeeded(Q('#ke2_ec15').value, units, mw);
+  const ec3  = convertIfNeeded(Q('#ke2_ec3').value,  units, mw);
+  const ic50 = convertIfNeeded(Q('#ke2_ic50').value, units, mw);
+  if(isFinite(ec15) || isFinite(ic50) || isFinite(ec3)){
+    const vals = [ec15, ec3, ic50].filter(v=>isFinite(v));
+    const minv = Math.min(...vals);
+    const pos = (isFinite(ec15) && ec15<=1000) || (isFinite(ic50) && ic50<=1000) || (isFinite(ec3) && ec3<=1000);
+    const borderline = minv>1000 && minv<=1500;
+    return {call: (borderline?'Borderline': (pos?'Positive':'Negative')),
+            cls: (borderline?'inc': (pos?'pos':'neg')),
+            why:`min(EC1.5, EC3, IC50) ≈ ${isFinite(minv)?minv.toFixed(1):'—'} µM`};
+  }
+  return {call:'—', cls:'', why:'Enter EC/IC values.'};
+}
+
+function evalKE3(){
+  if(Q('#ke3_lim').checked) return {call:'Inconclusive', cls:'inc', why:'Limitations flagged.'};
+  const units = Q('#ke3_units').value;
+  const mw = parseFloat(Q('#mw2').value || Q('#mw').value);
+  const ec150 = convertIfNeeded(Q('#ke3_ec150').value, units, mw);
+  const ec200 = convertIfNeeded(Q('#ke3_ec200').value, units, mw);
+  const cv75  = convertIfNeeded(Q('#ke3_cv75').value,  units, mw);
+  const mit = Math.min(isFinite(ec150)?ec150:1e9, isFinite(ec200)?ec200:1e9);
+  if(isFinite(mit) || isFinite(cv75)){
+    const pos = (isFinite(mit) && mit<=5000) || (isFinite(cv75) && cv75<=5000);
+    const borderline = (!pos) && ((isFinite(mit)&&mit<=7000) || (isFinite(cv75)&&cv75<=7000));
+    return {call: (borderline?'Borderline': (pos?'Positive':'Negative')),
+            cls: (borderline?'inc': (pos?'pos':'neg')),
+            why:`MIT ≈ ${isFinite(mit)?mit.toFixed(1):'—'} µM; CV75 ≈ ${isFinite(cv75)?cv75.toFixed(1):'—'} µM`};
+  }
+  return {call:'—', cls:'', why:'Enter EC150/EC200 and/or CV75.'};
+}
+
+function renderCalls(k1,k2,k3){
+  document.getElementById('ke1_call').innerHTML = `<span class="tag">KE1</span> <span class="call ${k1.cls}">${k1.call}</span> — ${k1.why}`;
+  document.getElementById('ke2_call').innerHTML = `<span class="tag">KE2</span> <span class="call ${k2.cls}">${k2.call}</span> — ${k2.why}`;
+  document.getElementById('ke3_call').innerHTML = `<span class="tag">KE3</span> <span class="call ${k3.cls}">${k3.call}</span> — ${k3.why}`;
+
+  const map = c => c.call.startsWith('Pos') ? 1 : (c.call.startsWith('Neg') ? 0 : null);
+  const arr = [k1,k2,k3].map(map).filter(x=>x!=null);
+  let text = 'Need at least two evaluable KEs.';
+  if(arr.length>=2){
+    const posCount = [k1,k2,k3].filter(c=>c.call.startsWith('Pos')).length;
+    const negCount = [k1,k2,k3].filter(c=>c.call.startsWith('Neg')).length;
+    const incCount = [k1,k2,k3].filter(c=>c.call.startsWith('Inconclusive')||c.call.startsWith('Borderline')).length;
+    if(posCount>=2) text = 'Final call: <b class="pos">Sensitizer (Positive)</b> — two or more KEs positive.';
+    else if(negCount>=2) text = 'Final call: <b class="neg">Non-sensitizer (Negative)</b> — two or more KEs negative.';
+    else text = 'Final call: <b class="inc">Inconclusive</b> — not enough concordant positives or negatives.';
+    text += ` <span class="small muted">(Pos=${posCount}, Neg=${negCount}, Inc/Borderline=${incCount})</span>`;
+  }
+  document.getElementById('final_box').innerHTML = text;
+  document.getElementById('rationale').innerHTML = `KE1: ${k1.call}; KE2: ${k2.call}; KE3: ${k3.call}.`;
+}
+
+function ke1(){ const r = evalKE1(); renderCalls(r, evalKE2(), evalKE3()); }
+function ke2(){ const r = evalKE2(); renderCalls(evalKE1(), r, evalKE3()); }
+function ke3(){ const r = evalKE3(); renderCalls(evalKE1(), evalKE2(), r); }
+
+document.getElementById('btnKe1').addEventListener('click', ke1);
+document.getElementById('btnKe2').addEventListener('click', ke2);
+document.getElementById('btnKe3').addEventListener('click', ke3);
+document.getElementById('btnAll').addEventListener('click', ()=>renderCalls(evalKE1(),evalKE2(),evalKE3()));
+document.getElementById('btnClear').addEventListener('click', ()=>location.reload());
+</script>
+</body>
+</html>
