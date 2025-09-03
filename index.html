@@ -3,417 +3,448 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OECD 497 — 2-out-of-3 Decision Helper (v4) · Marvelous Maura Model</title>
+<title>OECD 497 – 2‑out‑of‑3 Decision Helper • Marvelous Maura Model (Offline)</title>
 <style>
-  :root{--bg:#f6f8fb;--ink:#0f172a;--muted:#5b6475;--card:#fff;--line:#e5e7eb;--ok:#10b981;--bad:#ef4444;--low:#f59e0b}
-  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,Segoe UI,Roboto,Inter,Arial,sans-serif}
-  .container{max-width:1200px;margin:24px auto;padding:0 16px}
-  h1{font-size:26px;margin:0 0 6px}
-  .muted{color:var(--muted)} .small{font-size:12px;color:var(--muted)}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 2px rgba(0,0,0,.06);margin:14px 0}
-  .card .hd{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
-  .card .bd{padding:14px}
-  .grid{display:grid;gap:12px}
-  .cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-  @media(max-width:1000px){.cols-3,.cols-2{grid-template-columns:1fr}}
-  label{font-size:12px;font-weight:600;display:block;margin-bottom:4px}
-  input,select,button,textarea{font:inherit}
-  input[type="text"],input[type="number"],select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fff}
-  input[readonly]{background:#f8fafc}
-  .row{display:grid;gap:10px;grid-template-columns:1fr 1fr}
-  .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:white;padding:9px 12px;border-radius:12px;cursor:pointer}
-  .btn.primary{background:#111827;color:#fff;border-color:transparent}
-  .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#e8eaff;color:#1d4ed8;border:1px solid #c7d2fe;font-size:12px}
-  table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
-  .tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:#f8fafc;margin-right:6px}
-  .call{font-weight:700}.pos{color:var(--ok)}.neg{color:var(--bad)}.inc{color:var(--low)}
-  .note{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:8px;border-radius:10px}
-  pre.sig{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px;display:inline-block;text-align:left}
-  details{border:1px dashed var(--line);border-radius:12px;padding:8px}
-  summary{cursor:pointer;font-weight:700}
+  :root { --bg:#f8fafc; --fg:#0f172a; --muted:#475569; --card:#ffffff; --border:#e2e8f0; --ok:#065f46; --bad:#9f1239; --low:#92400e; --pill:#10b981; }
+  *{box-sizing:border-box} body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Noto Sans",sans-serif;background:var(--bg);color:var(--fg)}
+  .container{max-width:1152px;margin:0 auto;padding:24px;display:grid;gap:24px}
+  h1{font-size:24px;margin:0 0 6px 0} h2{font-size:18px;margin:0 0 12px 0}
+  .muted{color:var(--muted)} .card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 1px 1px rgba(0,0,0,.04);padding:16px}
+  .grid{display:grid;gap:16px} .cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  @media (max-width:960px){ .cols-3{grid-template-columns:1fr} }
+  .row{display:flex;gap:8px;align-items:center}
+  .btn{background:#fff;border:1px solid var(--border);border-radius:12px;padding:8px 12px;cursor:pointer}
+  .btn:active{transform:translateY(1px)} .pill{font-size:12px;padding:2px 8px;border-radius:999px;background:#ecfdf5;color:#065f46;border:1px solid #d1fae5}
+  .pill.low{background:#fef3c7;color:#92400e;border-color:#fde68a}
+  .call{font-weight:600} .pos{color:var(--bad)} .neg{color:var(--ok)}
+  input[type="number"]{padding:8px;border:1px solid var(--border);border-radius:12px;width:100%}
+  label{font-size:14px}
+  .list{font-size:12px;color:#334155;line-height:1.25}
+  .footer pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.2;white-space:pre-wrap;margin:0}
+  .modal-back{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:50}
+  .modal{background:#fff;border-radius:16px;max-width:800px;width:95%;padding:16px;border:1px solid var(--border)}
+  .hidden{display:none}
+  .small{font-size:12px}
+  .ke-tag{font-size:11px;color:#64748b;margin-top:6px}
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>OECD 497 — 2-out-of-3 Decision Helper <span class="muted">· Marvelous Maura Model (v4)</span></h1>
-  <div class="muted">Enter assay results for the three Key Events (KE1/2/3) or <b>upload a report/screenshot</b> below and let the app pre-fill fields. Privacy: everything runs in your browser; files are not uploaded or saved.</div>
+  <header class="row" style="justify-content:space-between;align-items:flex-end;">
+    <div>
+      <h1>OECD 497 – 2‑out‑of‑3 Decision Helper</h1>
+      <div class="muted small">A <b>Marvelous Maura Model</b> • by Maura Lavelle</div>
+      <div class="small muted">Assay thresholds & borderline ranges per OECD 497. Mark assays as inconclusive when precipitation/insolubility or other limitations apply.</div>
+    </div>
+    <div class="row">
+      <button class="btn" id="btnBR">BR cheat‑sheet</button>
+      <button class="btn" id="btnClear">Clear inputs</button>
+      <button class="btn" id="btnReset">Reset selection</button>
+    </div>
+  </header>
 
-  <!-- Report parser -->
+  <div class="grid cols-3" id="sections"></div>
+
   <div class="card">
-    <div class="hd">
-      <div><b>0) Optional: upload a report/screenshot</b></div>
-      <span class="pill">Local parsing only — nothing is saved</span>
-    </div>
-    <div class="bd">
-      <div class="grid cols-3">
-        <div>
-          <label>PDF report</label>
-          <input type="file" id="pdfFile" accept="application/pdf">
-          <button type="button" class="btn" id="btnParsePDF" style="margin-top:6px">Extract from PDF</button>
-        </div>
-        <div>
-          <label>Image (PNG/JPG screenshot)</label>
-          <input type="file" id="imgFile" accept="image/*">
-          <button type="button" class="btn" id="btnOCR" style="margin-top:6px">Run OCR on image</button>
-        </div>
-        <div>
-          <label>…or paste text</label>
-          <textarea id="paste" rows="6" placeholder="Paste text from the report here, then click Parse text"></textarea>
-          <button type="button" class="btn" id="btnParseText" style="margin-top:6px">Parse text</button>
-        </div>
-      </div>
-      <div id="parseStatus" class="small" style="margin-top:8px"></div>
-      <details style="margin-top:8px"><summary>What gets recognized?</summary>
-        <div class="small">
-          <ul>
-            <li><b>kDPRA</b>: <code>log kmax</code>, <code>kDPRA logk</code></li>
-            <li><b>DPRA/ADRA</b>: cysteine / lysine % depletion, mean % depletion</li>
-            <li><b>KeratinoSens™/LuSens/EpiSensA</b>: <code>EC1.5</code>, <code>EC3</code>, <code>IC50</code> (µM or µg/mL)</li>
-            <li><b>h-CLAT / U-SENS / IL-8 Luc</b>: <code>EC150</code> (CD86), <code>EC200</code> (CD54), <code>MIT</code>, <code>CV75</code> (µM or µg/mL)</li>
-            <li><b>Flags</b>: words like <i>precipitation</i>, <i>insoluble</i>, <i>cytotoxicity</i> will set the “limitations” box to mark the assay as Inconclusive.</li>
-          </ul>
-        </div>
-      </details>
-      <div id="found" class="small" style="margin-top:8px"></div>
-      <div class="row" style="grid-template-columns:auto auto 1fr;margin-top:6px">
-        <button type="button" class="btn" id="btnApply">Apply found values</button>
-        <button type="button" class="btn" id="btnClearFound">Clear found</button>
-        <div class="small muted">You can edit anything manually after applying.</div>
-      </div>
-      <div class="note" style="margin-top:8px">
-        <b>Privacy:</b> Files are parsed <b>entirely in your browser</b> using pdf.js and Tesseract.js. Nothing is sent to a server or stored.
-      </div>
-    </div>
+    <h2>Assay calls (per study)</h2>
+    <div class="grid cols-3" id="assayCalls"></div>
   </div>
 
-  <!-- KE1 -->
-  <div class="card">
-    <div class="hd"><b>KE1 — Protein binding</b> <span class="small">(DPRA / ADRA / kDPRA)</span></div>
-    <div class="bd">
-      <div class="grid cols-3">
-        <div>
-          <label>Assay type</label>
-          <select id="ke1_type">
-            <option value="">— select —</option>
-            <option>DPRA</option>
-            <option>ADRA</option>
-            <option>kDPRA</option>
-          </select>
-        </div>
-        <div>
-          <label class="small"><input type="checkbox" id="ke1_lim"> Precipitation / insolubility / irregularity</label>
-          <div class="small muted">If checked → KE1 call becomes <b>Inconclusive</b>.</div>
-        </div>
-      </div>
-      <div id="ke1_inputs" class="grid cols-3" style="margin-top:10px">
-        <div><label>Cys depletion (%)</label><input id="dpra_cys" type="number" step="0.01"></div>
-        <div><label>Lys depletion (%)</label><input id="dpra_lys" type="number" step="0.01"></div>
-        <div><label>Mean depletion (%)</label><input id="dpra_mean" type="number" step="0.01"></div>
-        <div><label>log kmax (kDPRA)</label><input id="kdpra_logk" type="number" step="0.01" placeholder="-3.5 to 0"></div>
-      </div>
-      <div class="row" style="grid-template-columns:1fr auto">
-        <div id="ke1_call" class="small muted">—</div>
-        <button type="button" class="btn" id="btnKe1">Evaluate KE1</button>
-      </div>
-    </div>
+  <div class="card" id="finalCard">
+    <h2>2o3 Decision (hazard)</h2>
+    <div id="finalText" class="row" style="gap:6px;font-size:18px;font-weight:600;">Final: <span id="finalVal">Inconclusive</span></div>
+    <ul id="finalNotes" class="list"></ul>
+    <div class="small muted">Rule: Two concordant, <b>High‑confidence</b> results across ≥2 KEs → conclusive prediction. Otherwise, inconclusive. Borderline results and any assay flagged as limited are treated as <b>Low</b> confidence for the 2o3 combination.</div>
+    <div class="small muted">Note: kDPRA is recorded but not used in the 2o3 hazard combination (potency/IATA context).</div>
   </div>
 
-  <!-- KE2 -->
-  <div class="card">
-    <div class="hd"><b>KE2 — Keratinocyte activation</b> <span class="small">(KeratinoSens™ / LuSens / EpiSensA)</span></div>
-    <div class="bd">
-      <div class="grid cols-3">
-        <div>
-          <label>Assay type</label>
-          <select id="ke2_type">
-            <option value="">— select —</option>
-            <option>KeratinoSens</option>
-            <option>LuSens</option>
-            <option>EpiSensA</option>
-          </select>
-        </div>
-        <div class="row">
-          <div><label>Units</label><select id="ke2_units"><option value="uM">µM (default)</option><option value="ugml">µg/mL (convert)</option></select></div>
-          <div><label>Molecular weight (g/mol) for conversion</label><input id="mw" type="number" step="0.01"></div>
-        </div>
-        <div>
-          <label class="small"><input type="checkbox" id="ke2_lim"> Precipitation / cytotoxicity / irregularity</label>
-          <div class="small muted">If checked → KE2 call becomes <b>Inconclusive</b>.</div>
-        </div>
-      </div>
-      <div class="grid cols-3" style="margin-top:10px">
-        <div><label>EC1.5</label><input id="ke2_ec15" type="number" step="0.01"></div>
-        <div><label>EC3 (optional)</label><input id="ke2_ec3" type="number" step="0.01"></div>
-        <div><label>IC50</label><input id="ke2_ic50" type="number" step="0.01"></div>
-      </div>
-      <div class="row" style="grid-template-columns:1fr auto">
-        <div id="ke2_call" class="small muted">—</div>
-        <button type="button" class="btn" id="btnKe2">Evaluate KE2</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- KE3 -->
-  <div class="card">
-    <div class="hd"><b>KE3 — Dendritic cell activation</b> <span class="small">(h-CLAT / U-SENS / IL-8 Luc / GARDskin)</span></div>
-    <div class="bd">
-      <div class="grid cols-3">
-        <div>
-          <label>Assay type</label>
-          <select id="ke3_type">
-            <option value="">— select —</option>
-            <option>h-CLAT</option>
-            <option>U-SENS</option>
-            <option>IL-8 Luc</option>
-            <option>GARDskin</option>
-          </select>
-        </div>
-        <div class="row">
-          <div><label>Units</label><select id="ke3_units"><option value="uM">µM</option><option value="ugml">µg/mL (convert)</option></select></div>
-          <div><label>Molecular weight (g/mol) for conversion</label><input id="mw2" type="number" step="0.01" placeholder="if different"></div>
-        </div>
-        <div>
-          <label class="small"><input type="checkbox" id="ke3_lim"> Precipitation / cytotoxicity / irregularity</label>
-          <div class="small muted">If checked → KE3 call becomes <b>Inconclusive</b>.</div>
-        </div>
-      </div>
-      <div class="grid cols-3" style="margin-top:10px">
-        <div><label>EC150 (CD86)</label><input id="ke3_ec150" type="number" step="0.01"></div>
-        <div><label>EC200 (CD54)</label><input id="ke3_ec200" type="number" step="0.01"></div>
-        <div><label>CV75</label><input id="ke3_cv75" type="number" step="0.01"></div>
-      </div>
-      <div class="row" style="grid-template-columns:1fr auto">
-        <div id="ke3_call" class="small muted">—</div>
-        <button type="button" class="btn" id="btnKe3">Evaluate KE3</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Final -->
-  <div class="card">
-    <div class="hd"><b>Final 2-out-of-3 call</b></div>
-    <div class="bd">
-      <div id="final_box" class="note">Enter at least two evaluable KEs and click “Evaluate” in each card, or just click “Recalculate all”.</div>
-      <div class="row" style="grid-template-columns:auto auto 1fr;margin-top:8px">
-        <button type="button" class="btn primary" id="btnAll">Recalculate all</button>
-        <button type="button" class="btn" id="btnClear">Clear</button>
-      </div>
-      <div id="rationale" class="small" style="margin-top:10px"></div>
-    </div>
-  </div>
-
-  <footer style="text-align:center;margin:22px 0">
-    <pre class="sig">  (\_/)   (\_/)   (\_/)   (\_/)
+  <footer class="card footer">
+    <div class="small muted">OECD 497 2‑out‑of‑3 Decision Helper — a <b>Marvelous Maura Model</b>.</div>
+<pre>
+  (\_/)   (\_/)   (\_/)   (\_/)
   ('.'.)  ('.'.)  ('.'.)  ('.'.)
   (")(")  (")(")  (")(")  (")(")
-This has been a (>-.-)> Maura Lavelle <(-.-)> Production!!</pre>
+This has been a (>-.-)> Maura Lavelle <(-.-)> Production!! &lt;(-.-&lt;)
+</pre>
   </footer>
 </div>
 
-<script type="module">
-const Q = s => document.querySelector(s);
+<!-- BR modal -->
+<div id="modalBack" class="modal-back hidden">
+  <div class="modal">
+    <div class="row" style="justify-content:space-between;">
+      <h3 style="margin:0;font-size:18px">Borderline Ranges (BR) Cheat‑Sheet</h3>
+      <button class="btn" id="btnCloseBR">Close</button>
+    </div>
+    <div class="small muted" style="margin:6px 0 10px">BR results are treated as <b>Low</b> confidence in the 2‑out‑of‑3 combination.</div>
+    <div class="grid" style="gap:10px;font-size:14px;">
+      <div>
+        <div style="font-weight:600;margin-bottom:4px">KE1 – Protein binding</div>
+        <ul class="list">
+          <li><b>DPRA (mean)</b>: Positive ≥ 6.38%; <i>BR 4.95–8.32</i></li>
+          <li><b>DPRA (Cys‑only)</b>: Positive ≥ 13.89%; <i>BR 10.56–18.47</i></li>
+          <li><b>ADRA (mean)</b>: Positive ≥ 4.9%; <i>BR 4.1–5.9</i></li>
+          <li><b>ADRA (NAC‑only)</b>: Positive ≥ 5.6%; <i>BR 4.7–6.8</i></li>
+          <li><b>kDPRA</b>: Potency context; not used in 2o3 hazard.</li>
+        </ul>
+      </div>
+      <div>
+        <div style="font-weight:600;margin-bottom:4px">KE2 – Keratinocyte activation</div>
+        <ul class="list">
+          <li><b>KeratinoSens</b>: Positive ≥ 1.5× (viability ≥70%); <i>BR 1.35–1.67</i></li>
+          <li><b>LuSens</b>: Positive ≥ 1.5×; <i>BR 1.28–1.76</i></li>
+          <li><b>EpiSensA</b> (approx if no report call): Positive if ≥2 genes exceed thresholds
+            (ATF3&gt;15, GCLM&gt;2, DNAJB2&gt;2, IL‑8&gt;4); <i>BRs</i> ATF3 10.71–21.02; GCLM 1.64–2.45; DNAJB2 1.61–2.52; IL‑8 3.11–5.16.</li>
+        </ul>
+      </div>
+      <div>
+        <div style="font-weight:600;margin-bottom:4px">KE3 – Dendritic cell activation</div>
+        <ul class="list">
+          <li><b>h‑CLAT</b>: Positive if CD86 ≥150% and/or CD54 ≥200%; <i>BRs</i> CD86 122–184%; CD54 157–255%.</li>
+          <li><b>U‑SENS</b>: Positive if SI(CD86) ≥150%; <i>BR 128–176%</i></li>
+          <li><b>IL‑8 Luc</b>: Positive ≥ 1.4×; <i>BR 1.25–1.57</i></li>
+          <li><b>GARDskin</b>: Positive if mean DV > 0; <i>BR −0.450 to +0.450</i></li>
+        </ul>
+      </div>
+      <div class="small muted">Tip: BR and any flagged limitation → Low confidence for that method. The 2o3 rule needs two concordant High‑confidence results across different KEs.</div>
+    </div>
+  </div>
+</div>
 
-// ---------- Parsing helpers (PDF & OCR) ----------
-let pdfjsLib = null;
-async function ensurePDFJS(){
-  if(pdfjsLib) return pdfjsLib;
-  const mod = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.mjs');
-  pdfjsLib = mod.default ?? mod;
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.mjs';
-  return pdfjsLib;
+<script>
+// ---------------- Data & helpers ----------------
+const ASSAYS = {
+  DPRA: { id:"DPRA", name:"DPRA (mean or Cys-only)", ke:1 },
+  ADRA: { id:"ADRA", name:"ADRA (mean or NAC-only)", ke:1 },
+  kDPRA: { id:"kDPRA", name:"kDPRA (SARA-ICE only)", ke:1 },
+  KeratinoSens: { id:"KeratinoSens", name:"KeratinoSens", ke:2 },
+  LuSens: { id:"LuSens", name:"LuSens", ke:2 },
+  EpiSensA: { id:"EpiSensA", name:"EpiSensA", ke:2 },
+  HCLAT: { id:"HCLAT", name:"h-CLAT", ke:3 },
+  USENS: { id:"USENS", name:"U-SENS", ke:3 },
+  IL8Luc: { id:"IL8Luc", name:"IL-8 Luc", ke:3 },
+  GARDskin: { id:"GARDskin", name:"GARDskin", ke:3 },
+};
+const ORDER = ["DPRA","ADRA","kDPRA","KeratinoSens","LuSens","EpiSensA","HCLAT","USENS","IL8Luc","GARDskin"];
+
+const state = {
+  selected: new Set(["DPRA","KeratinoSens","HCLAT"]),
+  inputs: {}
+};
+
+function within(v,lo,hi){ return !(v==null || Number.isNaN(v)) && v>=lo && v<=hi; }
+function posNeg(v,thr,dir="greater"){ if (v==null || Number.isNaN(v)) return "Inconclusive"; return dir==="greater" ? (v>=thr?"Positive":"Negative") : (v<=thr?"Positive":"Negative"); }
+function hiLoFromBR(inBR,inc){ return inc ? "Low" : (inBR ? "Low" : "High"); }
+function overrideIfInvalidated(base, flag){ if (!flag) return base; return { call:"Inconclusive", confidence:"Low", details:["Flagged: precipitation/insolubility or other limitation — set to Inconclusive"] }; }
+
+// --- calculators ---
+function calcDPRA({meanDepletion,cysOnlyDepletion,invalidated}={}){
+  const details=[]; let call="Inconclusive"; let inBR=false;
+  if (typeof cysOnlyDepletion==="number"){ call=posNeg(cysOnlyDepletion,13.89); inBR=within(cysOnlyDepletion,10.56,18.47);
+    details.push(`Cys-only depletion = ${cysOnlyDepletion}% (pos ≥13.89; BR 10.56–18.47)`);
+  } else if (typeof meanDepletion==="number"){ call=posNeg(meanDepletion,6.38); inBR=within(meanDepletion,4.95,8.32);
+    details.push(`Mean peptide depletion = ${meanDepletion}% (pos ≥6.38; BR 4.95–8.32)`);
+  } else { details.push("No DPRA value provided"); }
+  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details}, invalidated);
 }
-
-async function extractPDFText(file){
-  const lib = await ensurePDFJS();
-  const arrayBuf = await file.arrayBuffer();
-  const doc = await lib.getDocument({data: arrayBuf}).promise;
-  let text=''; for(let i=1;i<=doc.numPages;i++){ const page=await doc.getPage(i); const c=await page.getTextContent(); text += c.items.map(it=>it.str).join(' ') + '\\n'; }
-  return text;
+function calcADRA({meanDepletion,nacOnlyDepletion,invalidated}={}){
+  const details=[]; let call="Inconclusive"; let inBR=false;
+  if (typeof nacOnlyDepletion==="number"){ call=posNeg(nacOnlyDepletion,5.6); inBR=within(nacOnlyDepletion,4.7,6.8);
+    details.push(`NAC-only depletion = ${nacOnlyDepletion}% (pos ≥5.6; BR 4.7–6.8)`);
+  } else if (typeof meanDepletion==="number"){ call=posNeg(meanDepletion,4.9); inBR=within(meanDepletion,4.1,5.9);
+    details.push(`Mean percent depletion = ${meanDepletion}% (pos ≥4.9; BR 4.1–5.9)`);
+  } else { details.push("No ADRA value provided"); }
+  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details}, invalidated);
 }
-
-// OCR via tesseract.js
-let TESS = null;
-async function ensureTesseract(){
-  if(TESS) return TESS;
-  const mod = await import('https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.esm.min.js');
-  TESS = mod;
-  return TESS;
+function calcKDPRA({logKmax,invalidated}={}){
+  const details=[]; if (typeof logKmax!=="number"){ details.push("No kDPRA logKmax provided"); return overrideIfInvalidated({call:"Inconclusive",confidence:"Low",details}, invalidated); }
+  details.push(`kDPRA logKmax = ${logKmax} (SARA-ICE potency; not used in 2o3 hazard)`);
+  return overrideIfInvalidated({call:"Inconclusive",confidence:"Low",details}, invalidated);
 }
-async function ocrImage(file){
-  const { createWorker } = await ensureTesseract();
-  const worker = await createWorker('eng');
-  const { data: { text } } = await worker.recognize(file);
-  await worker.terminate();
-  return text;
+function calcKeratinoSens({maxInduction,viabilityAtMax,invalidated}={}){
+  const details=[]; let call="Inconclusive"; let inBR=false;
+  if (typeof maxInduction==="number"){
+    const ok = (viabilityAtMax==null) ? true : viabilityAtMax>=70;
+    call = (maxInduction>=1.5 && ok) ? "Positive":"Negative";
+    inBR = within(maxInduction,1.35,1.67);
+    details.push(`Max luciferase induction = ${maxInduction}× (pos ≥1.5×; BR 1.35–1.67×)`);
+    if (viabilityAtMax!=null) details.push(`Viability at max = ${viabilityAtMax}% (needs ≥70%)`);
+    if (!ok) details.push("Note: viability <70% at effect level — caution");
+  } else details.push("No KeratinoSens value provided");
+  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details}, invalidated);
 }
-
-// Regex extraction
-function parseText(txt){
-  const out = {};
-  const u = '[\\u00B5µu]'; // micro
-  const num = '(-?(?:\\d+\\.?\\d*|\\.\\d+))';
-
-  function m(re){ const r = re.exec(txt); return r? r[1] : null; }
-
-  out.kdpra_logk = m(/log\\s*k\\s*max\\s*[:=]?\\s*(-?\\d+\\.?\\d*)/i) || m(/kDPRA\\s*logk\\s*[:=]?\\s*(-?\\d+\\.?\\d*)/i);
-
-  out.dpra_cys  = m(new RegExp(`cys(?:teine)?[^\\n]{0,20}?${num}\\s*%`,'i'));
-  out.dpra_lys  = m(new RegExp(`lys(?:ine)?[^\\n]{0,20}?${num}\\s*%`,'i'));
-  out.dpra_mean = m(/mean[^\\n]{0,10}?depletion[^\\n]{0,10}?(-?\\d+\\.?\\d*)\\s*%/i);
-
-  out.ke2_ec15 = m(new RegExp(`EC\\s*1[\\.,]?5\\s*[:=]?\\s*${num}\\s*(?:${u}M|uM|µM|ug\\/?mL|µg\\/?mL)?`,'i'));
-  out.ke2_ec3  = m(new RegExp(`EC\\s*3\\s*[:=}?\\s*${num}\\s*(?:${u}M|uM|µM|ug\\/?mL|µg\\/?mL)?`,'i'));
-  out.ke2_ic50 = m(new RegExp(`IC\\s*50\\s*[:=]?\\s*${num}\\s*(?:${u}M|uM|µM|ug\\/?mL|µg\\/?mL)?`,'i'));
-
-  out.ke3_ec150 = m(new RegExp(`EC\\s*150(?:\\s*\\(\\s*CD\\s*86\\s*\\))?\\s*[:=]?\\s*${num}`,'i'));
-  out.ke3_ec200 = m(new RegExp(`EC\\s*200(?:\\s*\\(\\s*CD\\s*54\\s*\\))?\\s*[:=]?\\s*${num}`,'i'));
-  out.ke3_cv75  = m(new RegExp(`CV\\s*75\\s*[:=]?\\s*${num}`,'i'));
-
-  const lim = /(precipitat|insolub|poorly\\s*soluble|phase\\s*separation|excessive\\s*cytotox|cytotoxicity)/i.test(txt);
-  out.ke1_lim = /dpra|adra|kdpr/i.test(txt) && lim ? true : undefined;
-  out.ke2_lim = /(keratinosens|lusens|episensa)/i.test(txt) && lim ? true : undefined;
-  out.ke3_lim = /(h-?clat|u-?sens|il-?8|gardskin)/i.test(txt) && lim ? true : undefined;
-
-  return out;
+function calcLuSens({maxInduction,invalidated}={}){
+  const details=[]; let call="Inconclusive"; let inBR=false;
+  if (typeof maxInduction==="number"){ call=posNeg(maxInduction,1.5); inBR=within(maxInduction,1.28,1.76);
+    details.push(`Max luciferase induction = ${maxInduction}× (pos ≥1.5×; BR 1.28–1.76×)`);
+  } else details.push("No LuSens value provided");
+  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details}, invalidated);
 }
-
-function showFound(obj){
-  const f = Q('#found');
-  const keys = Object.keys(obj).filter(k=>obj[k]!=null);
-  if(!keys.length){ f.innerHTML = '<span class="muted">No obvious values found yet.</span>'; return; }
-  f.innerHTML = '<b>Found:</b> ' + keys.map(k=>`${k} = <b>${obj[k]}</b>`).join(' · ');
-  f._obj = obj;
+function calcEpiSensA({atf3,gclm,dnajb2,il8,overrideReportCall,invalidated}={}){
+  const details=[]; const genePos={ ATF3: typeof atf3==="number"? atf3>15:false, GCLM: typeof gclm==="number"? gclm>2:false, DNAJB2: typeof dnajb2==="number"? dnajb2>2:false, IL8: typeof il8==="number"? il8>4:false };
+  const genesAbove=Object.values(genePos).filter(Boolean).length;
+  let call="Inconclusive";
+  if (overrideReportCall && overrideReportCall!==""){ call=overrideReportCall; details.push(`Using provided EpiSensA report call: ${call}`); }
+  else if ([atf3,gclm,dnajb2,il8].some(v=> typeof v==="number")){ call= genesAbove>=2? "Positive":"Negative"; details.push(`EpiSensA genes ≥ thresholds: ${genesAbove} of 4 (ATF3>15, GCLM>2, DNAJB2>2, IL‑8>4)`); }
+  else details.push("No gene values provided");
+  const inBR = within(atf3,10.71,21.02)||within(gclm,1.64,2.45)||within(dnajb2,1.61,2.52)||within(il8,3.11,5.16);
+  if (typeof atf3==="number") details.push(`ATF3 Imax = ${atf3}×`);
+  if (typeof gclm==="number") details.push(`GCLM Imax = ${gclm}×`);
+  if (typeof dnajb2==="number") details.push(`DNAJB2 Imax = ${dnajb2}×`);
+  if (typeof il8==="number") details.push(`IL‑8 Imax = ${il8}×`);
+  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details}, invalidated);
 }
-
-function applyFound(){
-  const obj = (Q('#found')._obj)||{};
-  function set(id,val){ if(val==null) return; const el = Q('#'+id); if(el) el.value = val; }
-  set('kdpra_logk', obj.kdpra_logk);
-  set('dpra_cys', obj.dpra_cys); set('dpra_lys', obj.dpra_lys); set('dpra_mean', obj.dpra_mean);
-  set('ke2_ec15', obj.ke2_ec15); set('ke2_ec3', obj.ke2_ec3); set('ke2_ic50', obj.ke2_ic50);
-  set('ke3_ec150', obj.ke3_ec150); set('ke3_ec200', obj.ke3_ec200); set('ke3_cv75', obj.ke3_cv75);
-  if(obj.ke1_lim) Q('#ke1_lim').checked = true;
-  if(obj.ke2_lim) Q('#ke2_lim').checked = true;
-  if(obj.ke3_lim) Q('#ke3_lim').checked = true;
+function calcHCLAT({rfiCD86,rfiCD54,invalidated}={}){
+  const details=[]; let call="Inconclusive";
+  const cd86Pos = typeof rfiCD86==="number" ? rfiCD86>=150:false;
+  const cd54Pos = typeof rfiCD54==="number" ? rfiCD54>=200:false;
+  if ([rfiCD86,rfiCD54].some(v=> typeof v==="number")) call=(cd86Pos||cd54Pos) ? "Positive":"Negative";
+  else details.push("No h-CLAT inputs provided");
+  const inBR = within(rfiCD86,122,184)||within(rfiCD54,157,255);
+  if (typeof rfiCD86==="number") details.push(`RFI CD86 = ${rfiCD86}% (pos ≥150; BR 122–184)`);
+  if (typeof rfiCD54==="number") details.push(`RFI CD54 = ${rfiCD54}% (pos ≥200; BR 157–255)`);
+  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details}, invalidated);
 }
-
-document.getElementById('btnParsePDF').addEventListener('click', async ()=>{
-  const f = Q('#pdfFile').files?.[0]; if(!f){ alert('Choose a PDF first.'); return; }
-  Q('#parseStatus').textContent = 'Parsing PDF locally…';
-  try{ const txt = await extractPDFText(f); Q('#paste').value = txt; Q('#parseStatus').textContent = 'PDF text extracted. Click “Parse text”.'; }
-  catch(e){ Q('#parseStatus').textContent = 'Could not read PDF in this environment. Try a different browser or paste text manually.'; }
-});
-
-document.getElementById('btnOCR').addEventListener('click', async ()=>{
-  const f = Q('#imgFile').files?.[0]; if(!f){ alert('Choose an image first.'); return; }
-  Q('#parseStatus').textContent = 'Running OCR locally… this may take ~10–20s';
-  try{ const txt = await ocrImage(f); Q('#paste').value = txt; Q('#parseStatus').textContent = 'OCR text obtained. Click “Parse text”.'; }
-  catch(e){ Q('#parseStatus').textContent = 'OCR could not run (blocked). Try another browser or paste text.'; }
-});
-
-document.getElementById('btnParseText').addEventListener('click', ()=>{
-  const txt = (Q('#paste').value||'').trim(); if(!txt){ alert('Paste some text first.'); return; }
-  const found = parseText(txt); showFound(found);
-});
-document.getElementById('btnApply').addEventListener('click', applyFound);
-document.getElementById('btnClearFound').addEventListener('click', ()=>{ Q('#found').innerHTML=''; Q('#found')._obj={}; });
-
-// ---------- Decision logic ----------
-function convertIfNeeded(val, units, mw){
-  const x = parseFloat(val); if(!isFinite(x)) return NaN;
-  if(units==='uM') return x;
-  if(units==='ugml'){ const M = parseFloat(mw); if(!isFinite(M) || M<=0) return NaN; return x*1000/M; }
-  return x;
+function calcUSENS({siCD86,invalidated}={}){
+  const details=[]; let call="Inconclusive";
+  if (typeof siCD86==="number"){ call = siCD86>=150? "Positive":"Negative"; details.push(`SI CD86 = ${siCD86}% (pos ≥150; BR 128–176)`); }
+  else details.push("No U-SENS input provided");
+  const inBR = within(siCD86,128,176);
+  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details}, invalidated);
 }
-
-function evalKE1(){
-  if(Q('#ke1_lim').checked) return {call:'Inconclusive', cls:'inc', why:'Limitations flagged (precipitation/insolubility/etc.).'};
-  const type = Q('#ke1_type').value;
-  if(type==='kDPRA'){
-    const logk = parseFloat(Q('#kdpra_logk').value);
-    if(!isFinite(logk)) return {call:'—', cls:'', why:'Need log kmax.'};
-    const pos = logk >= -2.0; const borderline = logk > -2.3 && logk < -2.0;
-    return {call: (borderline ? 'Borderline' : (pos ? 'Positive' : 'Negative')), cls: (borderline?'inc' : (pos?'pos':'neg')), why:`log kmax = ${logk}`};
-  }else if(type==='DPRA' || type==='ADRA'){
-    const mean = parseFloat(Q('#dpra_mean').value);
-    const cys = parseFloat(Q('#dpra_cys').value);
-    const lys = parseFloat(Q('#dpra_lys').value);
-    const m = isFinite(mean)? mean : (isFinite(cys)&&isFinite(lys)? (cys+lys)/2 : NaN);
-    if(!isFinite(m)) return {call:'—', cls:'', why:'Need depletion % (mean or cys/lys).'};
-    const pos = m > 6.38; const borderline = m >= 3 && m <= 6.38;
-    return {call: (borderline ? 'Borderline' : (pos ? 'Positive' : 'Negative')), cls: (borderline?'inc': (pos?'pos':'neg')), why:`Mean depletion ≈ ${m.toFixed(2)}%`};
+function calcIL8Luc({indIL8LA,invalidated}={}){
+  const details=[]; let call="Inconclusive";
+  if (typeof indIL8LA==="number"){ call = indIL8LA>=1.4? "Positive":"Negative"; details.push(`Ind‑IL8LA = ${indIL8LA}× (pos ≥1.4×; BR 1.25–1.57×)`); }
+  else details.push("No IL‑8 Luc value provided");
+  const inBR = within(indIL8LA,1.25,1.57);
+  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details}, invalidated);
+}
+function calcGARDskin({meanDV,invalidated}={}){
+  const details=[]; let call="Inconclusive";
+  if (typeof meanDV==="number"){ call = meanDV>0? "Positive":"Negative"; details.push(`Mean DV = ${meanDV} (pos > 0; BR −0.450 to +0.450)`); }
+  else details.push("No GARDskin DV provided");
+  const inBR = within(meanDV,-0.45,0.45);
+  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details}, invalidated);
+}
+function runAssay(id){
+  const data = state.inputs[id] || {};
+  switch(id){
+    case "DPRA": return calcDPRA(data);
+    case "ADRA": return calcADRA(data);
+    case "kDPRA": return calcKDPRA(data);
+    case "KeratinoSens": return calcKeratinoSens(data);
+    case "LuSens": return calcLuSens(data);
+    case "EpiSensA": return calcEpiSensA(data);
+    case "HCLAT": return calcHCLAT(data);
+    case "USENS": return calcUSENS(data);
+    case "IL8Luc": return calcIL8Luc(data);
+    case "GARDskin": return calcGARDskin(data);
+    default: return {call:"Inconclusive",confidence:"Low",details:["Unknown assay"]};
   }
-  return {call:'—', cls:'', why:'Select assay and enter values.'};
 }
-
-function evalKE2(){
-  if(Q('#ke2_lim').checked) return {call:'Inconclusive', cls:'inc', why:'Limitations flagged.'};
-  const units = Q('#ke2_units').value;
-  const mw = parseFloat(Q('#mw').value);
-  const ec15 = convertIfNeeded(Q('#ke2_ec15').value, units, mw);
-  const ec3  = convertIfNeeded(Q('#ke2_ec3').value,  units, mw);
-  const ic50 = convertIfNeeded(Q('#ke2_ic50').value, units, mw);
-  if(isFinite(ec15) || isFinite(ic50) || isFinite(ec3)){
-    const vals = [ec15, ec3, ic50].filter(v=>isFinite(v));
-    const minv = Math.min(...vals);
-    const pos = (isFinite(ec15) && ec15<=1000) || (isFinite(ic50) && ic50<=1000) || (isFinite(ec3) && ec3<=1000);
-    const borderline = minv>1000 && minv<=1500;
-    return {call: (borderline?'Borderline': (pos?'Positive':'Negative')),
-            cls: (borderline?'inc': (pos?'pos':'neg')),
-            why:`min(EC1.5, EC3, IC50) ≈ ${isFinite(minv)?minv.toFixed(1):'—'} µM`};
+function pickBestForKE(arr){
+  if (!arr.length) return null;
+  const sorted = arr.slice().sort((a,b)=>{
+    const cA = a.res.confidence==="High"?1:0, cB=b.res.confidence==="High"?1:0;
+    if (cB!==cA) return cB-cA;
+    const iA = a.res.call==="Inconclusive"?0:1, iB = b.res.call==="Inconclusive"?0:1;
+    if (iB!==iA) return iB-iA;
+    return 0;
+  });
+  return sorted[0];
+}
+function combine2o3(bestByKE){
+  const notes=[]; const map={};
+  Object.entries(bestByKE).forEach(([k,v])=>{ if (v) map[Number(k)]=v.res; });
+  const KES=[1,2,3].filter(k=>map[k]);
+  for (let i=0;i<KES.length;i++){
+    for (let j=i+1;j<KES.length;j++){
+      const a=map[KES[i]], b=map[KES[j]];
+      if (a && b && a.call!=="Inconclusive" && b.call!=="Inconclusive" && a.call===b.call){
+        if (a.confidence==="High" && b.confidence==="High"){
+          notes.push(`Two concordant HIGH-confidence results across KE${KES[i]} and KE${KES[j]}.`);
+          return {final:a.call, rationale:notes};
+        }
+      }
+    }
   }
-  return {call:'—', cls:'', why:'Enter EC/IC values.'};
+  notes.push("No pair of HIGH-confidence concordant results across ≥2 KEs. Result is Inconclusive for 2o3 hazard.");
+  return {final:"Inconclusive", rationale:notes};
 }
 
-function evalKE3(){
-  if(Q('#ke3_lim').checked) return {call:'Inconclusive', cls:'inc', why:'Limitations flagged.'};
-  const units = Q('#ke3_units').value;
-  const mw = parseFloat(Q('#mw2').value || Q('#mw').value);
-  const ec150 = convertIfNeeded(Q('#ke3_ec150').value, units, mw);
-  const ec200 = convertIfNeeded(Q('#ke3_ec200').value, units, mw);
-  const cv75  = convertIfNeeded(Q('#ke3_cv75').value,  units, mw);
-  const mit = Math.min(isFinite(ec150)?ec150:1e9, isFinite(ec200)?ec200:1e9);
-  if(isFinite(mit) || isFinite(cv75)){
-    const pos = (isFinite(mit) && mit<=5000) || (isFinite(cv75) && cv75<=5000);
-    const borderline = (!pos) && ((isFinite(mit)&&mit<=7000) || (isFinite(cv75)&&cv75<=7000));
-    return {call: (borderline?'Borderline': (pos?'Positive':'Negative')),
-            cls: (borderline?'inc': (pos?'pos':'neg')),
-            why:`MIT ≈ ${isFinite(mit)?mit.toFixed(1):'—'} µM; CV75 ≈ ${isFinite(cv75)?cv75.toFixed(1):'—'} µM`};
+// ---------------- UI rendering ----------------
+const sectionsEl = document.getElementById('sections');
+const callsEl = document.getElementById('assayCalls');
+const finalVal = document.getElementById('finalVal');
+const finalNotes = document.getElementById('finalNotes');
+
+function makeSection(title){
+  const d=document.createElement('div'); d.className='card';
+  const h=document.createElement('h2'); h.textContent=title; d.appendChild(h);
+  return d;
+}
+function makeCheckbox(label, checked, onChange){
+  const lab=document.createElement('label'); lab.className='row'; lab.style.cursor='pointer'; lab.style.gap='8px';
+  const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=checked;
+  cb.addEventListener('change', e=> onChange(e.target.checked));
+  lab.appendChild(cb);
+  const span=document.createElement('span'); span.textContent=label; span.style.fontSize='14px'; lab.appendChild(span);
+  return lab;
+}
+function makeNumberField(label, value, onChange){
+  const wrap=document.createElement('label'); wrap.style.display='flex'; wrap.style.flexDirection='column'; wrap.style.gap='4px';
+  const sp=document.createElement('span'); sp.textContent=label; wrap.appendChild(sp);
+  const inp=document.createElement('input'); inp.type='number'; inp.value = (value??''); inp.addEventListener('input', e=>{
+    const v = e.target.value;
+    onChange(v===''?undefined:Number(v));
+  });
+  wrap.appendChild(inp); return wrap;
+}
+function makeLimitFlag(value, onChange){
+  const lab=document.createElement('label'); lab.className='row'; lab.style.cursor='pointer'; lab.style.gap='8px'; lab.style.fontSize='12px';
+  const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!value; cb.addEventListener('change', e=> onChange(e.target.checked));
+  lab.appendChild(cb);
+  const span=document.createElement('span'); span.innerHTML='Precipitation/insolubility or other limitation → set this assay to <b>Inconclusive</b>'; lab.appendChild(span);
+  return lab;
+}
+function makeRadioCall(label, value, onChange){
+  const wrap=document.createElement('div'); wrap.className='grid'; wrap.style.gap='6px';
+  const sp=document.createElement('span'); sp.textContent=label; sp.style.fontSize='14px'; wrap.appendChild(sp);
+  const row=document.createElement('div'); row.className='row';
+  ["","Positive","Negative","Inconclusive"].forEach(opt=>{
+    const l=document.createElement('label'); l.className='row'; l.style.gap='4px';
+    const rb=document.createElement('input'); rb.type='radio'; rb.name='rc-'+label; rb.checked = (value===opt); rb.addEventListener('change', ()=> onChange(opt));
+    const t=document.createElement('span'); t.textContent = opt===""?"—":opt;
+    l.appendChild(rb); l.appendChild(t); row.appendChild(l);
+  });
+  wrap.appendChild(row); return wrap;
+}
+
+function render(){
+  sectionsEl.innerHTML='';
+  // KE1
+  const sec1=makeSection('KE1 – Protein binding (TG 442C)');
+  ["DPRA","ADRA","kDPRA"].forEach(id=>{
+    sec1.appendChild(makeCheckbox(ASSAYS[id].name, state.selected.has(id), v=>{ v?state.selected.add(id):state.selected.delete(id); render(); }));
+    if (state.selected.has(id)){
+      const wrap=document.createElement('div'); wrap.className='grid'; wrap.style.gap='8px'; wrap.style.margin='8px 0 8px';
+      const data = state.inputs[id] || {};
+      if (id==="DPRA"){
+        wrap.appendChild(makeNumberField("DPRA – Mean peptide depletion (%)", data.meanDepletion, v=>{ensure(id).meanDepletion=v; update();}));
+        wrap.appendChild(makeNumberField("DPRA – Cys-only depletion (%) (use if co‑elution)", data.cysOnlyDepletion, v=>{ensure(id).cysOnlyDepletion=v; update();}));
+      } else if (id==="ADRA"){
+        wrap.appendChild(makeNumberField("ADRA – Mean depletion (%) (either probe)", data.meanDepletion, v=>{ensure(id).meanDepletion=v; update();}));
+        wrap.appendChild(makeNumberField("ADRA – NAC-only depletion (%) (optional)", data.nacOnlyDepletion, v=>{ensure(id).nacOnlyDepletion=v; update();}));
+      } else if (id==="kDPRA"){
+        wrap.appendChild(makeNumberField("kDPRA – log Kmax (M⁻¹·s⁻¹) (SARA‑ICE only; not used in 2o3)", data.logKmax, v=>{ensure(id).logKmax=v; update();}));
+        const p=document.createElement('div'); p.className='small muted'; p.textContent='Captured for potency/IATA context. Not used in the 2o3 hazard aggregation.'; wrap.appendChild(p);
+      }
+      wrap.appendChild(makeLimitFlag(data.invalidated, v=>{ensure(id).invalidated=v; update();}));
+      sec1.appendChild(wrap);
+    }
+  });
+  sectionsEl.appendChild(sec1);
+
+  // KE2
+  const sec2=makeSection('KE2 – Keratinocyte activation (TG 442D)');
+  ["KeratinoSens","LuSens","EpiSensA"].forEach(id=>{
+    sec2.appendChild(makeCheckbox(ASSAYS[id].name, state.selected.has(id), v=>{ v?state.selected.add(id):state.selected.delete(id); render(); }));
+    if (state.selected.has(id)){
+      const wrap=document.createElement('div'); wrap.className='grid'; wrap.style.gap='8px'; wrap.style.margin='8px 0 8px';
+      const data = state.inputs[id] || {};
+      if (id==="KeratinoSens"){
+        wrap.appendChild(makeNumberField("KeratinoSens – Max luciferase induction (fold)", data.maxInduction, v=>{ensure(id).maxInduction=v; update();}));
+        wrap.appendChild(makeNumberField("KeratinoSens – Viability at that concentration (%)", data.viabilityAtMax, v=>{ensure(id).viabilityAtMax=v; update();}));
+      } else if (id==="LuSens"){
+        wrap.appendChild(makeNumberField("LuSens – Max luciferase induction (fold)", data.maxInduction, v=>{ensure(id).maxInduction=v; update();}));
+      } else if (id==="EpiSensA"){
+        wrap.appendChild(makeNumberField("EpiSensA – ATF3 Imax (fold)", data.atf3, v=>{ensure(id).atf3=v; update();}));
+        wrap.appendChild(makeNumberField("EpiSensA – GCLM Imax (fold)", data.gclm, v=>{ensure(id).gclm=v; update();}));
+        wrap.appendChild(makeNumberField("EpiSensA – DNAJB2 Imax (fold)", data.dnajb2, v=>{ensure(id).dnajb2=v; update();}));
+        wrap.appendChild(makeNumberField("EpiSensA – IL‑8 Imax (fold)", data.il8, v=>{ensure(id).il8=v; update();}));
+        wrap.appendChild(makeRadioCall("EpiSensA – Use report's overall call (optional)", data.overrideReportCall||"", v=>{ensure(id).overrideReportCall=v; update();}));
+      }
+      wrap.appendChild(makeLimitFlag(data.invalidated, v=>{ensure(id).invalidated=v; update();}));
+      sec2.appendChild(wrap);
+    }
+  });
+  sectionsEl.appendChild(sec2);
+
+  // KE3
+  const sec3=makeSection('KE3 – Dendritic cell activation (TG 442E)');
+  ["HCLAT","USENS","IL8Luc","GARDskin"].forEach(id=>{
+    sec3.appendChild(makeCheckbox(ASSAYS[id].name, state.selected.has(id), v=>{ v?state.selected.add(id):state.selected.delete(id); render(); }));
+    if (state.selected.has(id)){
+      const wrap=document.createElement('div'); wrap.className='grid'; wrap.style.gap='8px'; wrap.style.margin='8px 0 8px';
+      const data = state.inputs[id] || {};
+      if (id==="HCLAT"){
+        wrap.appendChild(makeNumberField("h‑CLAT – RFI CD86 (%)", data.rfiCD86, v=>{ensure(id).rfiCD86=v; update();}));
+        wrap.appendChild(makeNumberField("h‑CLAT – RFI CD54 (%)", data.rfiCD54, v=>{ensure(id).rfiCD54=v; update();}));
+      } else if (id==="USENS"){
+        wrap.appendChild(makeNumberField("U‑SENS – SI CD86 (%)", data.siCD86, v=>{ensure(id).siCD86=v; update();}));
+      } else if (id==="IL8Luc"){
+        wrap.appendChild(makeNumberField("IL‑8 Luc – Ind‑IL8LA (fold)", data.indIL8LA, v=>{ensure(id).indIL8LA=v; update();}));
+      } else if (id==="GARDskin"){
+        wrap.appendChild(makeNumberField("GARDskin – Mean DV", data.meanDV, v=>{ensure(id).meanDV=v; update();}));
+      }
+      wrap.appendChild(makeLimitFlag(data.invalidated, v=>{ensure(id).invalidated=v; update();}));
+      sec3.appendChild(wrap);
+    }
+  });
+  sectionsEl.appendChild(sec3);
+
+  update();
+}
+
+function ensure(id){ if (!state.inputs[id]) state.inputs[id] = {}; return state.inputs[id]; }
+
+function update(){
+  // results
+  const results = {};
+  for (const id of ORDER){ if (state.selected.has(id)) results[id]=runAssay(id); }
+
+  // calls grid
+  callsEl.innerHTML='';
+  for (const id of ORDER){ if (!state.selected.has(id)) continue;
+    const r = results[id];
+    const card=document.createElement('div'); card.className='card';
+    const top=document.createElement('div'); top.className='row'; top.style.justifyContent='space-between'; card.appendChild(top);
+    const h3=document.createElement('div'); h3.textContent=ASSAYS[id].name; h3.style.fontWeight='600'; top.appendChild(h3);
+    const pill=document.createElement('span'); pill.className='pill'+(r.confidence==='High'?'':' low'); pill.textContent=r.confidence+' conf.'; top.appendChild(pill);
+    const callRow=document.createElement('div'); callRow.style.marginTop='4px';
+    const lbl=document.createElement('span'); lbl.textContent='Call: '; callRow.appendChild(lbl);
+    const val=document.createElement('span'); val.className='call '+(r.call==='Positive'?'pos':(r.call==='Negative'?'neg':'')); val.textContent=r.call; callRow.appendChild(val);
+    card.appendChild(callRow);
+    const ul=document.createElement('ul'); ul.className='list'; ul.style.marginTop='6px';
+    r.details.forEach(d=>{ const li=document.createElement('li'); li.textContent=d; ul.appendChild(li); });
+    card.appendChild(ul);
+    const tag=document.createElement('div'); tag.className='ke-tag'; tag.textContent='KE'+ASSAYS[id].ke; card.appendChild(tag);
+    callsEl.appendChild(card);
   }
-  return {call:'—', cls:'', why:'Enter EC150/EC200 and/or CV75.'};
+
+  // combine
+  const byKE = {1:[],2:[],3:[]};
+  Object.entries(results).forEach(([id,res])=> byKE[ASSAYS[id].ke].push({id,res}));
+  const bestByKE = {};
+  [1,2,3].forEach(k=>{ const best=pickBestForKE(byKE[k]); if (best) bestByKE[k]=best; });
+  const final = combine2o3(bestByKE);
+
+  // final UI
+  finalVal.textContent = final.final==='Inconclusive' ? 'Inconclusive' : (final.final==='Positive' ? 'Sensitiser' : 'Non‑sensitiser');
+  finalVal.className = final.final==='Positive' ? 'pos' : (final.final==='Negative' ? 'neg' : '');
+  finalNotes.innerHTML=''; final.rationale.forEach(n=>{ const li=document.createElement('li'); li.className='list'; li.textContent=n; finalNotes.appendChild(li); });
 }
 
-function renderCalls(k1,k2,k3){
-  document.getElementById('ke1_call').innerHTML = `<span class="tag">KE1</span> <span class="call ${k1.cls}">${k1.call}</span> — ${k1.why}`;
-  document.getElementById('ke2_call').innerHTML = `<span class="tag">KE2</span> <span class="call ${k2.cls}">${k2.call}</span> — ${k2.why}`;
-  document.getElementById('ke3_call').innerHTML = `<span class="tag">KE3</span> <span class="call ${k3.cls}">${k3.call}</span> — ${k3.why}`;
+// Buttons and modal
+document.getElementById('btnClear').onclick = ()=>{ state.inputs={}; render(); };
+document.getElementById('btnReset').onclick = ()=>{ state.selected=new Set(["DPRA","KeratinoSens","HCLAT"]); state.inputs={}; render(); };
+const modalBack=document.getElementById('modalBack');
+document.getElementById('btnBR').onclick = ()=>{ modalBack.classList.remove('hidden'); };
+document.getElementById('btnCloseBR').onclick = ()=>{ modalBack.classList.add('hidden'); };
+modalBack.addEventListener('click', (e)=>{ if (e.target===modalBack) modalBack.classList.add('hidden'); });
 
-  const map = c => c.call.startsWith('Pos') ? 1 : (c.call.startsWith('Neg') ? 0 : null);
-  const arr = [k1,k2,k3].map(map).filter(x=>x!=null);
-  let text = 'Need at least two evaluable KEs.';
-  if(arr.length>=2){
-    const posCount = [k1,k2,k3].filter(c=>c.call.startsWith('Pos')).length;
-    const negCount = [k1,k2,k3].filter(c=>c.call.startsWith('Neg')).length;
-    const incCount = [k1,k2,k3].filter(c=>c.call.startsWith('Inconclusive')||c.call.startsWith('Borderline')).length;
-    if(posCount>=2) text = 'Final call: <b class="pos">Sensitizer (Positive)</b> — two or more KEs positive.';
-    else if(negCount>=2) text = 'Final call: <b class="neg">Non-sensitizer (Negative)</b> — two or more KEs negative.';
-    else text = 'Final call: <b class="inc">Inconclusive</b> — not enough concordant positives or negatives.';
-    text += ` <span class="small muted">(Pos=${posCount}, Neg=${negCount}, Inc/Borderline=${incCount})</span>`;
-  }
-  document.getElementById('final_box').innerHTML = text;
-  document.getElementById('rationale').innerHTML = `KE1: ${k1.call}; KE2: ${k2.call}; KE3: ${k3.call}.`;
-}
-
-function ke1(){ const r = evalKE1(); renderCalls(r, evalKE2(), evalKE3()); }
-function ke2(){ const r = evalKE2(); renderCalls(evalKE1(), r, evalKE3()); }
-function ke3(){ const r = evalKE3(); renderCalls(evalKE1(), evalKE2(), r); }
-
-document.getElementById('btnKe1').addEventListener('click', ke1);
-document.getElementById('btnKe2').addEventListener('click', ke2);
-document.getElementById('btnKe3').addEventListener('click', ke3);
-document.getElementById('btnAll').addEventListener('click', ()=>renderCalls(evalKE1(),evalKE2(),evalKE3()));
-document.getElementById('btnClear').addEventListener('click', ()=>location.reload());
+// initial render
+render();
 </script>
 </body>
 </html>
