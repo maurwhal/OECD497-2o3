@@ -18,8 +18,7 @@
     font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Noto Sans",sans-serif;
     background: var(--bg);
     color:var(--fg);
-    /* Default: plain (no background image). The toggle will set background-image inline. */
-    background-image: none;
+    /* Default: pattern ON (toggle can disable) */
     background-size: 40px 40px;
   }
   .container{max-width:1152px;margin:0 auto;padding:24px;display:grid;gap:24px}
@@ -36,7 +35,7 @@
   .pill.warn{background:var(--warnbg);color:var(--warn);border-color:var(--warnbd)}
   .pill.bad{background:#fee2e2;color:#991b1b;border-color:#fecaca}
   .call{font-weight:600} .pos{color:var(--bad)} .neg{color:var(--ok)}
-  input[type="number"]{padding:8px;border:1px solid var(--border);border-radius:12px;width:100%}
+  input[type="number"], textarea{padding:8px;border:1px solid var(--border);border-radius:12px;width:100%}
   label{font-size:14px}
   .list{font-size:12px;color:#334155;line-height:1.25}
   .small{font-size:12px}
@@ -75,6 +74,9 @@
   #daPanel.open {transform:translateX(0)}
   #daPanel .panel {height:100%; background:#fff; border-left:1px solid var(--border); box-shadow:-2px 0 8px rgba(0,0,0,.08); padding:16px; display:flex; flex-direction:column; gap:12px}
   #daPanel textarea {width:100%; height:calc(100% - 120px); border:1px solid var(--border); border-radius:12px; padding:12px; resize:none; font-size:12px; line-height:1.4}
+
+  /* Excel blurb textarea in cards */
+  .blurbbox{margin-top:8px; font-size:12px; min-height:64px}
 </style>
 </head>
 <body>
@@ -89,8 +91,8 @@
       <button class="btn" id="btnBR">BR cheat‑sheet</button>
       <button class="btn" id="btnClear">Clear inputs</button>
       <button class="btn" id="btnReset">Reset selection</button>
-      <button class="btn" id="btnBG">BG: Pattern</button>
-      <button class="btn" id="btnDA">OECD 497 DA snippet</button>
+      <button class="btn" id="btnBG">BG: Plain</button>
+      <button class="btn" id="btnDA">OECD&nbsp;497 DA snippet</button>
     </div>
   </header>
 
@@ -178,7 +180,7 @@
 <div id="daPanel">
   <div class="panel">
     <div class="row" style="justify-content:space-between">
-      <h3 style="margin:0;font-size:18px">OECD 497 DA snippet</h3>
+      <h3 style="margin:0;font-size:18px">OECD&nbsp;497 DA snippet</h3>
       <button class="btn" id="btnCloseDA">Close</button>
     </div>
     <div class="small muted">Copy‑ready paragraph summarizing methods used, calls, BR/limitations, and the 2o3 outcome (no links).</div>
@@ -189,22 +191,39 @@
   </div>
 </div>
 
+<!-- Report interpreter (shared modal) -->
+<div id="intBack" class="modal-back hidden" role="dialog" aria-modal="true" aria-labelledby="intTitle">
+  <div class="modal">
+    <div class="row" style="justify-content:space-between;align-items:center;">
+      <h3 id="intTitle" style="margin:0;font-size:18px">Report interpreter</h3>
+      <button class="btn" id="btnCloseInt">Close</button>
+    </div>
+    <div id="intBody" class="grid" style="gap:10px"></div>
+    <div class="row" style="justify-content:flex-end;gap:8px;margin-top:8px">
+      <button class="btn" id="btnGenBlurb">Generate Excel blurb</button>
+      <button class="btn" id="btnCalcApply">Apply to 2‑out‑of‑3</button>
+    </div>
+  </div>
+</div>
+
 <script>
-// ---------------- Pattern toggle (inline SVG, no network) ----------------
-const jigsawDataURI = (() => {
+// ---------------- Pattern toggle (inline SVG, default ON) ----------------
+(function(){
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'>
-    <rect width='40' height='40' fill='${encodeURIComponent('#f8fafc')}'/>
-    <path d='M0,0 h40 v40 h-40 z M20,0 v8 c2,0 3.5,1.5 3.5,3.5S22,15 20,15v10c2,0 3.5,1.5 3.5,3.5S22,32 20,32v8 M0,20 h8 c0,-2 1.5,-3.5 3.5,-3.5S15,18 15,20h10c0,-2 1.5,-3.5 3.5,-3.5S32,18 32,20h8' fill='none' stroke='${encodeURIComponent('#0f172a')}' stroke-opacity='${encodeURIComponent(getComputedStyle(document.documentElement).getPropertyValue('--pattern-opacity')||0.08)}' stroke-width='1.1'/>
+    <rect width='40' height='40' fill='%23f8fafc'/>
+    <path d='M0,0 h40 v40 h-40 z M20,0 v8 c2,0 3.5,1.5 3.5,3.5S22,15 20,15v10c2,0 3.5,1.5 3.5,3.5S22,32 20,32v8 M0,20 h8 c0,-2 1.5,-3.5 3.5,-3.5S15,18 15,20h10c0,-2 1.5,-3.5 3.5,-3.5S32,18 32,20h8' fill='none' stroke='%230f172a' stroke-opacity='0.08' stroke-width='1.1'/>
   </svg>`;
-  return `url("data:image/svg+xml,${svg.replace(/\n|\s{2,}/g,' ')}")`;
-})();
-let patternOn = false;
-document.getElementById('btnBG').onclick = () => {
-  patternOn = !patternOn;
-  document.getElementById('btnBG').textContent = patternOn ? 'BG: Plain' : 'BG: Pattern';
-  document.body.style.backgroundImage = patternOn ? jigsawDataURI : 'none';
+  const uri = `url("data:image/svg+xml,${svg.replace(/\n|\s{2,}/g,' ')}")`;
+  document.body.style.backgroundImage = uri; // ON by default
   document.body.style.backgroundSize = '40px 40px';
-};
+  let on = true;
+  document.getElementById('btnBG').textContent = 'BG: Plain';
+  document.getElementById('btnBG').onclick = ()=>{
+    on=!on;
+    document.getElementById('btnBG').textContent = on? 'BG: Plain' : 'BG: Pattern';
+    document.body.style.backgroundImage = on? uri : 'none';
+  };
+})();
 
 // ---------------- Data & helpers ----------------
 const ASSAYS = {
@@ -223,16 +242,19 @@ const ORDER = ["DPRA","ADRA","kDPRA","KeratinoSens","LuSens","EpiSensA","HCLAT",
 
 const state = {
   selected: new Set(["DPRA","KeratinoSens","HCLAT"]),
-  inputs: {}
+  inputs: {},
+  raw: {} // raw runs per assay { AssayId: { runs:[{...},{...},{...}] } }
 };
 
+function ensureState(group, id, init){ if(!state[group]) state[group]={}; if(!state[group][id]) state[group][id] = (init||{}); return state[group][id]; }
+function ensureInputs(id){ if (!state.inputs[id]) state.inputs[id] = {}; return state.inputs[id]; }
 function within(v,lo,hi){ return !(v==null || Number.isNaN(v)) && v>=lo && v<=hi; }
 function posNeg(v,thr,dir="greater"){ if (v==null || Number.isNaN(v)) return "Inconclusive"; return dir==="greater" ? (v>=thr?"Positive":"Negative") : (v<=thr?"Positive":"Negative"); }
 function hiLoFromBR(inBR,inc){ return inc ? "Low" : (inBR ? "Low" : "High"); }
-function overrideIfInvalidated(base, flag){ if (!flag) return base; return { call:"Inconclusive", confidence:"Low", details:["Flagged: precipitation/insolubility or other limitation — set to Inconclusive"], br:base.br }; }
+function overrideIfInvalidated(base, flag){ if (!flag) return base; return { call:"Inconclusive", confidence:"Low", details:[...(base.details||[]),"Flagged: limitation — set to Inconclusive"], br:base.br }; }
 function softWarnIcon(text){ const s=document.createElement('span'); s.className='warn-flag'; s.textContent='  ⚠︎ ' + text; return s; }
 
-// --- calculators (OECD 497, TG 442C/D/E-aligned thresholds & BRs) ---
+// --- calculators (OECD 497 + TG 442C/D/E thresholds & BRs) ---
 function calcDPRA({meanDepletion,cysOnlyDepletion,invalidated}={}){
   const details=[]; let call="Inconclusive"; let inBR=false;
   if (typeof cysOnlyDepletion==="number"){
@@ -270,8 +292,8 @@ function calcKeratinoSens({maxInduction,viabilityAtMax,invalidated}={}){
     inBR = within(maxInduction,1.35,1.67);
     details.push(`Max luciferase induction = ${maxInduction}× (pos ≥1.5×; BR 1.35–1.67×)`);
     if (maxInduction>=1.5){
-      if (viabilityAtMax==null){ call = "Inconclusive"; details.push("Viability at effect not provided — cannot confirm positivity (needs ≥70%)."); }
-      else if (viabilityAtMax>=70){ call = "Positive"; details.push(`Viability at max = ${viabilityAtMax}% (meets ≥70% requirement).`); }
+      if (viabilityAtMax==null){ call = "Inconclusive"; details.push("Viability at effect not provided — needs ≥70% to confirm."); }
+      else if (viabilityAtMax>=70){ call = "Positive"; details.push(`Viability at max = ${viabilityAtMax}% (≥70%).`); }
       else { call = "Inconclusive"; details.push(`Viability at max = ${viabilityAtMax}% (<70%) — set to Inconclusive.`); }
     } else {
       call = "Negative"; if (viabilityAtMax!=null) details.push(`Viability at max = ${viabilityAtMax}%`);
@@ -292,7 +314,7 @@ function calcEpiSensA({atf3,gclm,dnajb2,il8,overrideReportCall,invalidated}={}){
   const details=[]; const genePos={ ATF3: typeof atf3==="number"? atf3>15:false, GCLM: typeof gclm==="number"? gclm>2:false, DNAJB2: typeof dnajb2==="number"? dnajb2>2:false, IL8: typeof il8==="number"? il8>4:false };
   const genesAbove=Object.values(genePos).filter(Boolean).length;
   let call="Inconclusive";
-  if (overrideReportCall && overrideReportCall!==""){ call=overrideReportCall; details.push(`Using provided EpiSensA report call: ${call}`); }
+  if (overrideReportCall && overrideReportCall!=""){ call=overrideReportCall; details.push(`Using provided EpiSensA report call: ${call}`); }
   else if ([atf3,gclm,dnajb2,il8].some(v=> typeof v==="number")){ call= genesAbove>=2? "Positive":"Negative"; details.push(`Genes ≥ thresholds: ${genesAbove} of 4 (ATF3>15, GCLM>2, DNAJB2>2, IL‑8>4)`); }
   else details.push("No gene values provided");
   const inBR = within(atf3,10.71,21.02)||within(gclm,1.64,2.45)||within(dnajb2,1.61,2.52)||within(il8,3.11,5.16);
@@ -405,8 +427,7 @@ function makeNumberField(label, value, onChange){
   const wrap=document.createElement('label'); wrap.style.display='flex'; wrap.style.flexDirection='column'; wrap.style.gap='4px';
   const sp=document.createElement('span'); sp.textContent=label; wrap.appendChild(sp);
   const inp=document.createElement('input'); inp.type='number'; inp.value = (value??''); inp.addEventListener('input', e=>{
-    const v = e.target.value;
-    onChange(v===''?undefined:Number(v));
+    const v = e.target.value; onChange(v===''?undefined:Number(v));
   });
   wrap.appendChild(inp); return wrap;
 }
@@ -440,16 +461,18 @@ function render(){
       const wrap=document.createElement('div'); wrap.className='grid'; wrap.style.gap='8px'; wrap.style.margin='8px 0 8px';
       const data = state.inputs[id] || {};
       if (id==="DPRA"){
-        wrap.appendChild(makeNumberField("DPRA – Mean peptide depletion (%)", data.meanDepletion, v=>{ensure(id).meanDepletion=v; update();}));
-        wrap.appendChild(makeNumberField("DPRA – Cys-only depletion (%) (use if co‑elution)", data.cysOnlyDepletion, v=>{ensure(id).cysOnlyDepletion=v; update();}));
+        wrap.appendChild(makeNumberField("DPRA – Mean peptide depletion (%)", data.meanDepletion, v=>{ensureInputs(id).meanDepletion=v; update();}));
+        wrap.appendChild(makeNumberField("DPRA – Cys-only depletion (%) (use if co‑elution)", data.cysOnlyDepletion, v=>{ensureInputs(id).cysOnlyDepletion=v; update();}));
       } else if (id==="ADRA"){
-        wrap.appendChild(makeNumberField("ADRA – Mean depletion (%) (either probe)", data.meanDepletion, v=>{ensure(id).meanDepletion=v; update();}));
-        wrap.appendChild(makeNumberField("ADRA – NAC-only depletion (%) (optional)", data.nacOnlyDepletion, v=>{ensure(id).nacOnlyDepletion=v; update();}));
+        wrap.appendChild(makeNumberField("ADRA – Mean depletion (%) (either probe)", data.meanDepletion, v=>{ensureInputs(id).meanDepletion=v; update();}));
+        wrap.appendChild(makeNumberField("ADRA – NAC-only depletion (%) (optional)", data.nacOnlyDepletion, v=>{ensureInputs(id).nacOnlyDepletion=v; update();}));
       } else if (id==="kDPRA"){
-        wrap.appendChild(makeNumberField("kDPRA – log Kmax (potency; not used in 2o3)", data.logKmax, v=>{ensure(id).logKmax=v; update();}));
+        wrap.appendChild(makeNumberField("kDPRA – log Kmax (potency; not used in 2o3)", data.logKmax, v=>{ensureInputs(id).logKmax=v; update();}));
         const p=document.createElement('div'); p.className='small muted'; p.textContent='Recorded for potency/IATA context (not used in 2o3 hazard).'; wrap.appendChild(p);
       }
-      wrap.appendChild(makeLimitFlag(data.invalidated, v=>{ensure(id).invalidated=v; update();}));
+      wrap.appendChild(makeLimitFlag(data.invalidated, v=>{ensureInputs(id).invalidated=v; update();}));
+      // Interpreter button (also available on cards)
+      const btn=document.createElement('button'); btn.className='btn'; btn.textContent='Report interpreter'; btn.onclick=()=>openInterpreter(id); wrap.appendChild(btn);
       sec1.appendChild(wrap);
     }
   });
@@ -463,18 +486,19 @@ function render(){
       const wrap=document.createElement('div'); wrap.className='grid'; wrap.style.gap='8px'; wrap.style.margin='8px 0 8px';
       const data = state.inputs[id] || {};
       if (id==="KeratinoSens"){
-        wrap.appendChild(makeNumberField("KeratinoSens – Max luciferase induction (fold)", data.maxInduction, v=>{ensure(id).maxInduction=v; update();}));
-        wrap.appendChild(makeNumberField("KeratinoSens – Viability at that concentration (%)", data.viabilityAtMax, v=>{ensure(id).viabilityAtMax=v; update();}));
+        wrap.appendChild(makeNumberField("KeratinoSens – Max luciferase induction (fold)", data.maxInduction, v=>{ensureInputs(id).maxInduction=v; update();}));
+        wrap.appendChild(makeNumberField("KeratinoSens – Viability at that concentration (%)", data.viabilityAtMax, v=>{ensureInputs(id).viabilityAtMax=v; update();}));
       } else if (id==="LuSens"){
-        wrap.appendChild(makeNumberField("LuSens – Max luciferase induction (fold)", data.maxInduction, v=>{ensure(id).maxInduction=v; update();}));
+        wrap.appendChild(makeNumberField("LuSens – Max luciferase induction (fold)", data.maxInduction, v=>{ensureInputs(id).maxInduction=v; update();}));
       } else if (id==="EpiSensA"){
-        wrap.appendChild(makeNumberField("EpiSensA – ATF3 Imax (fold)", data.atf3, v=>{ensure(id).atf3=v; update();}));
-        wrap.appendChild(makeNumberField("EpiSensA – GCLM Imax (fold)", data.gclm, v=>{ensure(id).gclm=v; update();}));
-        wrap.appendChild(makeNumberField("EpiSensA – DNAJB2 Imax (fold)", data.dnajb2, v=>{ensure(id).dnajb2=v; update();}));
-        wrap.appendChild(makeNumberField("EpiSensA – IL‑8 Imax (fold)", data.il8, v=>{ensure(id).il8=v; update();}));
-        wrap.appendChild(makeRadioCall("EpiSensA – Use report's overall call (optional)", data.overrideReportCall||"", v=>{ensure(id).overrideReportCall=v; update();}));
+        wrap.appendChild(makeNumberField("EpiSensA – ATF3 Imax (fold)", data.atf3, v=>{ensureInputs(id).atf3=v; update();}));
+        wrap.appendChild(makeNumberField("EpiSensA – GCLM Imax (fold)", data.gclm, v=>{ensureInputs(id).gclm=v; update();}));
+        wrap.appendChild(makeNumberField("EpiSensA – DNAJB2 Imax (fold)", data.dnajb2, v=>{ensureInputs(id).dnajb2=v; update();}));
+        wrap.appendChild(makeNumberField("EpiSensA – IL‑8 Imax (fold)", data.il8, v=>{ensureInputs(id).il8=v; update();}));
+        wrap.appendChild(makeRadioCall("EpiSensA – Use report's overall call (optional)", data.overrideReportCall||"", v=>{ensureInputs(id).overrideReportCall=v; update();}));
       }
-      wrap.appendChild(makeLimitFlag(data.invalidated, v=>{ensure(id).invalidated=v; update();}));
+      wrap.appendChild(makeLimitFlag(data.invalidated, v=>{ensureInputs(id).invalidated=v; update();}));
+      const btn=document.createElement('button'); btn.className='btn'; btn.textContent='Report interpreter'; btn.onclick=()=>openInterpreter(id); wrap.appendChild(btn);
       sec2.appendChild(wrap);
     }
   });
@@ -488,17 +512,18 @@ function render(){
       const wrap=document.createElement('div'); wrap.className='grid'; wrap.style.gap='8px'; wrap.style.margin='8px 0 8px';
       const data = state.inputs[id] || {};
       if (id==="HCLAT"){
-        wrap.appendChild(makeNumberField("h‑CLAT – RFI CD86 (%)", data.rfiCD86, v=>{ensure(id).rfiCD86=v; update();}));
-        wrap.appendChild(makeNumberField("h‑CLAT – RFI CD54 (%)", data.rfiCD54, v=>{ensure(id).rfiCD54=v; update();}));
-        wrap.appendChild(makeCheckbox("h‑CLAT – Viability ≥50% at effective dose", (data.viabilityOK ?? true), v=>{ensure(id).viabilityOK=v; update();}));
+        wrap.appendChild(makeNumberField("h‑CLAT – RFI CD86 (%)", data.rfiCD86, v=>{ensureInputs(id).rfiCD86=v; update();}));
+        wrap.appendChild(makeNumberField("h‑CLAT – RFI CD54 (%)", data.rfiCD54, v=>{ensureInputs(id).rfiCD54=v; update();}));
+        wrap.appendChild(makeCheckbox("h‑CLAT – Viability ≥50% at effective dose", (data.viabilityOK ?? true), v=>{ensureInputs(id).viabilityOK=v; update();}));
       } else if (id==="USENS"){
-        wrap.appendChild(makeNumberField("U‑SENS – SI CD86 (%)", data.siCD86, v=>{ensure(id).siCD86=v; update();}));
+        wrap.appendChild(makeNumberField("U‑SENS – SI CD86 (%)", data.siCD86, v=>{ensureInputs(id).siCD86=v; update();}));
       } else if (id==="IL8Luc"){
-        wrap.appendChild(makeNumberField("IL‑8 Luc – Ind‑IL8LA (fold)", data.indIL8LA, v=>{ensure(id).indIL8LA=v; update();}));
+        wrap.appendChild(makeNumberField("IL‑8 Luc – Ind‑IL8LA (fold)", data.indIL8LA, v=>{ensureInputs(id).indIL8LA=v; update();}));
       } else if (id==="GARDskin"){
-        wrap.appendChild(makeNumberField("GARDskin – Mean DV", data.meanDV, v=>{ensure(id).meanDV=v; update();}));
+        wrap.appendChild(makeNumberField("GARDskin – Mean DV", data.meanDV, v=>{ensureInputs(id).meanDV=v; update();}));
       }
-      wrap.appendChild(makeLimitFlag(data.invalidated, v=>{ensure(id).invalidated=v; update();}));
+      wrap.appendChild(makeLimitFlag(data.invalidated, v=>{ensureInputs(id).invalidated=v; update();}));
+      const btn=document.createElement('button'); btn.className='btn'; btn.textContent='Report interpreter'; btn.onclick=()=>openInterpreter(id); wrap.appendChild(btn);
       sec3.appendChild(wrap);
     }
   });
@@ -506,8 +531,6 @@ function render(){
 
   update();
 }
-
-function ensure(id){ if (!state.inputs[id]) state.inputs[id] = {}; return state.inputs[id]; }
 
 function update(){
   const results = {};
@@ -549,15 +572,21 @@ function update(){
 
     // Details
     const ul=document.createElement('ul'); ul.className='list'; ul.style.marginTop='6px';
-    r.details.forEach(d=>{ const li=document.createElement('li'); li.textContent=d; ul.appendChild(li); });
+    (r.details||[]).forEach(d=>{ const li=document.createElement('li'); li.textContent=d; ul.appendChild(li); });
     card.appendChild(ul);
 
-    // Explain this call (for all assays)
+    // Explain link
     const ex = document.createElement('button');
     ex.className = 'link-inline';
     ex.textContent = 'Explain this call';
     ex.onclick = ()=> explainAssay(id, r);
     card.appendChild(ex);
+
+    // Interpreter link on card
+    const ex2 = document.createElement('button'); ex2.className='link-inline'; ex2.style.marginLeft='8px'; ex2.textContent='Report interpreter'; ex2.onclick=()=>openInterpreter(id); card.appendChild(ex2);
+
+    // Excel blurb below the card (readonly)
+    const bl=document.createElement('textarea'); bl.className='blurbbox'; bl.id='blurb-'+id; bl.placeholder='Excel blurb (TSV) will appear here'; bl.readOnly=true; card.appendChild(bl);
 
     const tag=document.createElement('div'); tag.className='ke-tag'; tag.textContent='KE'+ASSAYS[id].ke; card.appendChild(tag);
     callsEl.appendChild(card);
@@ -566,8 +595,7 @@ function update(){
   // combine
   const byKE = {1:[],2:[],3:[]};
   Object.entries(results).forEach(([id,res])=> byKE[ASSAYS[id].ke].push({id,res}));
-  const bestByKE = {};
-  [1,2,3].forEach(k=>{ const best=pickBestForKE(byKE[k]); if (best) bestByKE[k]=best; });
+  const bestByKE = {}; [1,2,3].forEach(k=>{ const best=pickBestForKE(byKE[k]); if (best) bestByKE[k]=best; });
   const final = combine2o3(bestByKE);
 
   // final UI
@@ -610,8 +638,9 @@ function drawAxisBand(ctx, cfg){
   // Arrow/value
   if (value!=null && !Number.isNaN(value)){
     const xv=toX(value);
-    ctx.fillStyle="#1e293b"; ctx.beginPath(); ctx.moveTo(xv, y-28); ctx.lineTo(xv-6, y-16); ctx.lineTo(xv+6, y-16); ctx.closePath(); ctx.fill();
-    const label = (unit==='fold' ? value.toFixed(2)+'×' : value.toFixed(2)+'%');
+    ctx.fillStyle="#1e293b";
+    ctx.beginPath(); ctx.moveTo(xv, y-28); ctx.lineTo(xv-6, y-16); ctx.lineTo(xv+6, y-16); ctx.closePath(); ctx.fill();
+    const label = (unit==='fold' ? value.toFixed(2)+'×' : (unit==='DV'? value.toFixed(3) : value.toFixed(2)+'%'));
     ctx.fillText(label, Math.min(x1-60, Math.max(x0, xv-20)), y-36);
   }
 }
@@ -642,7 +671,7 @@ function explainAssay(id, res){
           <li>Threshold: <b>${thr}%</b></li>
           <li>Borderline: <b>${brLo}–${brHi}%</b></li>
           <li>Entered value: <b>${(typeof val==='number')?val+'%':'—'}</b></li>
-          ${d.invalidated ? '<li>Limitation flagged → set to <b>Inconclusive</b> in the assay.</li>': '' }
+          ${(d.invalidated ? '<li>Limitation flagged → set to <b>Inconclusive</b> in the assay.</li>' : '' )}
         </ul>
       </div>`;
     expFoot.textContent = "Criteria reflect DPRA decision models and borderline ranges.";
@@ -664,7 +693,7 @@ function explainAssay(id, res){
           <li>Threshold: <b>${thr}%</b></li>
           <li>Borderline: <b>${brLo}–${brHi}%</b></li>
           <li>Entered value: <b>${(typeof val==='number')?val+'%':'—'}</b></li>
-          ${d.invalidated ? '<li>Limitation flagged → set to <b>Inconclusive</b> in the assay.</li>': '' }
+          ${(d.invalidated ? '<li>Limitation flagged → set to <b>Inconclusive</b> in the assay.</li>' : '' )}
         </ul>
       </div>`;
     expFoot.textContent = "Criteria reflect ADRA decision models and borderline ranges.";
@@ -716,7 +745,6 @@ function explainAssay(id, res){
       {name:'DNAJB2', val:d.dnajb2, thr:2, br:[1.61,2.52]},
       {name:'IL‑8', val:d.il8, thr:4, br:[3.11,5.16]}
     ];
-    // mini-table
     expSide.innerHTML = `<div style="min-width:280px">
       <div style="font-weight:600;margin-bottom:6px">Decision</div>
       ${verdictBadge(res.call)}
@@ -740,7 +768,6 @@ function explainAssay(id, res){
     const m = { cd86:{thr:150, br:[122,184], val:d.rfiCD86}, cd54:{thr:200, br:[157,255], val:d.rfiCD54} };
     expTitle.textContent = "h‑CLAT — Why this call?";
     drawAxisBand(ctx,{brLo:m.cd86.br[0],brHi:m.cd86.br[1],thr:m.cd86.thr,value:m.cd86.val,unit:'% (CD86)',scaleMin:0,scaleMax:Math.max(260,(m.cd86.val||0)+40)});
-    // Overlay second marker as line
     const ctx2=ctx; const toX = (v,min=0,max=260)=> 46 + ((Math.max(min,Math.min(max,v))-min)/(max-min))*(780-46-18);
     if (m.cd54.val!=null){ ctx2.fillStyle="#64748b"; ctx2.beginPath(); const xv=toX(m.cd54.val,0,Math.max(260,(m.cd54.val||0)+40)); ctx2.arc(xv,110,4,0,Math.PI*2); ctx2.fill(); }
     expLegend.innerHTML = `<span class="sw sw-br"></span>BR (CD86) &nbsp;&nbsp;<span class="sw sw-thr"></span>CD86 threshold; CD54 shown as dot`;
@@ -845,9 +872,160 @@ function buildDASnippet(results, final, bestByKE){
   daText.value = parts.join('\n');
 }
 
+// ---------------- Report Interpreter (shared) ----------------
+const intBack = document.getElementById('intBack');
+const intTitle = document.getElementById('intTitle');
+const intBody  = document.getElementById('intBody');
+const btnCloseInt = document.getElementById('btnCloseInt');
+const btnCalcApply = document.getElementById('btnCalcApply');
+const btnGenBlurb  = document.getElementById('btnGenBlurb');
+let intAssay = null; let intRows = [];
+
+btnCloseInt.onclick = ()=> intBack.classList.add('hidden');
+intBack.addEventListener('click', e=>{ if(e.target===intBack) intBack.classList.add('hidden'); });
+
+function openInterpreter(assay){
+  intAssay = assay;
+  const store = ensureState('raw', assay, { runs: [] });
+  intRows = Array.isArray(store.runs) && store.runs.length? JSON.parse(JSON.stringify(store.runs)) : [{},{},{}];
+  intTitle.textContent = `${ASSAYS[assay].name} — Report interpreter`;
+  renderInterpreter();
+  intBack.classList.remove('hidden');
+}
+
+function spanTxt(t){ const s=document.createElement('span'); s.textContent=t; s.style.fontSize='12px'; return s; }
+function fieldNum(label,val,setter){ const w=document.createElement('label'); w.style.display='flex'; w.style.flexDirection='column'; w.style.gap='4px'; const sp=document.createElement('span'); sp.textContent=label; w.appendChild(sp); const inp=document.createElement('input'); inp.type='number'; inp.value=(val??''); inp.oninput=e=>{ const v=e.target.value; setter(v===''?undefined:Number(v)); }; w.appendChild(inp); return w; }
+
+function renderInterpreter(){
+  intBody.innerHTML='';
+  const a = intAssay;
+  for(let i=0;i<3;i++){
+    const r = intRows[i] || (intRows[i]={});
+    const row=document.createElement('div'); row.className='row'; row.style.gap='8px'; row.style.flexWrap='wrap';
+    if(a==='DPRA'){ row.appendChild(fieldNum(`Run ${i+1} — Mean %`, r.mean, v=>r.mean=v)); row.appendChild(fieldNum(`Cys-only %`, r.cys, v=>r.cys=v)); }
+    else if(a==='ADRA'){ row.appendChild(fieldNum(`Run ${i+1} — Mean %`, r.mean, v=>r.mean=v)); row.appendChild(fieldNum(`NAC-only %`, r.nac, v=>r.nac=v)); }
+    else if(a==='kDPRA'){ row.appendChild(fieldNum(`Run ${i+1} — log Kmax`, r.kmax, v=>r.kmax=v)); }
+    else if(a==='KeratinoSens'){ row.appendChild(fieldNum(`Run ${i+1} — Imax (fold)`, r.imax, v=>r.imax=v)); row.appendChild(fieldNum(`Viability at effect (%)`, r.viab, v=>r.viab=v)); }
+    else if(a==='LuSens'){ row.appendChild(fieldNum(`Run ${i+1} — Imax (fold)`, r.imax, v=>r.imax=v)); }
+    else if(a==='EpiSensA'){
+      row.appendChild(fieldNum(`Run ${i+1} — ATF3×`, r.atf3, v=>r.atf3=v));
+      row.appendChild(fieldNum(`GCLM×`, r.gclm, v=>r.gclm=v));
+      row.appendChild(fieldNum(`DNAJB2×`, r.dnajb2, v=>r.dnajb2=v));
+      row.appendChild(fieldNum(`IL‑8×`, r.il8, v=>r.il8=v));
+    }
+    else if(a==='HCLAT'){
+      row.appendChild(fieldNum(`Run ${i+1} — RFI CD86 %`, r.cd86, v=>r.cd86=v));
+      row.appendChild(fieldNum(`RFI CD54 %`, r.cd54, v=>r.cd54=v));
+      const labV=document.createElement('label'); labV.className='row'; labV.style.gap='6px'; const cbv=document.createElement('input'); cbv.type='checkbox'; cbv.checked=(r.vok??true); cbv.onchange=e=>r.vok=e.target.checked; labV.appendChild(cbv); labV.appendChild(spanTxt('Viability ≥50%')); row.appendChild(labV);
+    }
+    else if(a==='USENS'){ row.appendChild(fieldNum(`Run ${i+1} — SI CD86 %`, r.si, v=>r.si=v)); }
+    else if(a==='IL8Luc'){ row.appendChild(fieldNum(`Run ${i+1} — Ind‑IL8LA×`, r.ind, v=>r.ind=v)); }
+    else if(a==='GARDskin'){ row.appendChild(fieldNum(`Run ${i+1} — Mean DV`, r.dv, v=>r.dv=v)); }
+
+    // Limitation checkbox (common)
+    const lab=document.createElement('label'); lab.className='row'; lab.style.gap='6px'; const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!r.limit; cb.onchange=e=>r.limit=e.target.checked; lab.appendChild(cb); lab.appendChild(spanTxt('Limitation')); row.appendChild(lab);
+    intBody.appendChild(row);
+  }
+}
+
+btnCalcApply.onclick = ()=>{
+  // persist raw
+  ensureState('raw', intAssay, {runs:[]}).runs = JSON.parse(JSON.stringify(intRows));
+
+  // compute study-level from runs and push to state.inputs
+  const id=intAssay; const runs=intRows; let anyLimit=false;
+  runs.forEach(r=>{ if(r && r.limit) anyLimit=true; });
+  if(id==='DPRA'){
+    const preferCys = runs.some(r=> typeof r.cys==='number');
+    const vals = runs.map(r=> preferCys? r.cys : r.mean).filter(v=> typeof v==='number');
+    const study = vals.length? (vals.reduce((a,b)=>a+b,0)/vals.length) : undefined;
+    ensureInputs(id); if(preferCys) state.inputs.DPRA.cysOnlyDepletion=study; else state.inputs.DPRA.meanDepletion=study; state.inputs.DPRA.invalidated=anyLimit||false;
+  }
+  else if(id==='ADRA'){
+    const preferNAC = runs.some(r=> typeof r.nac==='number');
+    const vals = runs.map(r=> preferNAC? r.nac : r.mean).filter(v=> typeof v==='number');
+    const study = vals.length? (vals.reduce((a,b)=>a+b,0)/vals.length) : undefined;
+    ensureInputs(id); if(preferNAC) state.inputs.ADRA.nacOnlyDepletion=study; else state.inputs.ADRA.meanDepletion=study; state.inputs.ADRA.invalidated=anyLimit||false;
+  }
+  else if(id==='kDPRA'){
+    const vals = runs.map(r=> r.kmax).filter(v=> typeof v==='number');
+    const study = vals.length? Math.max.apply(null,vals): undefined;
+    ensureInputs(id); state.inputs.kDPRA.logKmax=study; state.inputs.kDPRA.invalidated=anyLimit||false;
+  }
+  else if(id==='KeratinoSens'){
+    const imaxs = runs.map(r=> r.imax).filter(v=> typeof v==='number');
+    const viabs = runs.map(r=> r.viab).filter(v=> typeof v==='number');
+    const imax = imaxs.length? Math.max.apply(null,imaxs): undefined;
+    const viabAtEffect = viabs.length? Math.max.apply(null,viabs): undefined;
+    ensureInputs(id); state.inputs.KeratinoSens.maxInduction=imax; state.inputs.KeratinoSens.viabilityAtMax=viabAtEffect; state.inputs.KeratinoSens.invalidated=anyLimit||false;
+  }
+  else if(id==='LuSens'){
+    const imaxs = runs.map(r=> r.imax).filter(v=> typeof v==='number');
+    const imax = imaxs.length? Math.max.apply(null,imaxs): undefined;
+    ensureInputs(id); state.inputs.LuSens.maxInduction=imax; state.inputs.LuSens.invalidated=anyLimit||false;
+  }
+  else if(id==='EpiSensA'){
+    const max = (name)=>{
+      const arr=runs.map(r=> r[name]).filter(v=> typeof v==='number');
+      return arr.length? Math.max.apply(null,arr): undefined;
+    };
+    ensureInputs(id);
+    state.inputs.EpiSensA.atf3 = max('atf3');
+    state.inputs.EpiSensA.gclm = max('gclm');
+    state.inputs.EpiSensA.dnajb2 = max('dnajb2');
+    state.inputs.EpiSensA.il8 = max('il8');
+    state.inputs.EpiSensA.invalidated = anyLimit||false;
+  }
+  else if(id==='HCLAT'){
+    const cd86 = runs.map(r=> r.cd86).filter(v=> typeof v==='number');
+    const cd54 = runs.map(r=> r.cd54).filter(v=> typeof v==='number');
+    const study86 = cd86.length? Math.max.apply(null,cd86): undefined;
+    const study54 = cd54.length? Math.max.apply(null,cd54): undefined;
+    const vOK = runs.every(r=> r.vok!==false);
+    ensureInputs(id); state.inputs.HCLAT.rfiCD86=study86; state.inputs.HCLAT.rfiCD54=study54; state.inputs.HCLAT.viabilityOK=vOK; state.inputs.HCLAT.invalidated=anyLimit||false;
+  }
+  else if(id==='USENS'){
+    const si = runs.map(r=> r.si).filter(v=> typeof v==='number');
+    const study = si.length? Math.max.apply(null,si): undefined;
+    ensureInputs(id); state.inputs.USENS.siCD86=study; state.inputs.USENS.invalidated=anyLimit||false;
+  }
+  else if(id==='IL8Luc'){
+    const ind = runs.map(r=> r.ind).filter(v=> typeof v==='number');
+    const study = ind.length? Math.max.apply(null,ind): undefined;
+    ensureInputs(id); state.inputs.IL8Luc.indIL8LA=study; state.inputs.IL8Luc.invalidated=anyLimit||false;
+  }
+  else if(id==='GARDskin'){
+    const dv = runs.map(r=> r.dv).filter(v=> typeof v==='number');
+    const study = dv.length? (dv.reduce((a,b)=>a+b,0)/dv.length) : undefined;
+    ensureInputs(id); state.inputs.GARDskin.meanDV=study; state.inputs.GARDskin.invalidated=anyLimit||false;
+  }
+
+  update();
+  intBack.classList.add('hidden');
+};
+
+btnGenBlurb.onclick = ()=>{
+  const id=intAssay; const runs=intRows;
+  const lines = runs.map((r,i)=>{
+    if(id==='DPRA') return [id,`Run ${i+1}`, (r.mean??''), (r.cys??''), (r.limit? 'Limit':'')].join('\t');
+    if(id==='ADRA') return [id,`Run ${i+1}`, (r.mean??''), (r.nac??''), (r.limit? 'Limit':'')].join('\t');
+    if(id==='kDPRA') return [id,`Run ${i+1}`, (r.kmax??''), (r.limit? 'Limit':'')].join('\t');
+    if(id==='KeratinoSens') return [id,`Run ${i+1}`, (r.imax??''), (r.viab??''), (r.limit? 'Limit':'')].join('\t');
+    if(id==='LuSens') return [id,`Run ${i+1}`, (r.imax??''), (r.limit? 'Limit':'')].join('\t');
+    if(id==='EpiSensA') return [id,`Run ${i+1}`, (r.atf3??''), (r.gclm??''), (r.dnajb2??''), (r.il8??''), (r.limit? 'Limit':'')].join('\t');
+    if(id==='HCLAT') return [id,`Run ${i+1}`, (r.cd86??''), (r.cd54??''), (r.vok===false?'Viab<50%':''), (r.limit? 'Limit':'')].join('\t');
+    if(id==='USENS') return [id,`Run ${i+1}`, (r.si??''), (r.limit? 'Limit':'')].join('\t');
+    if(id==='IL8Luc') return [id,`Run ${i+1}`, (r.ind??''), (r.limit? 'Limit':'')].join('\t');
+    if(id==='GARDskin') return [id,`Run ${i+1}`, (r.dv??''), (r.limit? 'Limit':'')].join('\t');
+    return '';
+  }).join('\n');
+  const ta = document.getElementById('blurb-'+id);
+  if(ta){ ta.value = lines || '—'; }
+};
+
 // ---------------- Buttons and modals ----------------
-document.getElementById('btnClear').onclick = ()=>{ state.inputs={}; render(); };
-document.getElementById('btnReset').onclick = ()=>{ state.selected=new Set(["DPRA","KeratinoSens","HCLAT"]); state.inputs={}; render(); };
+document.getElementById('btnClear').onclick = ()=>{ state.inputs={}; state.raw={}; render(); };
+document.getElementById('btnReset').onclick = ()=>{ state.selected=new Set(["DPRA","KeratinoSens","HCLAT"]); state.inputs={}; state.raw={}; render(); };
 const modalBack=document.getElementById('modalBack');
 document.getElementById('btnBR').onclick = ()=>{ modalBack.classList.remove('hidden'); };
 document.getElementById('btnCloseBR').onclick = ()=>{ modalBack.classList.add('hidden'); };
