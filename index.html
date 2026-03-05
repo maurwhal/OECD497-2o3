@@ -7,34 +7,20 @@
 <style>
   :root {
     --bg:#f8fafc; --fg:#0f172a; --muted:#475569; --card:#ffffff; --border:#e2e8f0;
-    --ok:#065f46; --bad:#9f1239; --low:#92400e; --pill:#10b981;
-    --warn:#9a3412; --warnbg:#fff7ed; --warnbd:#fed7aa;
+    --ok:#065f46; --bad:#9f1239; --low:#92400e; --warn:#9a3412;
+    --pill-border:#d1fae5; --pill-bg:#ecfdf5; --pill-low-bg:#fef3c7; --pill-low-bd:#fde68a;
+    --warnbg:#fff7ed; --warnbd:#fed7aa;
+    --pattern-opacity: 0.08; /* Adjust the subtlety of the optional pattern */
   }
   *{box-sizing:border-box}
   body{
-    margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Noto Sans",sans-serif;
+    margin:0;
+    font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Noto Sans",sans-serif;
     background: var(--bg);
     color:var(--fg);
-    /* Pixel-art guinea pig tile (SVG) */
-    background-image: url("data:image/svg+xml;utf8,\
-    <svg xmlns='http://www.w3.org/2000/svg' width='96' height='96' shape-rendering='crispEdges'>\
-      <rect width='96' height='96' fill='%23f8fafc'/>\
-      <!-- carrot -->\
-      <rect x='66' y='62' width='16' height='8' fill='%23fb923c'/>\
-      <rect x='80' y='58' width='6' height='4' fill='%23fb923c'/>\
-      <rect x='62' y='60' width='4' height='4' fill='%23f97316'/>\
-      <rect x='82' y='54' width='4' height='6' fill='%2322c55e'/>\
-      <rect x='78' y='54' width='4' height='4' fill='%2322c55e'/>\
-      <!-- guinea pig (brown/white patchy) -->\
-      <rect x='12' y='52' width='40' height='18' fill='%23fff'/>\
-      <rect x='20' y='50' width='28' height='14' fill='%23b45309'/>\
-      <rect x='16' y='62' width='12' height='6' fill='%23fff'/>\
-      <rect x='40' y='58' width='8' height='6' fill='%23111827'/>\
-      <rect x='44' y='62' width='6' height='6' fill='%23b45309'/>\
-      <rect x='10' y='68' width='12' height='4' fill='%231f2937'/>\
-      <rect x='36' y='68' width='12' height='4' fill='%231f2937'/>\
-    </svg>");
-    background-size: 200px 200px;
+    /* Default: plain (no background image). The toggle will set background-image inline. */
+    background-image: none;
+    background-size: 40px 40px;
   }
   .container{max-width:1152px;margin:0 auto;padding:24px;display:grid;gap:24px}
   h1{font-size:24px;margin:0 0 6px 0} h2{font-size:18px;margin:0 0 12px 0}
@@ -42,48 +28,49 @@
   .card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 1px 1px rgba(0,0,0,.04);padding:16px}
   .grid{display:grid;gap:16px} .cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
   @media (max-width:960px){ .cols-3{grid-template-columns:1fr} }
-  .row{display:flex;gap:8px;align-items:center}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .btn{background:#fff;border:1px solid var(--border);border-radius:12px;padding:8px 12px;cursor:pointer}
   .btn:active{transform:translateY(1px)}
-  .pill{font-size:12px;padding:2px 8px;border-radius:999px;background:#ecfdf5;color:#065f46;border:1px solid #d1fae5}
-  .pill.low{background:#fef3c7;color:#92400e;border-color:#fde68a}
+  .pill{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--pill-bg);color:#065f46;border:1px solid var(--pill-border)}
+  .pill.low{background:var(--pill-low-bg);color:var(--low);border-color:var(--pill-low-bd)}
   .pill.warn{background:var(--warnbg);color:var(--warn);border-color:var(--warnbd)}
   .pill.bad{background:#fee2e2;color:#991b1b;border-color:#fecaca}
   .call{font-weight:600} .pos{color:var(--bad)} .neg{color:var(--ok)}
   input[type="number"]{padding:8px;border:1px solid var(--border);border-radius:12px;width:100%}
   label{font-size:14px}
   .list{font-size:12px;color:#334155;line-height:1.25}
-  .footer pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.2;white-space:pre-wrap;margin:0}
-  .modal-back{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:50}
-  .modal{background:#fff;border-radius:16px;max-width:800px;width:95%;padding:16px;border:1px solid var(--border)}
-  .modal.wide{max-width:820px}
-  .hidden{display:none}
   .small{font-size:12px}
   .ke-tag{font-size:11px;color:#64748b;margin-top:6px}
   .warn-flag{color:var(--warn);font-size:12px}
   .link-inline{background:none;border:none;padding:0;color:#2563eb;cursor:pointer;font-size:12px}
 
-  /* DPRA Explain modal */
-  .explain-head {display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-  .explain-row {display:flex;gap:16px;align-items:flex-start}
-  .explain-badge{padding:2px 8px;border-radius:999px;font-size:12px;border:1px solid}
-  .explain-badge.neg{background:#ecfeff;color:#075985;border-color:#a5f3fc}
-  .explain-badge.pos{background:#fef2f2;color:#991b1b;border-color:#fecaca}
-  .explain-badge.br{background:#fff7ed;color:#9a3412;border-color:#fed7aa}
-  .explain-note{font-size:12px;color:#64748b;margin-top:6px}
-  .explain-legend{font-size:12px;color:#334155}
-  .explain-legend .swatch{display:inline-block;width:10px;height:10px;margin-right:6px;border-radius:2px;vertical-align:middle}
+  /* Modal (shared) */
+  .modal-back{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:50}
+  .modal{background:#fff;border-radius:16px;max-width:880px;width:96%;padding:16px;border:1px solid var(--border)}
+  .hidden{display:none}
+
+  /* Explain modal layout */
+  .exp-head {display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .exp-row {display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+  .exp-badge{padding:2px 8px;border-radius:999px;font-size:12px;border:1px solid}
+  .exp-badge.neg{background:#ecfeff;color:#075985;border-color:#a5f3fc}
+  .exp-badge.pos{background:#fef2f2;color:#991b1b;border-color:#fecaca}
+  .exp-badge.br{background:#fff7ed;color:#9a3412;border-color:#fed7aa}
+  .exp-note{font-size:12px;color:#64748b;margin-top:6px}
+  .exp-legend{font-size:12px;color:#334155}
+  .exp-legend .sw{display:inline-block;width:10px;height:10px;margin-right:6px;border-radius:2px;vertical-align:middle}
   .sw-br{background:#fde68a} .sw-thr{background:#fca5a5}
+  canvas{border:1px solid var(--border);border-radius:8px}
 
   /* KS tooltip */
   .pill.warn[data-tip]{position:relative}
   .pill.warn[data-tip]:hover::after{
     content: attr(data-tip); position:absolute; left:0; top:120%;
     background:var(--warnbg); color:var(--warn); border:1px solid var(--warnbd);
-    padding:6px 8px; font-size:11px; width:220px; border-radius:6px; z-index:100; box-shadow:0 2px 6px rgba(0,0,0,0.15); line-height:1.3;
+    padding:6px 8px; font-size:11px; width:240px; border-radius:6px; z-index:100; box-shadow:0 2px 6px rgba(0,0,0,0.15); line-height:1.3;
   }
 
-  /* DA snippet panel */
+  /* DA snippet side panel */
   #daPanel {position:fixed; top:0; right:0; height:100%; width:420px; transform:translateX(110%); transition:.25s ease; z-index:60}
   #daPanel.open {transform:translateX(0)}
   #daPanel .panel {height:100%; background:#fff; border-left:1px solid var(--border); box-shadow:-2px 0 8px rgba(0,0,0,.08); padding:16px; display:flex; flex-direction:column; gap:12px}
@@ -96,12 +83,13 @@
     <div>
       <h1>OECD 497 – 2‑out‑of‑3 Decision Helper</h1>
       <div class="muted small">A <b>Marvelous Maura Model</b> • by Maura Lavelle</div>
-      <div class="small muted">Assay thresholds &amp; borderline ranges per OECD 497; TG 442C/442D/442E acceptance logic. Mark assays as inconclusive when precipitation/insolubility or other limitations apply. [1](https://rifminc-my.sharepoint.com/personal/mlavelle_rifm_org/Documents/Microsoft%20Copilot%20Chat%20Files/497.pdf)[1](https://rifminc-my.sharepoint.com/personal/mlavelle_rifm_org/Documents/Microsoft%20Copilot%20Chat%20Files/497.pdf)[2](https://rifminc-my.sharepoint.com/personal/mlavelle_rifm_org/Documents/Microsoft%20Copilot%20Chat%20Files/442E.pdf)[3](https://rifminc-my.sharepoint.com/personal/mlavelle_rifm_org/Documents/Microsoft%20Copilot%20Chat%20Files/442C.pdf)</div>
+      <div class="small muted">Assay thresholds &amp; borderline ranges per OECD&nbsp;Guideline&nbsp;No.&nbsp;497 and TG&nbsp;442C/442D/442E validity/BR handling.</div>
     </div>
     <div class="row">
       <button class="btn" id="btnBR">BR cheat‑sheet</button>
       <button class="btn" id="btnClear">Clear inputs</button>
       <button class="btn" id="btnReset">Reset selection</button>
+      <button class="btn" id="btnBG">BG: Pattern</button>
       <button class="btn" id="btnDA">OECD 497 DA snippet</button>
     </div>
   </header>
@@ -117,18 +105,13 @@
     <h2>2o3 Decision (hazard)</h2>
     <div id="finalText" class="row" style="gap:6px;font-size:18px;font-weight:600;">Final: <span id="finalVal">Inconclusive</span></div>
     <ul id="finalNotes" class="list"></ul>
-    <div class="small muted">Rule: Two concordant, <b>High‑confidence</b> results across ≥2 KEs → conclusive prediction. Otherwise, inconclusive. BR results and any assay flagged as limited are treated as <b>Low</b> confidence for the 2o3 combination. [1](https://rifminc-my.sharepoint.com/personal/mlavelle_rifm_org/Documents/Microsoft%20Copilot%20Chat%20Files/497.pdf)</div>
-    <div class="small muted">Note: kDPRA is recorded but not used in the 2o3 hazard combination (potency/IATA context). [1](https://rifminc-my.sharepoint.com/personal/mlavelle_rifm_org/Documents/Microsoft%20Copilot%20Chat%20Files/497.pdf)</div>
+    <div class="small muted">Rule: Two concordant, <b>High‑confidence</b> results across ≥2 KEs → conclusive prediction. Otherwise, Inconclusive. BR results and any assay flagged as limited are treated as <b>Low</b> confidence for the 2o3 combination.</div>
+    <div class="small muted">Note: kDPRA is recorded for potency/IATA context and is not used in the 2o3 hazard aggregation.</div>
   </div>
 
-  <footer class="card footer">
+  <footer class="card">
     <div class="small muted">OECD 497 2‑out‑of‑3 Decision Helper — a <b>Marvelous Maura Model</b>.</div>
-<pre>
-  (\_/)   (\_/)   (\_/)   (\_/)
-  ('.'.)  ('.'.)  ('.'.)  ('.'.)
-  (")(")  (")(")  (")(")  (")(")
-This has been a (>.-.)> Maura Lavelle <(-.-)< Production!! <(-.-<)
-</pre>
+    <div class="small muted">No external links or resources are loaded; all logic and visuals are client‑side.</div>
   </footer>
 </div>
 
@@ -139,7 +122,7 @@ This has been a (>.-.)> Maura Lavelle <(-.-)< Production!! <(-.-<)
       <h3 style="margin:0;font-size:18px">Borderline Ranges (BR) Cheat‑Sheet</h3>
       <button class="btn" id="btnCloseBR">Close</button>
     </div>
-    <div class="small muted" style="margin:6px 0 10px">BR results are treated as <b>Low</b> confidence in the 2‑out‑of‑3 combination. [1](https://rifminc-my.sharepoint.com/personal/mlavelle_rifm_org/Documents/Microsoft%20Copilot%20Chat%20Files/497.pdf)</div>
+    <div class="small muted" style="margin:6px 0 10px">BR results are treated as <b>Low</b> confidence in the 2‑out‑of‑3 combination.</div>
     <div class="grid" style="gap:10px;font-size:14px;">
       <div>
         <div style="font-weight:600;margin-bottom:4px">KE1 – Protein binding</div>
@@ -162,36 +145,32 @@ This has been a (>.-.)> Maura Lavelle <(-.-)< Production!! <(-.-<)
       <div>
         <div style="font-weight:600;margin-bottom:4px">KE3 – Dendritic cell activation</div>
         <ul class="list">
-          <li><b>h‑CLAT</b>: Positive if CD86 ≥150% and/or CD54 ≥200%; <i>BRs</i> CD86 122–184%; CD54 157–255%.</li>
-          <li><b>U‑SENS</b>: Positive if SI(CD86) ≥150%; <i>BR 128–176%</i></li>
+          <li><b>h‑CLAT</b>: CD86 ≥150% and/or CD54 ≥200%; <i>BRs</i> CD86 122–184%; CD54 157–255%.</li>
+          <li><b>U‑SENS</b>: SI(CD86) ≥150%; <i>BR 128–176%</i></li>
           <li><b>IL‑8 Luc</b>: Positive ≥ 1.4×; <i>BR 1.25–1.57</i></li>
           <li><b>GARDskin</b>: Positive if mean DV > 0; <i>BR −0.450 to +0.450</i></li>
         </ul>
       </div>
-      <div class="small muted">Tip: BR and any flagged limitation → Low confidence for that method. The 2o3 rule needs two concordant High‑confidence results across different KEs. [1](https://rifminc-my.sharepoint.com/personal/mlavelle_rifm_org/Documents/Microsoft%20Copilot%20Chat%20Files/497.pdf)</div>
+      <div class="small muted">BR and any flagged limitation → Low confidence for that method. The 2o3 rule needs two concordant High‑confidence results across different KEs.</div>
     </div>
   </div>
 </div>
 
-<!-- DPRA Explain modal -->
-<div id="dpraExplainBack" class="modal-back hidden">
-  <div class="modal wide">
-    <div class="explain-head">
-      <h3 style="margin:0;font-size:18px">DPRA – Why this call?</h3>
-      <button class="btn" id="btnCloseDPRAExplain">Close</button>
+<!-- Explain modal (shared across all assays) -->
+<div id="expBack" class="modal-back hidden">
+  <div class="modal">
+    <div class="exp-head">
+      <h3 id="expTitle" style="margin:0;font-size:18px">Explain</h3>
+      <button class="btn" id="btnCloseExp">Close</button>
     </div>
-    <div class="explain-row" style="flex-wrap:wrap">
+    <div class="exp-row">
       <div>
-        <canvas id="dpraChart" width="760" height="180" style="border:1px solid #e2e8f0;border-radius:8px"></canvas>
-        <div class="explain-legend" style="margin-top:8px">
-          <span class="swatch sw-br"></span>Borderline range &nbsp;&nbsp;
-          <span class="swatch sw-thr"></span>Decision threshold
-          <div class="explain-note" id="dpraExplainNote"></div>
-        </div>
+        <canvas id="expCanvas" width="780" height="220"></canvas>
+        <div class="exp-legend" style="margin-top:8px" id="expLegend"></div>
       </div>
-      <div id="dpraExplainVerdict"></div>
+      <div id="expSide"></div>
     </div>
-    <div class="small muted">Criteria per OECD 497 Annex 1 and TG 442C DPRA model. [1](https://rifminc-my.sharepoint.com/personal/mlavelle_rifm_org/Documents/Microsoft%20Copilot%20Chat%20Files/497.pdf)[1](https://rifminc-my.sharepoint.com/personal/mlavelle_rifm_org/Documents/Microsoft%20Copilot%20Chat%20Files/497.pdf)</div>
+    <div class="small muted" id="expFoot"></div>
   </div>
 </div>
 
@@ -202,7 +181,7 @@ This has been a (>.-.)> Maura Lavelle <(-.-)< Production!! <(-.-<)
       <h3 style="margin:0;font-size:18px">OECD 497 DA snippet</h3>
       <button class="btn" id="btnCloseDA">Close</button>
     </div>
-    <div class="small muted">Copy‑ready paragraph summarizing methods used, calls, BR/limitations, and 2o3 outcome (per 497 §2.1.9). [1](https://rifminc-my.sharepoint.com/personal/mlavelle_rifm_org/Documents/Microsoft%20Copilot%20Chat%20Files/497.pdf)</div>
+    <div class="small muted">Copy‑ready paragraph summarizing methods used, calls, BR/limitations, and the 2o3 outcome (no links).</div>
     <textarea id="daText" readonly></textarea>
     <div class="row" style="justify-content:flex-end;gap:8px">
       <button class="btn" id="btnCopyDA">Copy</button>
@@ -211,6 +190,22 @@ This has been a (>.-.)> Maura Lavelle <(-.-)< Production!! <(-.-<)
 </div>
 
 <script>
+// ---------------- Pattern toggle (inline SVG, no network) ----------------
+const jigsawDataURI = (() => {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'>
+    <rect width='40' height='40' fill='${encodeURIComponent('#f8fafc')}'/>
+    <path d='M0,0 h40 v40 h-40 z M20,0 v8 c2,0 3.5,1.5 3.5,3.5S22,15 20,15v10c2,0 3.5,1.5 3.5,3.5S22,32 20,32v8 M0,20 h8 c0,-2 1.5,-3.5 3.5,-3.5S15,18 15,20h10c0,-2 1.5,-3.5 3.5,-3.5S32,18 32,20h8' fill='none' stroke='${encodeURIComponent('#0f172a')}' stroke-opacity='${encodeURIComponent(getComputedStyle(document.documentElement).getPropertyValue('--pattern-opacity')||0.08)}' stroke-width='1.1'/>
+  </svg>`;
+  return `url("data:image/svg+xml,${svg.replace(/\n|\s{2,}/g,' ')}")`;
+})();
+let patternOn = false;
+document.getElementById('btnBG').onclick = () => {
+  patternOn = !patternOn;
+  document.getElementById('btnBG').textContent = patternOn ? 'BG: Plain' : 'BG: Pattern';
+  document.body.style.backgroundImage = patternOn ? jigsawDataURI : 'none';
+  document.body.style.backgroundSize = '40px 40px';
+};
+
 // ---------------- Data & helpers ----------------
 const ASSAYS = {
   DPRA: { id:"DPRA", name:"DPRA (mean or Cys-only)", ke:1 },
@@ -234,11 +229,10 @@ const state = {
 function within(v,lo,hi){ return !(v==null || Number.isNaN(v)) && v>=lo && v<=hi; }
 function posNeg(v,thr,dir="greater"){ if (v==null || Number.isNaN(v)) return "Inconclusive"; return dir==="greater" ? (v>=thr?"Positive":"Negative") : (v<=thr?"Positive":"Negative"); }
 function hiLoFromBR(inBR,inc){ return inc ? "Low" : (inBR ? "Low" : "High"); }
-function overrideIfInvalidated(base, flag){ if (!flag) return base; return { call:"Inconclusive", confidence:"Low", details:["Flagged: precipitation/insolubility or other limitation — set to Inconclusive"] }; }
+function overrideIfInvalidated(base, flag){ if (!flag) return base; return { call:"Inconclusive", confidence:"Low", details:["Flagged: precipitation/insolubility or other limitation — set to Inconclusive"], br:base.br }; }
 function softWarnIcon(text){ const s=document.createElement('span'); s.className='warn-flag'; s.textContent='  ⚠︎ ' + text; return s; }
 
-// --- calculators ---
-// DPRA
+// --- calculators (OECD 497, TG 442C/D/E-aligned thresholds & BRs) ---
 function calcDPRA({meanDepletion,cysOnlyDepletion,invalidated}={}){
   const details=[]; let call="Inconclusive"; let inBR=false;
   if (typeof cysOnlyDepletion==="number"){
@@ -254,67 +248,52 @@ function calcDPRA({meanDepletion,cysOnlyDepletion,invalidated}={}){
   } else { details.push("No DPRA value provided"); }
   return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR}, invalidated);
 }
-// ADRA
 function calcADRA({meanDepletion,nacOnlyDepletion,invalidated}={}){
   const details=[]; let call="Inconclusive"; let inBR=false;
   if (typeof nacOnlyDepletion==="number"){
     call=posNeg(nacOnlyDepletion,5.6); inBR=within(nacOnlyDepletion,4.7,6.8);
-    details.push(`NAC-only depletion = ${nacOnlyDepletion}% (pos ≥5.6; BR 4.7–6.8)`);
-    if (inBR) details.push("Borderline range (Low confidence).");
+    details.push(`NAC-only depletion = ${nacOnlyDepletion}% (pos ≥5.6; BR 4.7–6.8)`); if (inBR) details.push("Borderline range (Low confidence).");
   } else if (typeof meanDepletion==="number"){
     call=posNeg(meanDepletion,4.9); inBR=within(meanDepletion,4.1,5.9);
-    details.push(`Mean percent depletion = ${meanDepletion}% (pos ≥4.9; BR 4.1–5.9)`);
-    if (inBR) details.push("Borderline range (Low confidence).");
+    details.push(`Mean percent depletion = ${meanDepletion}% (pos ≥4.9; BR 4.1–5.9)`); if (inBR) details.push("Borderline range (Low confidence).");
   } else { details.push("No ADRA value provided"); }
   return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR}, invalidated);
 }
-// kDPRA (record only)
 function calcKDPRA({logKmax,invalidated}={}){
   const details=[]; if (typeof logKmax!=="number"){ details.push("No kDPRA logKmax provided"); return overrideIfInvalidated({call:"Inconclusive",confidence:"Low",details}, invalidated); }
-  details.push(`kDPRA logKmax = ${logKmax} (SARA-ICE potency; not used in 2o3 hazard)`);
+  details.push(`kDPRA logKmax = ${logKmax} (potency/IATA context; not used in 2o3 hazard)`);
   return overrideIfInvalidated({call:"Inconclusive",confidence:"Low",details}, invalidated);
 }
-// KeratinoSens™ — enforce ≥70% viability for positive calls; warn if Imax≥1.5× but viability missing
 function calcKeratinoSens({maxInduction,viabilityAtMax,invalidated}={}){
   const details=[]; let call="Inconclusive"; let inBR=false;
   if (typeof maxInduction==="number"){
     inBR = within(maxInduction,1.35,1.67);
     details.push(`Max luciferase induction = ${maxInduction}× (pos ≥1.5×; BR 1.35–1.67×)`);
     if (maxInduction>=1.5){
-      if (viabilityAtMax==null){
-        call = "Inconclusive";
-        details.push("Viability at effect not provided — cannot confirm positivity (needs ≥70%).");
-      } else if (viabilityAtMax>=70){
-        call = "Positive";
-        details.push(`Viability at max = ${viabilityAtMax}% (meets ≥70% requirement).`);
-      } else {
-        call = "Inconclusive";
-        details.push(`Viability at max = ${viabilityAtMax}% (<70%) — set to Inconclusive per acceptance criteria.`);
-      }
+      if (viabilityAtMax==null){ call = "Inconclusive"; details.push("Viability at effect not provided — cannot confirm positivity (needs ≥70%)."); }
+      else if (viabilityAtMax>=70){ call = "Positive"; details.push(`Viability at max = ${viabilityAtMax}% (meets ≥70% requirement).`); }
+      else { call = "Inconclusive"; details.push(`Viability at max = ${viabilityAtMax}% (<70%) — set to Inconclusive.`); }
     } else {
-      call = "Negative";
-      if (viabilityAtMax!=null) details.push(`Viability at max = ${viabilityAtMax}%`);
+      call = "Negative"; if (viabilityAtMax!=null) details.push(`Viability at max = ${viabilityAtMax}%`);
     }
     if (inBR) details.push("Borderline range (Low confidence).");
   } else details.push("No KeratinoSens value provided");
   return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR, needsViab:(typeof maxInduction==="number" && maxInduction>=1.5 && viabilityAtMax==null)}, invalidated);
 }
-// LuSens
 function calcLuSens({maxInduction,invalidated}={}){
   const details=[]; let call="Inconclusive"; let inBR=false;
-  if (typeof maxInduction==="number"){ call=posNeg(maxInduction,1.5); inBR=within(maxInduction,1.28,1.76);
-    details.push(`Max luciferase induction = ${maxInduction}× (pos ≥1.5×; BR 1.28–1.76×)`);
-    if (inBR) details.push("Borderline range (Low confidence).");
+  if (typeof maxInduction==="number"){
+    call=posNeg(maxInduction,1.5); inBR=within(maxInduction,1.28,1.76);
+    details.push(`Max luciferase induction = ${maxInduction}× (pos ≥1.5×; BR 1.28–1.76×)`); if (inBR) details.push("Borderline range (Low confidence).");
   } else details.push("No LuSens value provided");
   return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR}, invalidated);
 }
-// EpiSensA
 function calcEpiSensA({atf3,gclm,dnajb2,il8,overrideReportCall,invalidated}={}){
   const details=[]; const genePos={ ATF3: typeof atf3==="number"? atf3>15:false, GCLM: typeof gclm==="number"? gclm>2:false, DNAJB2: typeof dnajb2==="number"? dnajb2>2:false, IL8: typeof il8==="number"? il8>4:false };
   const genesAbove=Object.values(genePos).filter(Boolean).length;
   let call="Inconclusive";
   if (overrideReportCall && overrideReportCall!==""){ call=overrideReportCall; details.push(`Using provided EpiSensA report call: ${call}`); }
-  else if ([atf3,gclm,dnajb2,il8].some(v=> typeof v==="number")){ call= genesAbove>=2? "Positive":"Negative"; details.push(`EpiSensA genes ≥ thresholds: ${genesAbove} of 4 (ATF3>15, GCLM>2, DNAJB2>2, IL‑8>4)`); }
+  else if ([atf3,gclm,dnajb2,il8].some(v=> typeof v==="number")){ call= genesAbove>=2? "Positive":"Negative"; details.push(`Genes ≥ thresholds: ${genesAbove} of 4 (ATF3>15, GCLM>2, DNAJB2>2, IL‑8>4)`); }
   else details.push("No gene values provided");
   const inBR = within(atf3,10.71,21.02)||within(gclm,1.64,2.45)||within(dnajb2,1.61,2.52)||within(il8,3.11,5.16);
   if (typeof atf3==="number") details.push(`ATF3 Imax = ${atf3}×`);
@@ -322,9 +301,8 @@ function calcEpiSensA({atf3,gclm,dnajb2,il8,overrideReportCall,invalidated}={}){
   if (typeof dnajb2==="number") details.push(`DNAJB2 Imax = ${dnajb2}×`);
   if (typeof il8==="number") details.push(`IL‑8 Imax = ${il8}×`);
   if (inBR) details.push("Borderline marker present (Low confidence).");
-  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR}, invalidated);
+  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR, genePos}, invalidated);
 }
-// h‑CLAT — viabilityOK toggle (≥50% at effective dose) forces Inconclusive if false
 function calcHCLAT({rfiCD86,rfiCD54,viabilityOK,invalidated}={}){
   const details=[]; let call="Inconclusive";
   const cd86Pos = typeof rfiCD86==="number" ? rfiCD86>=150:false;
@@ -334,31 +312,23 @@ function calcHCLAT({rfiCD86,rfiCD54,viabilityOK,invalidated}={}){
   const inBR = within(rfiCD86,122,184)||within(rfiCD54,157,255);
   if (typeof rfiCD86==="number") details.push(`RFI CD86 = ${rfiCD86}% (pos ≥150; BR 122–184)`);
   if (typeof rfiCD54==="number") details.push(`RFI CD54 = ${rfiCD54}% (pos ≥200; BR 157–255)`);
-  // Acceptance check per TG 442E
-  if (call!=="Inconclusive" && viabilityOK===false){
-    call = "Inconclusive";
-    details.push("Effective-dose viability <50% — set to Inconclusive per acceptance criteria.");
-  } else if (viabilityOK===true){
-    details.push("Effective-dose viability ≥50% confirmed.");
-  }
+  if (call!=="Inconclusive" && viabilityOK===false){ call = "Inconclusive"; details.push("Effective-dose viability <50% — set to Inconclusive."); }
+  else if (viabilityOK===true){ details.push("Effective-dose viability ≥50% confirmed."); }
   if (inBR) details.push("Borderline range marker (Low confidence).");
   return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR, needsViab:(viabilityOK===false)}, invalidated);
 }
-// U‑SENS
 function calcUSENS({siCD86,invalidated}={}){
   const details=[]; let call="Inconclusive"; const inBR = within(siCD86,128,176);
   if (typeof siCD86==="number"){ call = siCD86>=150? "Positive":"Negative"; details.push(`SI CD86 = ${siCD86}% (pos ≥150; BR 128–176)`); if (inBR) details.push("Borderline range (Low confidence)."); }
   else details.push("No U-SENS input provided");
   return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR}, invalidated);
 }
-// IL‑8 Luc
 function calcIL8Luc({indIL8LA,invalidated}={}){
   const details=[]; let call="Inconclusive"; const inBR = within(indIL8LA,1.25,1.57);
   if (typeof indIL8LA==="number"){ call = indIL8LA>=1.4? "Positive":"Negative"; details.push(`Ind‑IL8LA = ${indIL8LA}× (pos ≥1.4×; BR 1.25–1.57×)`); if (inBR) details.push("Borderline range (Low confidence)."); }
   else details.push("No IL‑8 Luc value provided");
   return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR}, invalidated);
 }
-// GARDskin
 function calcGARDskin({meanDV,invalidated}={}){
   const details=[]; let call="Inconclusive"; const inBR = within(meanDV,-0.45,0.45);
   if (typeof meanDV==="number"){ call = meanDV>0? "Positive":"Negative"; details.push(`Mean DV = ${meanDV} (pos > 0; BR −0.450 to +0.450)`); if (inBR) details.push("Borderline range (Low confidence)."); }
@@ -476,8 +446,8 @@ function render(){
         wrap.appendChild(makeNumberField("ADRA – Mean depletion (%) (either probe)", data.meanDepletion, v=>{ensure(id).meanDepletion=v; update();}));
         wrap.appendChild(makeNumberField("ADRA – NAC-only depletion (%) (optional)", data.nacOnlyDepletion, v=>{ensure(id).nacOnlyDepletion=v; update();}));
       } else if (id==="kDPRA"){
-        wrap.appendChild(makeNumberField("kDPRA – log Kmax (M⁻¹·s⁻¹) (SARA‑ICE only; not used in 2o3)", data.logKmax, v=>{ensure(id).logKmax=v; update();}));
-        const p=document.createElement('div'); p.className='small muted'; p.textContent='Captured for potency/IATA context. Not used in the 2o3 hazard aggregation.'; wrap.appendChild(p);
+        wrap.appendChild(makeNumberField("kDPRA – log Kmax (potency; not used in 2o3)", data.logKmax, v=>{ensure(id).logKmax=v; update();}));
+        const p=document.createElement('div'); p.className='small muted'; p.textContent='Recorded for potency/IATA context (not used in 2o3 hazard).'; wrap.appendChild(p);
       }
       wrap.appendChild(makeLimitFlag(data.invalidated, v=>{ensure(id).invalidated=v; update();}));
       sec1.appendChild(wrap);
@@ -520,7 +490,6 @@ function render(){
       if (id==="HCLAT"){
         wrap.appendChild(makeNumberField("h‑CLAT – RFI CD86 (%)", data.rfiCD86, v=>{ensure(id).rfiCD86=v; update();}));
         wrap.appendChild(makeNumberField("h‑CLAT – RFI CD54 (%)", data.rfiCD54, v=>{ensure(id).rfiCD54=v; update();}));
-        // One-click viability guard (≥50% at effective dose)
         wrap.appendChild(makeCheckbox("h‑CLAT – Viability ≥50% at effective dose", (data.viabilityOK ?? true), v=>{ensure(id).viabilityOK=v; update();}));
       } else if (id==="USENS"){
         wrap.appendChild(makeNumberField("U‑SENS – SI CD86 (%)", data.siCD86, v=>{ensure(id).siCD86=v; update();}));
@@ -541,57 +510,54 @@ function render(){
 function ensure(id){ if (!state.inputs[id]) state.inputs[id] = {}; return state.inputs[id]; }
 
 function update(){
-  // results
   const results = {};
   for (const id of ORDER){ if (state.selected.has(id)) results[id]=runAssay(id); }
 
-  // calls grid
   callsEl.innerHTML='';
   for (const id of ORDER){
     if (!state.selected.has(id)) continue;
     const r = results[id];
     const card=document.createElement('div'); card.className='card';
 
-    // Title row + KS warning pill if viability missing at Imax ≥1.5×
+    // Title row
     const top=document.createElement('div'); top.className='row'; top.style.justifyContent='space-between'; card.appendChild(top);
     const left=document.createElement('div'); left.className='row'; top.appendChild(left);
     const h3=document.createElement('div'); h3.textContent=ASSAYS[id].name; h3.style.fontWeight='600'; left.appendChild(h3);
 
+    // KS warning pill
     if (id==="KeratinoSens"){
       const ks = state.inputs.KeratinoSens || {};
       if (typeof ks.maxInduction==="number" && ks.maxInduction>=1.5 && (ks.viabilityAtMax==null)){
         const warn=document.createElement('span'); warn.className='pill warn'; warn.textContent='Needs viability';
-        warn.setAttribute('data-tip','KeratinoSens positivity requires ≥70% viability at the concentration showing ≥1.5× induction (TG 442D; OECD 497).');
+        warn.setAttribute('data-tip','KeratinoSens positivity requires ≥70% viability at the concentration showing ≥1.5× induction.');
         left.appendChild(warn);
       }
     }
+
     // Confidence pill
     const pill=document.createElement('span'); pill.className='pill'+(r.confidence==='High'?'':' low'); pill.textContent=r.confidence+' conf.'; top.appendChild(pill);
 
+    // Call & soft warnings
     const callRow=document.createElement('div'); callRow.style.marginTop='4px';
     const lbl=document.createElement('span'); lbl.textContent='Call: '; callRow.appendChild(lbl);
     const val=document.createElement('span'); val.className='call '+(r.call==='Positive'?'pos':(r.call==='Negative'?'neg':'')); val.textContent=r.call; callRow.appendChild(val);
-
-    // Soft-warning icons
     if (r.br) callRow.appendChild(softWarnIcon('Borderline range'));
     if (id==="HCLAT" && (state.inputs.HCLAT?.viabilityOK===false)) callRow.appendChild(softWarnIcon('Viability <50% at effective dose'));
     if (id==="KeratinoSens" && (r.needsViab)) callRow.appendChild(softWarnIcon('Viability required to confirm Positivity'));
     if (state.inputs[id]?.invalidated) callRow.appendChild(softWarnIcon('Assay flagged limited → Inconclusive'));
-
     card.appendChild(callRow);
 
+    // Details
     const ul=document.createElement('ul'); ul.className='list'; ul.style.marginTop='6px';
     r.details.forEach(d=>{ const li=document.createElement('li'); li.textContent=d; ul.appendChild(li); });
     card.appendChild(ul);
 
-    // “Explain this call” for DPRA
-    if (id==="DPRA"){
-      const ex = document.createElement('button');
-      ex.className = 'link-inline';
-      ex.textContent = 'Explain this call';
-      ex.onclick = renderDPRAExplain;
-      card.appendChild(ex);
-    }
+    // Explain this call (for all assays)
+    const ex = document.createElement('button');
+    ex.className = 'link-inline';
+    ex.textContent = 'Explain this call';
+    ex.onclick = ()=> explainAssay(id, r);
+    card.appendChild(ex);
 
     const tag=document.createElement('div'); tag.className='ke-tag'; tag.textContent='KE'+ASSAYS[id].ke; card.appendChild(tag);
     callsEl.appendChild(card);
@@ -613,82 +579,239 @@ function update(){
   buildDASnippet(results, final, bestByKE);
 }
 
-// ----- DPRA Explain: helpers -----
-function dpraRuleCtx(dpraInput){
-  const useCysOnly = typeof dpraInput?.cysOnlyDepletion === "number";
-  if (useCysOnly){
-    return { mode:"Cys-only", value: dpraInput.cysOnlyDepletion, thr:13.89, br:[10.56,18.47],
-      note:"Cys-only model (co‑elution): Positive ≥13.89%; BR 10.56–18.47." };
-  }
-  return { mode:"Mean", value: dpraInput?.meanDepletion, thr:6.38, br:[4.95,8.32],
-    note:"Mean depletion model: Positive ≥6.38%; BR 4.95–8.32." };
-}
-function dpraCallFromValue(v, thr, brLo, brHi){
-  if (typeof v !== "number" || Number.isNaN(v)) return {label:"Inconclusive", cls:"br"};
-  if (v >= thr) return (v >= brLo && v <= brHi) ? {label:"Borderline (Pos)", cls:"br"} : {label:"Positive", cls:"pos"};
-  return (v >= brLo && v <= brHi) ? {label:"Borderline (Neg)", cls:"br"} : {label:"Negative", cls:"neg"};
-}
-function drawDPRAChart(canvas, value, thr, brLo, brHi){
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  const pad = {l:40,r:20,t:24,b:36};
-  const x0 = pad.l, x1 = canvas.width - pad.r, y = canvas.height/2;
-  ctx.strokeStyle = "#cbd5e1"; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
-  function x(v){ return x0 + (Math.max(0,Math.min(100,v))/100)*(x1-x0); }
+// ---------------- Explain modal renderers ----------------
+const expBack = document.getElementById('expBack');
+const expCanvas = document.getElementById('expCanvas');
+const expTitle = document.getElementById('expTitle');
+const expLegend = document.getElementById('expLegend');
+const expSide = document.getElementById('expSide');
+const expFoot = document.getElementById('expFoot');
+
+document.getElementById('btnCloseExp').onclick = ()=> expBack.classList.add('hidden');
+expBack.addEventListener('click', (e)=>{ if (e.target===expBack) expBack.classList.add('hidden'); });
+
+function openExplain(){ expBack.classList.remove('hidden'); }
+function drawAxisBand(ctx, cfg){
+  const {w=780,h=220,pad={l:46,r:18,t:24,b:40}, scaleMin=0, scaleMax=100, brLo, brHi, thr, value, unit='%'} = cfg;
+  ctx.clearRect(0,0,w,h);
+  const x0=pad.l, x1=w-pad.r, y=h/2;
+  const toX = (v)=> x0 + ( (Math.max(scaleMin,Math.min(scaleMax,v))-scaleMin)/(scaleMax-scaleMin) )*(x1-x0);
+  // Axis
+  ctx.strokeStyle="#cbd5e1"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(x1,y); ctx.stroke();
   // BR band
-  ctx.fillStyle = "#fde68a"; ctx.fillRect(x(brLo), y-16, x(brHi)-x(brLo), 32);
+  if (brLo!=null && brHi!=null){ ctx.fillStyle="#fde68a"; ctx.fillRect(toX(brLo), y-16, toX(brHi)-toX(brLo), 32); }
   // Threshold
-  ctx.fillStyle = "#fca5a5"; ctx.fillRect(x(thr)-1, y-20, 2, 40);
-  // Ticks & labels
-  ctx.fillStyle = "#334155"; ctx.font = "12px ui-sans-serif, system-ui";
-  [0,10,20,30,40,50,60,70,80,90,100].forEach(t=>{
-    ctx.fillRect(x(t), y-4, 1, 8);
-    if (t%20===0){ ctx.fillText(String(t), x(t)-6, y+22); }
-  });
-  ctx.fillText("% peptide depletion", x1-130, y+22);
-  // Arrow
-  if (typeof value === "number" && !Number.isNaN(value)){
-    const xv = x(value);
-    ctx.fillStyle = "#1e293b";
-    ctx.beginPath(); ctx.moveTo(xv, y-28); ctx.lineTo(xv-6, y-16); ctx.lineTo(xv+6, y-16); ctx.closePath(); ctx.fill();
-    ctx.fillText(`${value.toFixed(2)}%`, Math.min(x1-60, Math.max(x0, xv-20)), y-36);
+  if (thr!=null){ ctx.fillStyle="#fca5a5"; ctx.fillRect(toX(thr)-1, y-20, 2, 40); }
+  // Ticks
+  ctx.fillStyle="#334155"; ctx.font="12px ui-sans-serif, system-ui";
+  const steps=10; for(let i=0;i<=steps;i++){ const t=scaleMin + i*(scaleMax-scaleMin)/steps; const xt=toX(t);
+    ctx.fillRect(xt, y-4, 1, 8); if (i%2===0){ ctx.fillText(String(Math.round(t)), xt-6, y+22); } }
+  ctx.fillText(unit, x1-20, y+22);
+  // Arrow/value
+  if (value!=null && !Number.isNaN(value)){
+    const xv=toX(value);
+    ctx.fillStyle="#1e293b"; ctx.beginPath(); ctx.moveTo(xv, y-28); ctx.lineTo(xv-6, y-16); ctx.lineTo(xv+6, y-16); ctx.closePath(); ctx.fill();
+    const label = (unit==='fold' ? value.toFixed(2)+'×' : value.toFixed(2)+'%');
+    ctx.fillText(label, Math.min(x1-60, Math.max(x0, xv-20)), y-36);
   }
 }
-function openDPRAExplain(){ document.getElementById('dpraExplainBack').classList.remove('hidden'); }
-function closeDPRAExplain(){ document.getElementById('dpraExplainBack').classList.add('hidden'); }
-document.getElementById('btnCloseDPRAExplain').onclick = closeDPRAExplain;
-document.getElementById('dpraExplainBack').addEventListener('click', (e)=>{ if (e.target.id === 'dpraExplainBack') closeDPRAExplain(); });
-function renderDPRAExplain(){
-  const dpraInput = state.inputs.DPRA || {};
-  const rule = dpraRuleCtx(dpraInput);
-  const canvas = document.getElementById('dpraChart');
-  drawDPRAChart(canvas, rule.value, rule.thr, rule.br[0], rule.br[1]);
-  const verdict = dpraCallFromValue(rule.value, rule.thr, rule.br[0], rule.br[1]);
-  const side = document.getElementById('dpraExplainVerdict');
-  const res = runAssay("DPRA");
-  side.innerHTML = `
-    <div style="min-width:220px">
+function verdictBadge(label){
+  const cls = label.startsWith('Positive')?'pos':(label.startsWith('Negative')?'neg':'br');
+  return `<span class="exp-badge ${cls}">${label}</span>`;
+}
+function explainAssay(id, res){
+  expLegend.innerHTML = '';
+  expSide.innerHTML = '';
+  expFoot.textContent = '';
+  const ctx = expCanvas.getContext('2d');
+
+  if (id==="DPRA"){
+    const d = state.inputs.DPRA||{};
+    const useCys = typeof d.cysOnlyDepletion==="number";
+    const thr = useCys?13.89:6.38, brLo=useCys?10.56:4.95, brHi=useCys?18.47:8.32, val= useCys? d.cysOnlyDepletion : d.meanDepletion;
+    expTitle.textContent = "DPRA — Why this call?";
+    drawAxisBand(ctx,{brLo,brHi,thr,value:val,unit:'%'});
+    expLegend.innerHTML = `<span class="sw sw-br"></span>Borderline range &nbsp;&nbsp;<span class="sw sw-thr"></span>Decision threshold`;
+    const vb = res.br ? (res.call==='Positive'?'Borderline (Pos)':'Borderline (Neg)') : res.call;
+    expSide.innerHTML = `
+      <div style="min-width:240px">
+        <div style="font-weight:600;margin-bottom:6px">Decision</div>
+        ${verdictBadge(vb)}
+        <ul class="list" style="margin-top:8px">
+          <li>Model: <b>${useCys?'Cys‑only':'Mean (Cys+Lys)'}</b></li>
+          <li>Threshold: <b>${thr}%</b></li>
+          <li>Borderline: <b>${brLo}–${brHi}%</b></li>
+          <li>Entered value: <b>${(typeof val==='number')?val+'%':'—'}</b></li>
+          ${d.invalidated ? '<li>Limitation flagged → set to <b>Inconclusive</b> in the assay.</li>': '' }
+        </ul>
+      </div>`;
+    expFoot.textContent = "Criteria reflect DPRA decision models and borderline ranges.";
+  }
+  else if (id==="ADRA"){
+    const d = state.inputs.ADRA||{};
+    const useNAC = typeof d.nacOnlyDepletion==="number";
+    const thr = useNAC?5.6:4.9, brLo=useNAC?4.7:4.1, brHi=useNAC?6.8:5.9, val= useNAC? d.nacOnlyDepletion : d.meanDepletion;
+    expTitle.textContent = "ADRA — Why this call?";
+    drawAxisBand(ctx,{brLo,brHi,thr,value:val,unit:'%'});
+    expLegend.innerHTML = `<span class="sw sw-br"></span>Borderline range &nbsp;&nbsp;<span class="sw sw-thr"></span>Decision threshold`;
+    const vb = res.br ? (res.call==='Positive'?'Borderline (Pos)':'Borderline (Neg)') : res.call;
+    expSide.innerHTML = `
+      <div style="min-width:240px">
+        <div style="font-weight:600;margin-bottom:6px">Decision</div>
+        ${verdictBadge(vb)}
+        <ul class="list" style="margin-top:8px">
+          <li>Model: <b>${useNAC?'NAC‑only':'Mean (NAC+NAL)'}</b></li>
+          <li>Threshold: <b>${thr}%</b></li>
+          <li>Borderline: <b>${brLo}–${brHi}%</b></li>
+          <li>Entered value: <b>${(typeof val==='number')?val+'%':'—'}</b></li>
+          ${d.invalidated ? '<li>Limitation flagged → set to <b>Inconclusive</b> in the assay.</li>': '' }
+        </ul>
+      </div>`;
+    expFoot.textContent = "Criteria reflect ADRA decision models and borderline ranges.";
+  }
+  else if (id==="kDPRA"){
+    const d = state.inputs.kDPRA||{};
+    expTitle.textContent = "kDPRA — Note";
+    ctx.clearRect(0,0,expCanvas.width,expCanvas.height);
+    expLegend.textContent = '';
+    expSide.innerHTML = `
+      <div style="min-width:280px">
+        <div class="exp-badge br">Not used in 2o3 hazard</div>
+        <ul class="list" style="margin-top:8px">
+          <li>Input: log Kmax = <b>${(typeof d.logKmax==='number')?d.logKmax:'—'}</b></li>
+          <li>Role: potency / IATA context; excluded from 2o3 hazard aggregation.</li>
+        </ul>
+      </div>`;
+    expFoot.textContent = "kDPRA informs potency categorisation; it is not part of the 2o3 hazard decision.";
+  }
+  else if (id==="KeratinoSens" || id==="LuSens"){
+    const d = state.inputs[id]||{};
+    const thr = 1.5, brLo = (id==="KeratinoSens")?1.35:1.28, brHi=(id==="KeratinoSens")?1.67:1.76;
+    const val = d.maxInduction;
+    expTitle.textContent = `${ASSAYS[id].name} — Why this call?`;
+    drawAxisBand(ctx,{brLo,brHi,thr,value:val,unit:'fold',scaleMin:0,scaleMax:Math.max(3, (val||0)+1)});
+    expLegend.innerHTML = `<span class="sw sw-br"></span>Borderline band &nbsp;&nbsp;<span class="sw sw-thr"></span>Decision threshold`;
+    const vb = res.br ? (res.call==='Positive'?'Borderline (Pos)':'Borderline (Neg)') : res.call;
+    const viabRow = (id==="KeratinoSens")
+      ? `<li>Viability gate: <b>${(d.viabilityAtMax==null)?'missing':(d.viabilityAtMax+'%')}</b> (needs ≥70% when Imax ≥1.5×)</li>`
+      : '';
+    expSide.innerHTML = `
+      <div style="min-width:260px">
+        <div style="font-weight:600;margin-bottom:6px">Decision</div>
+        ${verdictBadge(vb)}
+        <ul class="list" style="margin-top:8px">
+          <li>Imax: <b>${(typeof val==='number')?val+'×':'—'}</b> (thr 1.5×)</li>
+          ${viabRow}
+        </ul>
+      </div>`;
+    expFoot.textContent = (id==="KeratinoSens") ? "Positivity requires ≥70% viability at the effect concentration." : "LuSens uses the 1.5× induction threshold with its BR band.";
+  }
+  else if (id==="EpiSensA"){
+    const d=state.inputs.EpiSensA||{};
+    expTitle.textContent = "EpiSensA — Why this call?";
+    ctx.clearRect(0,0,expCanvas.width,expCanvas.height);
+    const ticks = [
+      {name:'ATF3', val:d.atf3, thr:15, br:[10.71,21.02]},
+      {name:'GCLM', val:d.gclm, thr:2, br:[1.64,2.45]},
+      {name:'DNAJB2', val:d.dnajb2, thr:2, br:[1.61,2.52]},
+      {name:'IL‑8', val:d.il8, thr:4, br:[3.11,5.16]}
+    ];
+    // mini-table
+    expSide.innerHTML = `<div style="min-width:280px">
       <div style="font-weight:600;margin-bottom:6px">Decision</div>
-      <div class="explain-badge ${verdict.cls}">${verdict.label}</div>
-      <ul class="list" style="margin-top:8px">
-        <li>Model: <b>${rule.mode}</b></li>
-        <li>Threshold: <b>${rule.thr}%</b></li>
-        <li>Borderline: <b>${rule.br[0]}–${rule.br[1]}%</b></li>
-        <li>Entered value: <b>${(typeof rule.value==='number')?rule.value+'%':'—'}</b></li>
-        ${dpraInput.invalidated ? '<li>Limitation: set to <b>Inconclusive</b> due to precipitation/insolubility.</li>': '' }
-      </ul>
-      <div class="explain-note">${rule.note}</div>
-    </div>
-  `;
-  const note = document.getElementById('dpraExplainNote');
-  note.textContent = (rule.mode==="Cys-only")
-    ? "Using the cysteine‑only decision rule (co‑elution with lysine)."
-    : "Using the mean (cysteine+lysine) decision rule.";
-  openDPRAExplain();
+      ${verdictBadge(res.call)}
+      <div class="small muted" style="margin-top:6px">Positive if ≥2 genes exceed thresholds.</div>
+      <ul class="list" style="margin-top:8px" id="epiList"></ul>
+    </div>`;
+    const ul = expSide.querySelector('#epiList');
+    ticks.forEach(t=>{
+      const li=document.createElement('li');
+      const vtxt = (typeof t.val==='number')? t.val+'×':'—';
+      const hit = (typeof t.val==='number') && t.val>t.thr;
+      const inBR = (typeof t.val==='number') && within(t.val,t.br[0],t.br[1]);
+      li.innerHTML = `<b>${t.name}</b>: ${vtxt} (thr ${t.thr}) ${hit?'✔️':''} ${inBR?'<span class="warn-flag">⚠︎ BR</span>':''}`;
+      ul.appendChild(li);
+    });
+    expLegend.textContent = '';
+    expFoot.textContent = "EpiSensA compares 4 gene markers to their thresholds; BR values reduce confidence.";
+  }
+  else if (id==="HCLAT"){
+    const d=state.inputs.HCLAT||{};
+    const m = { cd86:{thr:150, br:[122,184], val:d.rfiCD86}, cd54:{thr:200, br:[157,255], val:d.rfiCD54} };
+    expTitle.textContent = "h‑CLAT — Why this call?";
+    drawAxisBand(ctx,{brLo:m.cd86.br[0],brHi:m.cd86.br[1],thr:m.cd86.thr,value:m.cd86.val,unit:'% (CD86)',scaleMin:0,scaleMax:Math.max(260,(m.cd86.val||0)+40)});
+    // Overlay second marker as line
+    const ctx2=ctx; const toX = (v,min=0,max=260)=> 46 + ((Math.max(min,Math.min(max,v))-min)/(max-min))*(780-46-18);
+    if (m.cd54.val!=null){ ctx2.fillStyle="#64748b"; ctx2.beginPath(); const xv=toX(m.cd54.val,0,Math.max(260,(m.cd54.val||0)+40)); ctx2.arc(xv,110,4,0,Math.PI*2); ctx2.fill(); }
+    expLegend.innerHTML = `<span class="sw sw-br"></span>BR (CD86) &nbsp;&nbsp;<span class="sw sw-thr"></span>CD86 threshold; CD54 shown as dot`;
+    expSide.innerHTML = `
+      <div style="min-width:260px">
+        <div style="font-weight:600;margin-bottom:6px">Decision</div>
+        ${verdictBadge(res.call)}
+        <ul class="list" style="margin-top:8px">
+          <li>CD86: <b>${(m.cd86.val!=null)?m.cd86.val+'%':'—'}</b> (thr 150)</li>
+          <li>CD54: <b>${(m.cd54.val!=null)?m.cd54.val+'%':'—'}</b> (thr 200)</li>
+          <li>Viability gate (effective dose): <b>${d.viabilityOK===false?'&lt;50% (fails)':'≥50% / not set'}</b></li>
+        </ul>
+      </div>`;
+    expFoot.textContent = "h‑CLAT is positive if CD86≥150% and/or CD54≥200% (with viability ≥50%).";
+  }
+  else if (id==="USENS"){
+    const d=state.inputs.USENS||{};
+    const thr=150, brLo=128, brHi=176, val=d.siCD86;
+    expTitle.textContent = "U‑SENS — Why this call?";
+    drawAxisBand(ctx,{brLo,brHi,thr,value:val,unit:'%'});
+    expLegend.innerHTML = `<span class="sw sw-br"></span>Borderline band &nbsp;&nbsp;<span class="sw sw-thr"></span>Decision threshold`;
+    const vb = res.br ? (res.call==='Positive'?'Borderline (Pos)':'Borderline (Neg)') : res.call;
+    expSide.innerHTML = `
+      <div style="min-width:240px">
+        <div style="font-weight:600;margin-bottom:6px">Decision</div>
+        ${verdictBadge(vb)}
+        <ul class="list" style="margin-top:8px">
+          <li>SI(CD86): <b>${(typeof val==='number')?val+'%':'—'}</b> (thr 150)</li>
+        </ul>
+      </div>`;
+    expFoot.textContent = "U‑SENS uses the CD86 stimulation index threshold with its BR band.";
+  }
+  else if (id==="IL8Luc"){
+    const d=state.inputs.IL8Luc||{};
+    const thr=1.4, brLo=1.25, brHi=1.57, val=d.indIL8LA;
+    expTitle.textContent = "IL‑8 Luc — Why this call?";
+    drawAxisBand(ctx,{brLo,brHi,thr,value:val,unit:'fold',scaleMin:0,scaleMax:Math.max(3,(val||0)+1)});
+    expLegend.innerHTML = `<span class="sw sw-br"></span>Borderline band &nbsp;&nbsp;<span class="sw sw-thr"></span>Decision threshold`;
+    const vb = res.br ? (res.call==='Positive'?'Borderline (Pos)':'Borderline (Neg)') : res.call;
+    expSide.innerHTML = `
+      <div style="min-width:240px">
+        <div style="font-weight:600;margin-bottom:6px">Decision</div>
+        ${verdictBadge(vb)}
+        <ul class="list" style="margin-top:8px">
+          <li>Ind‑IL8LA: <b>${(typeof val==='number')?val+'×':'—'}</b> (thr 1.4×)</li>
+        </ul>
+      </div>`;
+    expFoot.textContent = "Reporter gene threshold with BR band guides confidence.";
+  }
+  else if (id==="GARDskin"){
+    const d=state.inputs.GARDskin||{};
+    const thr=0, brLo=-0.45, brHi=0.45, val=d.meanDV;
+    expTitle.textContent = "GARDskin — Why this call?";
+    drawAxisBand(ctx,{brLo,brHi,thr,value:val,unit:'DV',scaleMin:-1,scaleMax:1});
+    expLegend.innerHTML = `<span class="sw sw-br"></span>Borderline band &nbsp;&nbsp;<span class="sw sw-thr"></span>Decision threshold (0)`;
+    const vb = res.br ? (res.call==='Positive'?'Borderline (Pos)':'Borderline (Neg)') : res.call;
+    expSide.innerHTML = `
+      <div style="min-width:240px">
+        <div style="font-weight:600;margin-bottom:6px">Decision</div>
+        ${verdictBadge(vb)}
+        <ul class="list" style="margin-top:8px">
+          <li>Mean DV: <b>${(typeof val==='number')?val:'—'}</b> (thr > 0)</li>
+        </ul>
+      </div>`;
+    expFoot.textContent = "Mean decision value > 0 indicates Positivity; BR band reduces confidence.";
+  }
+
+  openExplain();
 }
 
-// ----- DA snippet builder -----
+// ---------------- DA snippet builder ----------------
 const daPanel = document.getElementById('daPanel');
 const daText = document.getElementById('daText');
 document.getElementById('btnDA').onclick = ()=>{ daPanel.classList.add('open'); };
@@ -703,17 +826,11 @@ function buildDASnippet(results, final, bestByKE){
     const a = bestByKE[ke].id;
     used.push(`KE${ke}: ${ASSAYS[a].name}`);
   });
-  if (used.length===0){
-    parts.push(`(No valid KE pairs; inputs do not yield two concordant high‑confidence results.)`);
-  } else {
-    parts.push(used.join('; '));
-  }
+  parts.push(used.length? used.join('; ') : `(No valid KE pairs; inputs do not yield two concordant high‑confidence results.)`);
   parts.push('');
   parts.push(`Assay outcomes:`);
   Object.entries(results).forEach(([id,res])=>{
-    const flags=[];
-    if (res.br) flags.push('BR');
-    if (state.inputs[id]?.invalidated) flags.push('Limited');
+    const flags=[]; if (res.br) flags.push('BR'); if (state.inputs[id]?.invalidated) flags.push('Limited');
     parts.push(`• ${ASSAYS[id].name} → ${res.call} (${res.confidence} conf${flags.length?'; '+flags.join(', '):''}).`);
   });
   parts.push('');
@@ -724,11 +841,11 @@ function buildDASnippet(results, final, bestByKE){
     parts.push(`2o3 outcome: ${final.final==='Positive'?'Sensitiser':'Non‑sensitiser'}${pairTxt}.`);
   }
   parts.push('');
-  parts.push(`Notes: Borderline results and assay limitations follow TG 442C/442D/442E acceptance and the 497 borderline integration; positivity requires method‑specific validity (e.g., KS viability ≥70%; h‑CLAT effective‑dose viability ≥50%). [2](https://rifminc-my.sharepoint.com/personal/mlavelle_rifm_org/Documents/Microsoft%20Copilot%20Chat%20Files/442E.pdf)[3](https://rifminc-my.sharepoint.com/personal/mlavelle_rifm_org/Documents/Microsoft%20Copilot%20Chat%20Files/442C.pdf)`);
+  parts.push(`Notes: Borderline results and assay limitations follow TG 442C/442D/442E acceptance and the 497 borderline integration; positivity requires method‑specific validity (e.g., KS viability ≥70%; h‑CLAT effective‑dose viability ≥50%).`);
   daText.value = parts.join('\n');
 }
 
-// Buttons and modal
+// ---------------- Buttons and modals ----------------
 document.getElementById('btnClear').onclick = ()=>{ state.inputs={}; render(); };
 document.getElementById('btnReset').onclick = ()=>{ state.selected=new Set(["DPRA","KeratinoSens","HCLAT"]); state.inputs={}; render(); };
 const modalBack=document.getElementById('modalBack');
