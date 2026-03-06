@@ -1,4 +1,4 @@
-**#Privacy & Data Handling**
+**Privacy & Data Handling**
 
 
 This application processes all information entirely in your browser.
