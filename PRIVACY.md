@@ -1,8 +1,9 @@
-# Privacy & Data Handling
+**#Privacy & Data Handling**
 
-This application processes your inputs entirely in your browser.
 
-- Any **files, images, or text** you upload are **only used to run the application** (to parse values and pre‑fill fields).
-- **None of it will be saved or downloaded** by the app.
-- Nothing is uploaded to a server; parsing and calculations happen locally.
-- You can remove values at any time with **Clear inputs** or by refreshing the page.
+This application processes all information entirely in your browser.
+
+Nothing you enter is sent to any server.
+All calculations, rendering, and Report Interpreter logic run locally on your device.
+The app does not upload, store, or transmit any data.
+You may clear all inputs at any time using Clear inputs or by refreshing the page.
