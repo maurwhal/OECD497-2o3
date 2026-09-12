@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Natsch PoD Calculator • Marvelous Maura Model (Offline)</title>
+<style>
+  :root { --bg:#f8fafc; --fg:#0f172a; --muted:#475569; --card:#ffffff; --border:#e2e8f0; --ok:#065f46; --bad:#9f1239; --low:#92400e; --warn:#9a3412; --pill-border:#d1fae5; --pill-bg:#ecfdf5; --pill-low-bg:#fef3c7; --pill-low-bd:#fde68a; --warnbg:#fff7ed; --warnbd:#fed7aa; }
+  *{box-sizing:border-box}
+  body{ margin:0; font-family:Tahoma, "Segoe UI", ui-sans-serif, system-ui, -apple-system, Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif; background:var(--bg); color:var(--fg) }
+  .container{max-width:1152px;margin:0 auto;padding:24px;display:grid;gap:24px}
+  h1{font-size:24px;margin:0 0 6px 0} h2{font-size:18px;margin:0 0 12px 0}
+  .muted{color:var(--muted)} .small{font-size:12px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 1px 1px rgba(0,0,0,.04);padding:16px}
+  .grid{display:grid;gap:16px} .cols-2{grid-template-columns:repeat(2,minmax(0,1fr))} .cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  @media (max-width:960px){ .cols-2,.cols-3{grid-template-columns:1fr} }
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{background:#fff;border:1px solid var(--border);border-radius:12px;padding:8px 12px;cursor:pointer}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:#0f172a;color:#fff;border-color:#0f172a}
+  input[type="number"],input[type="text"]{padding:8px;border:1px solid var(--border);border-radius:12px;width:100%}
+  label{font-size:14px}
+  .list{font-size:12px;color:#334155;line-height:1.4}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px;border-bottom:1px solid var(--border)}
+  th{color:var(--muted);font-weight:600;font-size:12px}
+  tr.best{background:#ecfdf5}
+  tr.gated td{color:#94a3b8}
+  .pill{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--pill-bg);color:#065f46;border:1px solid var(--pill-border)}
+  .pill.warn{background:var(--warnbg);color:var(--warn);border-color:var(--warnbd)}
+  .pill.pass{background:#ecfdf5;color:#065f46;border:1px solid #d1fae5}
+  .pill.fail{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+  .icon-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:#fff;border-radius:999px;padding:6px 10px;font-size:12px;color:#0f172a;text-decoration:none}
+  fieldset{border:1px solid var(--border);border-radius:12px;padding:12px}
+  legend{font-size:13px;font-weight:600;padding:0 6px}
+  .warn-box{background:var(--warnbg);border:1px solid var(--warnbd);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="row" style="justify-content:space-between;align-items:flex-end;">
+    <div>
+      <h1>Natsch Point-of-Departure Calculator</h1>
+      <div class="muted small">A <b>Marvelous Maura Model</b> • by <a href="https://www.linkedin.com/in/mauralavelle/" target="_blank" rel="noopener noreferrer">Maura Lavelle</a></div>
+      <div class="small muted">Reproduces the regression-based PoD models from Natsch, "Integrated Skin Sensitization Assessment Based on OECD Methods (III): Adding Human Data to the Potency Assessment", ALTEX, doi:10.14573/altex.2302081s3 (Supplementary Material ESM3).</div>
+    </div>
+    <div class="row">
+      <a class="icon-btn" href="index.html">&larr; Hub</a>
+      <a class="icon-btn" href="2o3.html">2o3 Hazard tool</a>
+    </div>
+  </header>
+
+  <div class="warn-box">
+    This is <b>not</b> the SARA-ICE tool. SARA-ICE (NICEATM/Unilever) uses a proprietary Bayesian model calibrated on 400+ ICE chemicals whose coefficients are not published, so it can't be reproduced here. This calculator instead reproduces the fully-published Natsch et al. linear regression models exactly as given in ESM3. Use the two "Load worked example" buttons below and check the Self-check panel to confirm this page reproduces the source spreadsheet's own examples before trusting it on a real material — this exists specifically so you don't have to take my arithmetic on faith.
+  </div>
+
+  <div class="card">
+    <h2>Material</h2>
+    <div class="grid cols-3">
+      <label class="grid" style="gap:4px"><span>Substance name</span><input type="text" id="matName"></label>
+      <label class="grid" style="gap:4px"><span>CAS #</span><input type="text" id="matCas"></label>
+      <label class="grid" style="gap:4px"><span>MW (g/mol)</span><input type="number" id="mw" placeholder="required"></label>
+    </div>
+    <label class="grid" style="gap:4px;margin-top:10px;max-width:320px"><span>Vapor pressure (Pa)</span><input type="number" id="vp" placeholder="e.g. 4.6 (0 if negligible/unknown)"></label>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="btnLoadDNCB">Load worked example: DNCB</button>
+      <button class="btn" id="btnLoadCA">Load worked example: Cinnamic aldehyde</button>
+      <button class="btn" id="btnClearAll">Clear</button>
+    </div>
+  </div>
+
+  <div class="grid cols-3">
+    <fieldset>
+      <legend>KeratinoSens (TG 442D)</legend>
+      <label class="row" style="gap:6px"><input type="checkbox" id="ksRating"><span>KeratinoSens performed (rated positive or negative)</span></label>
+      <div class="grid" style="gap:8px;margin-top:8px">
+        <label class="grid" style="gap:4px"><span>EC1.5 (mM, per ESM3 convention — see worked examples)</span><input type="number" id="ec15" step="any"></label>
+        <label class="grid" style="gap:4px"><span>EC3.0 (mM) — conc. giving 3-fold induction</span><input type="number" id="ec3" step="any"></label>
+        <label class="grid" style="gap:4px"><span>IC50 (mM)</span><input type="number" id="ic50" step="any"></label>
+        <div class="small muted">All three fields (EC1.5, EC3.0, IC50) are needed for any KeratinoSens-based model below — a partial set is treated as not sufficient data rather than guessed. No induction/cytotoxicity reached at top concentration → enter 4000 mM (the ESM3 default), not blank.</div>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>kDPRA (TG 442C)</legend>
+      <label class="grid" style="gap:4px"><span>log kmax (M⁻¹ s⁻¹)</span><input type="number" id="kmax" step="any" placeholder="non-reactive = -3.5"></label>
+      <div class="small muted" style="margin-top:6px">Chemicals tested but non-reactive: enter -3.5, per ESM3.</div>
+    </fieldset>
+    <fieldset>
+      <legend>h-CLAT (TG 442E)</legend>
+      <label class="row" style="gap:6px"><input type="checkbox" id="hclatRating"><span>h-CLAT performed (rated positive or negative)</span></label>
+      <div class="grid" style="gap:8px;margin-top:8px">
+        <label class="grid" style="gap:4px"><span>CD86 EC150 (mg/mL, per ESM3 convention)</span><input type="number" id="cd86" step="any"></label>
+        <label class="grid" style="gap:4px"><span>CD54 EC200 (mg/mL, per ESM3 convention)</span><input type="number" id="cd54" step="any"></label>
+        <label class="grid" style="gap:4px"><span>CV75 (mg/mL, per ESM3 convention)</span><input type="number" id="cv75" step="any"></label>
+        <div class="small muted">All three fields (CD86, CD54, CV75) plus MW are needed for any h-CLAT-based model below. No induction/cytotoxicity reached → enter 5000 (the ESM3 default), not blank. MIT is auto-computed as min(CD86,CD54).</div>
+      </div>
+    </fieldset>
+  </div>
+
+  <div class="card">
+    <h2>Results — models trained on LLNA data (EC3)</h2>
+    <div class="small muted" style="margin-bottom:8px">pED = model's linear predictor; EC3% = MW / 10^pED; DSA = EC3% × 250 (dose per skin area, µg/cm²).</div>
+    <div style="overflow-x:auto"><table id="tblLLNA"></table></div>
+  </div>
+
+  <div class="card">
+    <h2>Results — models trained on extended Potency Values (PV)</h2>
+    <div class="small muted" style="margin-bottom:8px">Per ESM3's own guidance: a conservative assessment may take the lower PoD of the LLNA- and PV-trained models, unless there's a mechanistic reason to prefer one (e.g. a strongly cytotoxic chemical with weak alerts/reactivity — prefer the PV-trained model there to avoid a cytotoxicity-driven bias).</div>
+    <div style="overflow-x:auto"><table id="tblPV"></table></div>
+  </div>
+
+  <div class="card">
+    <h2>Self-check against the ESM3 worked examples</h2>
+    <div class="small muted" style="margin-bottom:8px">Loads each worked example internally and compares this page's output to values independently computed from the ESM3 formulas. If anything shows FAIL, do not trust this calculator's numbers until it's fixed.</div>
+    <div id="selfCheckOut" class="grid" style="gap:6px"></div>
+  </div>
+
+  <footer class="card">
+    <div class="small muted">Natsch PoD Calculator — a <b>Marvelous Maura Model</b>. All calculation is client-side; nothing is uploaded anywhere.</div>
+    <div class="small muted">Disclaimer: provided for informational purposes. Final scientific interpretation and unit verification against source data remain the responsibility of the user.</div>
+  </footer>
+</div>
+
+<script>
+'use strict';
+const log10 = Math.log10;
+
+function lognormVP(vp){ return (vp!=null && vp>10) ? (log10(vp)-1) : 0; }
+
+// Core ESM3 formula engine. All inputs are plain numbers already in ESM3's own
+// units (see the on-page notes + worked examples). Returns null fields when a
+// required input is missing ("not sufficient data" gating, matching ESM3).
+function computeAll(inp){
+  const { mw, vp, ksOn, ec15, ec3, ic50, kmax, hclatOn, cd86, cd54, cv75 } = inp;
+  const E5 = lognormVP(vp);
+  const haveKS = ksOn && ec15!=null && ec3!=null && ic50!=null;
+  const haveKmax = kmax!=null;
+  const haveHclat = hclatOn && cd86!=null && cd54!=null && cv75!=null;
+
+  const E9 = haveKS ? (-log10(ec15)+log10(4000)) : null;   // LOG norm EC1.5 KS
+  const E11 = haveKS ? (-log10(ec3)+log10(4000)) : null;   // LOG norm EC3 KS
+  const E13 = haveKS ? (-log10(ic50)+log10(4000)) : null;  // LOG norm IC50 KS
+  const E19 = haveKmax ? (kmax+3.5) : null;                // LOG norm Kmax
+
+  let E24=null, E26=null;
+  if (haveHclat && mw){
+    const mit = Math.min(cd86, cd54);
+    const E23 = mit*1000/mw;      // MIT (mM)
+    E24 = -log10(E23)+log10(25000);
+    const E25 = cv75*1000/mw;     // CV75 (mM)
+    E26 = -log10(E25)+log10(25000);
+  }
+
+  function fromPED(pED){
+    if (pED==null || !mw) return { pED:null, pct:null, dsa:null };
+    const pct = mw/Math.pow(10,pED);
+    return { pED, pct, dsa: pct*250 };
+  }
+
+  const eqs = {};
+  eqs.eq1 = (haveKS && haveKmax) ? fromPED(0.4156+0.1507*E9+0.3577*E13+0.4038*E19-0.213*E5) : fromPED(null);
+  eqs.eq4 = (haveKmax && haveHclat) ? fromPED(0.181+0.2089*E24+0.3511*E26+0.3638*E19-0.1862*E5) : fromPED(null);
+  eqs.eq5 = (haveKS && haveKmax && haveHclat) ? fromPED(0.198+0.1971*E24+0.207*E26+0.3445*E19-0.1855*E5+0.0893*E9+0.109*E13) : fromPED(null);
+  eqs.eq6 = (haveKS && haveHclat) ? fromPED(0.084+0.2832*E24+0.331*E26-0.1241*E5+0.2179*E9+0.055*E13) : fromPED(null);
+  eqs.eq7 = (haveKS && haveHclat) ? fromPED(0.202+0.2226*E24+0.313*E26-0.1508*E5+0.4003*E11+0.023*E13) : fromPED(null);
+
+  eqs.eq1d = (haveKS && haveKmax) ? fromPED(0.418+0.3038*E9+0.081*E13+0.4539*E19-0.0774*E5) : fromPED(null);
+  eqs.eq4d = (haveKmax && haveHclat) ? fromPED(0.28+0.36*E24+0.073*E26+0.4465*E19-0.0429*E5) : fromPED(null);
+  eqs.eq5d = (haveKS && haveKmax && haveHclat) ? fromPED(0.237+0.3593*E24+0.011*E26+0.3842*E19-0.0612*E5+0.2573*E9+-0.175*E13) : fromPED(null);
+  eqs.eq6d = (haveKS && haveHclat) ? fromPED(0.165+0.5*E24+0.035*E26-0.0189*E5+0.415*E9+-0.196*E13) : fromPED(null);
+  eqs.eq5e = (haveKS && haveKmax && haveHclat) ? fromPED(0.211+0.3064*E24+0.3821*E19+0.2142*E9) : fromPED(null);
+
+  return eqs;
+}
+
+const LLNA_ROWS = [
+  ['eq1','Equation 1 — KeratinoSens + kDPRA'],
+  ['eq4','Equation 4 — kDPRA + h-CLAT'],
+  ['eq5','Equation 5 — KeratinoSens + kDPRA + h-CLAT'],
+  ['eq6','Equation 6 — KeratinoSens (EC1.5) + h-CLAT'],
+  ['eq7','Equation 7 — KeratinoSens (EC3) + h-CLAT'],
+];
+const PV_ROWS = [
+  ['eq1d','Equation 1d — KeratinoSens + kDPRA'],
+  ['eq4d','Equation 4d — kDPRA + h-CLAT'],
+  ['eq5d','Equation 5d — KeratinoSens + kDPRA + h-CLAT'],
+  ['eq6d','Equation 6d — KeratinoSens + h-CLAT'],
+  ['eq5e','Equation 5e — KeratinoSens + kDPRA + h-CLAT (ignores cytotoxicity & vapor pressure)'],
+];
+
+function fmt(x, d){ return (x==null || Number.isNaN(x)) ? '—' : Number(x).toFixed(d==null?4:d); }
+
+function renderTable(tblId, rows, eqs){
+  const tbl = document.getElementById(tblId);
+  // find the row with the most inputs (eq5/eq5d use all three) among computable rows to highlight
+  let bestKey = null;
+  rows.forEach(([key])=>{ if (eqs[key].pED!=null) bestKey = key; });
+  // prefer eq5/eq5d if computable (uses all three KEs)
+  if (eqs['eq5'] && eqs['eq5'].pED!=null && rows.some(r=>r[0]==='eq5')) bestKey='eq5';
+  if (eqs['eq5d'] && eqs['eq5d'].pED!=null && rows.some(r=>r[0]==='eq5d')) bestKey='eq5d';
+
+  let html = '<thead><tr><th>Model</th><th>pED</th><th>EC3 / PV (%)</th><th>DSA (µg/cm²)</th></tr></thead><tbody>';
+  rows.forEach(([key,label])=>{
+    const r = eqs[key];
+    const gated = r.pED==null;
+    html += `<tr class="${key===bestKey?'best':''} ${gated?'gated':''}"><td>${label}${key===bestKey?' <span class="pill">most complete</span>':''}</td><td>${fmt(r.pED)}</td><td>${gated?'not sufficient data':fmt(r.pct,4)+'%'}</td><td>${gated?'—':fmt(r.dsa,2)}</td></tr>`;
+  });
+  html += '</tbody>';
+  tbl.innerHTML = html;
+}
+
+function readInputs(){
+  const num = id => { const v = document.getElementById(id).value; return v===''? null : Number(v); };
+  return {
+    mw: num('mw'), vp: num('vp'),
+    ksOn: document.getElementById('ksRating').checked,
+    ec15: num('ec15'), ec3: num('ec3'), ic50: num('ic50'),
+    kmax: num('kmax'),
+    hclatOn: document.getElementById('hclatRating').checked,
+    cd86: num('cd86'), cd54: num('cd54'), cv75: num('cv75'),
+  };
+}
+
+function update(){
+  const inp = readInputs();
+  const eqs = computeAll(inp);
+  renderTable('tblLLNA', LLNA_ROWS, eqs);
+  renderTable('tblPV', PV_ROWS, eqs);
+}
+
+['mw','vp','ec15','ec3','ic50','kmax','cd86','cd54','cv75'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', update);
+});
+['ksRating','hclatRating'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', update);
+});
+
+function setVal(id,v){ document.getElementById(id).value = (v===undefined||v===null)?'':v; }
+
+function loadExample(ex){
+  document.getElementById('matName').value = ex.name;
+  document.getElementById('matCas').value = ex.cas;
+  setVal('mw', ex.mw); setVal('vp', ex.vp);
+  document.getElementById('ksRating').checked = true;
+  setVal('ec15', ex.ec15); setVal('ec3', ex.ec3); setVal('ic50', ex.ic50);
+  setVal('kmax', ex.kmax);
+  document.getElementById('hclatRating').checked = true;
+  setVal('cd86', ex.cd86); setVal('cd54', ex.cd54); setVal('cv75', ex.cv75);
+  update();
+}
+
+const DNCB = { name:'DNCB (2,4-dinitrochlorobenzene)', cas:'97-00-7', mw:202.6, vp:0, ec15:2.495628477, ec3:3.892464976, ic50:8.2, kmax:-0.55, cd86:1.92, cd54:2.23, cv75:5 };
+const CA = { name:'Cinnamic aldehyde', cas:'104-55-2', mw:132.16, vp:4.6, ec15:16.13, ec3:63.93, ic50:194.37, kmax:-1.35, cd86:10.2, cd54:12.3, cv75:28 };
+
+document.getElementById('btnLoadDNCB').onclick = ()=> loadExample(DNCB);
+document.getElementById('btnLoadCA').onclick = ()=> loadExample(CA);
+document.getElementById('btnClearAll').onclick = ()=>{
+  ['matName','matCas','mw','vp','ec15','ec3','ic50','kmax','cd86','cd54','cv75'].forEach(id=> document.getElementById(id).value='');
+  document.getElementById('ksRating').checked=false; document.getElementById('hclatRating').checked=false;
+  update();
+};
+
+// ---------- Self-check against independently-computed ESM3 reference values ----------
+// These reference numbers were computed directly from the ESM3 formulas (not
+// from this page's code) — see the project notes. If this page's live output
+// stops matching them, something in the port above is wrong.
+const EXPECTED = {
+  DNCB: { eq1:{pct:0.1800,dsa:44.9996}, eq4:{pct:0.1916,dsa:47.9066}, eq5:{pct:0.1647,dsa:41.1713}, eq6:{pct:0.2586,dsa:64.6576}, eq7:{pct:0.1364,dsa:34.1020},
+          eq1d:{pct:0.2282,dsa:57.0406}, eq4d:{pct:0.1813,dsa:45.3247}, eq5d:{pct:0.2088,dsa:52.2023}, eq6d:{pct:0.3332,dsa:83.2943}, eq5e:{pct:0.1713,dsa:42.8173} },
+  CA:   { eq1:{pct:1.0155,dsa:253.8726}, eq4:{pct:0.8055,dsa:201.3731}, eq5:{pct:0.7975,dsa:199.3846}, eq6:{pct:1.1127,dsa:278.1676}, eq7:{pct:0.9172,dsa:229.3122},
+          eq1d:{pct:0.7823,dsa:195.5873}, eq4d:{pct:0.6701,dsa:167.5172}, eq5d:{pct:0.5585,dsa:139.6314}, eq6d:{pct:0.7800,dsa:195.0069}, eq5e:{pct:0.6405,dsa:160.1181} },
+};
+
+function runSelfCheck(){
+  const out = document.getElementById('selfCheckOut');
+  out.innerHTML = '';
+  const cases = [['DNCB', DNCB], ['CA', CA]];
+  let allPass = true;
+  cases.forEach(([key, ex])=>{
+    const inp = { mw:ex.mw, vp:ex.vp, ksOn:true, ec15:ex.ec15, ec3:ex.ec3, ic50:ex.ic50, kmax:ex.kmax, hclatOn:true, cd86:ex.cd86, cd54:ex.cd54, cv75:ex.cv75 };
+    const eqs = computeAll(inp);
+    const exp = EXPECTED[key];
+    const row = document.createElement('div');
+    let rowPass = true;
+    const parts = [];
+    Object.keys(exp).forEach(eqKey=>{
+      const got = eqs[eqKey];
+      const want = exp[eqKey];
+      const ok = got.pct!=null && Math.abs(got.pct-want.pct) < 0.001 && Math.abs(got.dsa-want.dsa) < 0.01;
+      if (!ok) rowPass = false;
+      parts.push(`${eqKey}:${ok?'OK':'FAIL('+fmt(got.pct)+' vs '+want.pct+')'}`);
+    });
+    allPass = allPass && rowPass;
+    row.innerHTML = `<span class="pill ${rowPass?'pass':'fail'}">${rowPass?'PASS':'FAIL'}</span> ${ex.name} — ${parts.join(', ')}`;
+    out.appendChild(row);
+  });
+  return allPass;
+}
+
+update();
+runSelfCheck();
+</script>
+</body>
+</html>

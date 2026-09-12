@@ -1,79 +1,115 @@
-# OECD 497 - 2-out-of-3 Decision Helper
+# Skin Sensitization Toolkit
 
-A browser-based tool that implements the **OECD TG 497 "2-out-of-3" (2o3)** skin-sensitisation hazard decision logic across the three key events (KEs). In addition to the official 2o3 methods, the tool also includes **expanded support for additional assays** commonly used in skin-sensitisation workflows.
+A browser-based toolkit for skin-sensitisation hazard and potency assessment.
+It started as the **OECD TG 497 "2-out-of-3" (2o3)** decision helper and has
+grown to include a point-of-departure calculator; more tools may be added
+over time.
 
 **Acronyms used:**
 - **BR** = Borderline Range
 - **DA** = Defined Approach
+- **PoD** = Point of Departure
 
-### KE1 - Protein Binding (TG 442C)
-- **DPRA** (mean or cysteine-only)
-- **ADRA** (mean or NAC-only)
-- **kDPRA** (potency context; not used in the 2o3 hazard aggregation)
+## Tools
 
-### KE2 - Keratinocyte Activation (TG 442D)
-- **KeratinoSens™**
-- **LuSens**
-- **EpiSensA**
+### OECD 497 2-out-of-3 Decision Helper (`2o3.html`)
 
-### KE3 - Dendritic Cell Activation (TG 442E)
-- **h-CLAT**
-- **U-SENS**
-- **IL-8 Luc**
-- **GARDskin**
+Implements the OECD TG 497 "2o3" skin-sensitisation hazard decision logic
+across the three key events (KEs), plus expanded support for additional
+assays commonly used in skin-sensitisation workflows.
 
-The tool calculates a per-assay call (Positive / Negative / Inconclusive, with confidence) and a **Final 2o3 Hazard Decision**, following the TG 497 rules. Borderline values and test limitations (for example, precipitation/insolubility, viability gates) are handled per OECD guidance.
+- **KE1 – Protein Binding (TG 442C)**: DPRA (mean or cysteine-only), ADRA
+  (mean or NAC-only), kDPRA (potency context; not used in the 2o3 hazard
+  aggregation, but does drive a 1A/Not 1A/BL classification in the
+  house-style output).
+- **KE2 – Keratinocyte Activation (TG 442D)**: KeratinoSens™, LuSens,
+  EpiSensA.
+- **KE3 – Dendritic Cell Activation (TG 442E)**: h-CLAT, U-SENS, IL-8 Luc,
+  GARDskin.
 
----
+The tool calculates a per-assay call (Positive / Negative / Inconclusive,
+with confidence) and a **Final 2o3 Hazard Decision**, following the TG 497
+rules. Borderline values and test limitations (e.g. precipitation/
+insolubility, viability gates) are handled per OECD guidance.
+
+Also includes:
+- A **Report interpreter** modal for entering up to 3 runs per assay with
+  averaging and an Excel-blurb (TSV) export.
+- An **OECD 497 DA snippet** — an auto-generated, copy-ready summary
+  paragraph.
+- A canvas-based **"Explain this call"** view per assay showing the
+  threshold/borderline band and where the entered value falls.
+- **RIFM house-style cells** — a separate panel that renders DPRA/
+  KeratinoSens/h-CLAT/U-SENS/kDPRA results in the `Call (label value, ...)`
+  grammar used by RIFM's High-EC3 review process, from a dedicated set of
+  "for house-style cell" input fields (kept separate from the RFI%/SI%
+  fields used for the hazard call, since those are different quantities).
+- **PDF upload** for lab reports: detects lab and assay type from known
+  signature strings; currently extracts values only for IIVS DPRA reports
+  (the one parser validated in the source project this was ported from —
+  everything else is detected but flagged as "no parser yet" rather than
+  guessed).
+
+### Point-of-Departure Calculator (`pod.html`)
+
+Reproduces the published Natsch et al. ("Integrated Skin Sensitization
+Assessment Based on OECD Methods (III)", ALTEX, doi:10.14573/altex.2302081s3,
+Supplementary Material ESM3) regression models for estimating EC3%/PV% and
+dose-per-skin-area from KeratinoSens, kDPRA, and h-CLAT data — both the
+LLNA-trained and extended-PV-trained model families. Includes a built-in
+self-check against the paper's own DNCB and cinnamic aldehyde worked
+examples; **check that self-check panel before trusting a real result.**
+
+This is not SARA-ICE — see the hub page (`index.html`) for why.
 
 ## How to use
 
-1. **Open the app**  
+1. **Open the app**
    https://maurwhal.github.io/OECD497-2o3/
 
-2. **Select assays**  
-   Enable or disable any method (DPRA, ADRA, LuSens, U-SENS, and others). Only **DPRA, KeratinoSens™, and h-CLAT** are required for the official **TG 497 2o3** decision; other methods are optional and recorded for completeness.
+2. **Pick a tool** from the hub, or go straight to
+   `2o3.html` or `pod.html`.
 
-3. **Enter assay data**  
-   Provide the numeric values for each enabled assay (for example, percent depletion, Imax fold-induction, RFI percent, decision value). If the study had limitations, tick **set this assay to Inconclusive**.
+3. **2o3 tool**: select assays, enter data (or upload a lab report PDF for
+   IIVS DPRA), and review the per-assay calls, the Final 2o3 Decision, and
+   the RIFM house-style cells.
 
-4. **Review assay-level calls**  
-   Each card shows the call, confidence (High or Low), any Borderline Range flag, any limitations, and a copy-ready **Excel blurb** that summarises the study data.
-
-5. **View the Final 2o3 Decision**  
-   The bottom card shows the OECD TG 497 outcome (Sensitiser / Non-sensitiser / Inconclusive). A conclusive prediction requires **two concordant High-confidence results across two or more different KEs**.
-
-6. **Support tools**  
-   - **BR cheat-sheet** - Thresholds and Borderline Ranges  
-   - **OECD 497 DA snippet** - Auto-generated, copy-ready summary paragraph  
-   - **Clear inputs** - Remove all values  
-   - **Reset selection** - Restore the default DPRA + KeratinoSens™ + h-CLAT panel
-
----
+4. **PoD calculator**: enter MW, vapor pressure, and whichever of
+   KeratinoSens/kDPRA/h-CLAT data you have, or load a worked example first
+   to confirm the self-check passes.
 
 ## Privacy and Data Handling
 
-This application processes all information **entirely in the browser**.
-
-- No data is uploaded, stored, transmitted, or logged.  
-- All calculations and logic run locally on the user's device.  
-- Values can be cleared at any time using **Clear inputs** or by refreshing the page.
-
----
+See `PRIVACY.md`. In short: everything runs in your browser, nothing is
+uploaded anywhere, except that the 2o3 page's PDF-upload feature loads the
+pdf.js library from a CDN on first use (the PDF itself is never uploaded).
 
 ## Notes
 
-- TG 497 logic is applied as described in the guideline (publication: June 2025).  
-- Borderline Ranges and validity criteria follow TG 442C / TG 442D / TG 442E.  
-- Additional assays (ADRA, kDPRA, LuSens, EpiSensA, U-SENS, IL-8 Luc, GARDskin) are included for convenience even though they are **not** all part of the TG 497 2o3 hazard determination.
-
----
+- TG 497 logic is applied as described in the guideline (2025/2026 update).
+- Borderline Ranges and validity criteria follow TG 442C / TG 442D / TG 442E.
+- Additional assays (ADRA, kDPRA, LuSens, EpiSensA, U-SENS, IL-8 Luc,
+  GARDskin) are included for convenience even though they are not all part
+  of the TG 497 2o3 hazard determination.
+- SARA-ICE's ED01/POD/GHS output is a proprietary Bayesian model whose
+  coefficients aren't published, so it isn't reproduced here — the hub links
+  to the official NTP tool instead.
 
 ## Attribution
-Created by Maura Lavelle. AI tools supported code editing and error checking; the author verified results. If an error is found or an improvement is suggested, please open an issue or contact the author.
+
+Created by Maura Lavelle. AI tools supported code editing and error
+checking; the author verified results. If an error is found or an
+improvement is suggested, please open an issue or contact the author.
 
 ## Disclaimer
-This tool is provided "as is" without warranties of any kind. Accuracy is intended, but the author is not responsible for any errors, omissions, miscalculations, or for actions or decisions taken based on the outputs. Users remain responsible for interpreting their own data and for any conclusions drawn.
+
+This tool is provided "as is" without warranties of any kind. Accuracy is
+intended, but the author is not responsible for any errors, omissions,
+miscalculations, or for actions or decisions taken based on the outputs.
+Users remain responsible for interpreting their own data and for any
+conclusions drawn.
 
 ## License and reuse
-All rights reserved. For reuse or distribution beyond fair use, please contact the author to request permission.
+
+All rights reserved. For reuse or distribution beyond fair use, please
+contact the author to request permission.
