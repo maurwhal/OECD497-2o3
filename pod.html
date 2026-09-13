@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Natsch PoD Calculator • Marvelous Maura Model (Offline)</title>
 <style>
-  :root { --bg:#f8fafc; --fg:#0f172a; --muted:#475569; --card:#ffffff; --border:#e2e8f0; --ok:#065f46; --bad:#9f1239; --low:#92400e; --warn:#9a3412; --accent:#0284c7; --accent-dark:#075985; --pill-border:#bae6fd; --pill-bg:#e0f2fe; --pill-low-bg:#fef3c7; --pill-low-bd:#fde68a; --warnbg:#fff7ed; --warnbd:#fed7aa; }
+  :root { --bg:#eaf3fb; --fg:#14213d; --muted:#3d5a80; --card:#ffffff; --border:#dbe9f7; --ok:#065f46; --bad:#9f1239; --low:#92400e; --warn:#9a3412; --accent:#0284c7; --accent-dark:#075985; --pill-border:#bae6fd; --pill-bg:#e0f2fe; --pill-low-bg:#fef3c7; --pill-low-bd:#fde68a; --warnbg:#fff7ed; --warnbd:#fed7aa; }
   *{box-sizing:border-box}
   body{ margin:0; font-family:Tahoma, "Segoe UI", ui-sans-serif, system-ui, -apple-system, Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif; background:var(--bg); color:var(--fg); background-size:40px 40px }
   .container{max-width:1152px;margin:0 auto;padding:24px;display:grid;gap:24px}
@@ -18,7 +18,7 @@
   .btn{background:#fff;border:1px solid var(--border);border-radius:12px;padding:8px 12px;cursor:pointer;transition:background .15s ease,border-color .15s ease}
   .btn:hover{background:#f1f5f9;border-color:#cbd5e1}
   .btn:active{transform:translateY(1px)}
-  .btn.primary{background:#0f172a;color:#fff;border-color:#0f172a}
+  .btn.primary{background:var(--fg);color:#fff;border-color:var(--fg)}
   input[type="number"],input[type="text"]{padding:8px;border:1px solid var(--border);border-radius:12px;width:100%}
   input[type="number"]:focus,input[type="text"]:focus{outline:2px solid #93c5fd;outline-offset:1px}
   .icon-btn:hover{background:#f1f5f9}
@@ -33,7 +33,7 @@
   .pill.warn{background:var(--warnbg);color:var(--warn);border-color:var(--warnbd)}
   .pill.pass{background:var(--pill-bg);color:var(--accent-dark);border:1px solid var(--pill-border)}
   .pill.fail{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
-  .icon-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:#fff;border-radius:999px;padding:6px 10px;font-size:12px;color:#0f172a;text-decoration:none}
+  .icon-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:#fff;border-radius:999px;padding:6px 10px;font-size:12px;color:var(--fg);text-decoration:none}
   fieldset{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
   legend{font-size:13px;font-weight:600;padding:0 6px;background:var(--card)}
 </style>
@@ -134,8 +134,8 @@
 // ---------- Pattern background toggle (same puzzle pattern as 2o3.html) ----------
 (function(){
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'>
-    <rect width='40' height='40' fill='%23f8fafc'/>
-    <path d='M0,0 h40 v40 h-40 z M20,0 v8 c2,0 3.5,1.5 3.5,3.5S22,15 20,15v10c2,0 3.5,1.5 3.5,3.5S22,32 20,32v8 M0,20 h8 c0,-2 1.5,-3.5 3.5,-3.5S15,18 15,20h10c0,-2 1.5,-3.5 3.5,-3.5S32,18 32,20h8' fill='none' stroke='%230f172a' stroke-opacity='0.08' stroke-width='1.1'/>
+    <rect width='40' height='40' fill='%23eaf3fb'/>
+    <path d='M0,0 h40 v40 h-40 z M20,0 v8 c2,0 3.5,1.5 3.5,3.5S22,15 20,15v10c2,0 3.5,1.5 3.5,3.5S22,32 20,32v8 M0,20 h8 c0,-2 1.5,-3.5 3.5,-3.5S15,18 15,20h10c0,-2 1.5,-3.5 3.5,-3.5S32,18 32,20h8' fill='none' stroke='%2314213d' stroke-opacity='0.10' stroke-width='1.1'/>
   </svg>`;
   const uri = `url("data:image/svg+xml,${svg.replace(/\n|\s{2,}/g,' ')}")`;
   document.body.style.backgroundImage = uri;
