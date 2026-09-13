@@ -292,19 +292,30 @@ function overrideIfInvalidated(base, flag){ if (!flag) return base; return { cal
 function softWarnIcon(text){ const s=document.createElement('span'); s.className='warn-flag'; s.textContent='  ⚠︎ ' + text; return s; }
 
 // --- calculators (OECD 497 + TG 442C/D/E thresholds & BRs) ---
-function calcDPRA({meanDepletion,cysOnlyDepletion,invalidated}={}){
+function calcDPRA({cysDepletion,lysDepletion,meanDepletion,invalidated}={}){
+  // One Cys field drives both the hazard call and the house-style cell.
+  // Lys present -> mean model (negatives floored to 0, matching the
+  // house-style Avg convention); Lys blank -> treated as co-elution and
+  // scored with the Cys-only model. Mean is only a fallback for reports
+  // that give a precomputed mean with no separate Cys/Lys.
   const details=[]; let call="Inconclusive"; let inBR=false;
-  if (typeof cysOnlyDepletion==="number"){
-    call=posNeg(cysOnlyDepletion,13.89);
-    inBR=within(cysOnlyDepletion,10.56,18.47);
-    details.push(`Cys-only depletion = ${cysOnlyDepletion}% (pos ≥13.89; BR 10.56–18.47)`);
-    if (inBR) details.push("Borderline range (Low confidence).");
+  let value=null, thr=null, brLo=null, brHi=null;
+  if (typeof cysDepletion==="number" && typeof lysDepletion==="number"){
+    const cysF=Math.max(cysDepletion,0), lysF=Math.max(lysDepletion,0);
+    value=(cysF+lysF)/2; thr=6.38; brLo=4.95; brHi=8.32;
+    details.push(`Cys ${cysDepletion}%, Lys ${lysDepletion}% → mean ${value.toFixed(2)}% (negatives floored to 0; pos ≥6.38; BR 4.95–8.32)`);
+  } else if (typeof cysDepletion==="number"){
+    value=cysDepletion; thr=13.89; brLo=10.56; brHi=18.47;
+    details.push(`Cys-only depletion = ${cysDepletion}% (Lys not provided — treated as co-elution; pos ≥13.89; BR 10.56–18.47)`);
   } else if (typeof meanDepletion==="number"){
-    call=posNeg(meanDepletion,6.38);
-    inBR=within(meanDepletion,4.95,8.32);
+    value=meanDepletion; thr=6.38; brLo=4.95; brHi=8.32;
     details.push(`Mean peptide depletion = ${meanDepletion}% (pos ≥6.38; BR 4.95–8.32)`);
-    if (inBR) details.push("Borderline range (Low confidence).");
   } else { details.push("No DPRA value provided"); }
+  if (value!=null){
+    call=posNeg(value,thr);
+    inBR=within(value,brLo,brHi);
+    if (inBR) details.push("Borderline range (Low confidence).");
+  }
   return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR}, invalidated);
 }
 function calcADRA({meanDepletion,nacOnlyDepletion,invalidated}={}){
@@ -499,10 +510,9 @@ function render(){
       const wrap=document.createElement('div'); wrap.className='grid'; wrap.style.gap='8px'; wrap.style.margin='8px 0 8px';
       const data = state.inputs[id] || {};
       if (id==="DPRA"){
-        wrap.appendChild(makeNumberField("DPRA – Mean peptide depletion (%)", data.meanDepletion, v=>{ensureInputs(id).meanDepletion=v; update();}, "required for 2o3 (or Cys-only below)"));
-        wrap.appendChild(makeNumberField("DPRA – Cys-only depletion (%) (use if co‑elution)", data.cysOnlyDepletion, v=>{ensureInputs(id).cysOnlyDepletion=v; update();}, "required for 2o3 if co-elution"));
-        wrap.appendChild(makeNumberField("DPRA – Cys depletion (%) (for house‑style cell)", data.cysDepletion, v=>{ensureInputs(id).cysDepletion=v; update();}, "optional — house-style only"));
-        wrap.appendChild(makeNumberField("DPRA – Lys depletion (%) (for house‑style cell)", data.lysDepletion, v=>{ensureInputs(id).lysDepletion=v; update();}, "optional — house-style only"));
+        wrap.appendChild(makeNumberField("DPRA – Cys depletion (%)", data.cysDepletion, v=>{ensureInputs(id).cysDepletion=v; update();}, "required for 2o3"));
+        wrap.appendChild(makeNumberField("DPRA – Lys depletion (%)", data.lysDepletion, v=>{ensureInputs(id).lysDepletion=v; update();}, "leave blank if co-elution (uses Cys-only model)"));
+        wrap.appendChild(makeNumberField("DPRA – Mean peptide depletion (%) (only if Cys/Lys aren't available separately)", data.meanDepletion, v=>{ensureInputs(id).meanDepletion=v; update();}, "optional — fallback only"));
       } else if (id==="ADRA"){
         wrap.appendChild(makeNumberField("ADRA – Mean depletion (%) (either probe)", data.meanDepletion, v=>{ensureInputs(id).meanDepletion=v; update();}, "optional for 2o3"));
         wrap.appendChild(makeNumberField("ADRA – NAC-only depletion (%) (optional)", data.nacOnlyDepletion, v=>{ensureInputs(id).nacOnlyDepletion=v; update();}, "optional for 2o3"));
@@ -669,13 +679,8 @@ function renderHouseStyle(){
 
   if (state.selected.has('DPRA')){
     const d = state.inputs.DPRA || {};
-    // Prefer the dedicated house-style Cys field; fall back to the co-elution
-    // "Cys-only" hazard-call field (that field IS a raw Cys reading in that
-    // scenario). Never substitute the Mean field for Cys - that would show a
-    // fabricated Cys value.
-    const cys = (d.cysDepletion!=null) ? d.cysDepletion : d.cysOnlyDepletion;
-    const run = { cys: cys, lys: d.lysDepletion, exclude: !!d.invalidated };
-    if (cys!=null || d.lysDepletion!=null){
+    const run = { cys: d.cysDepletion, lys: d.lysDepletion, exclude: !!d.invalidated };
+    if (d.cysDepletion!=null || d.lysDepletion!=null){
       cells.push(['DPRA', HouseStyle.render_dpra([run], runAssay('DPRA').call)]);
     }
   }
@@ -768,8 +773,13 @@ function explainAssay(id, res){
 
   if (id==="DPRA"){
     const d = state.inputs.DPRA||{};
-    const useCys = typeof d.cysOnlyDepletion==="number";
-    const thr = useCys?13.89:6.38, brLo=useCys?10.56:4.95, brHi=useCys?18.47:8.32, val= useCys? d.cysOnlyDepletion : d.meanDepletion;
+    const hasLys = typeof d.lysDepletion==="number";
+    const hasCys = typeof d.cysDepletion==="number";
+    const useCysOnly = hasCys && !hasLys;
+    const usedMeanFallback = !hasCys && typeof d.meanDepletion==="number";
+    const thr = useCysOnly?13.89:6.38, brLo=useCysOnly?10.56:4.95, brHi=useCysOnly?18.47:8.32;
+    const val = useCysOnly ? d.cysDepletion : (hasCys && hasLys ? (Math.max(d.cysDepletion,0)+Math.max(d.lysDepletion,0))/2 : (usedMeanFallback ? d.meanDepletion : null));
+    const modelLabel = useCysOnly ? 'Cys‑only (Lys not provided)' : (hasCys && hasLys ? 'Mean (Cys+Lys, computed)' : (usedMeanFallback ? 'Mean (reported directly)' : '—'));
     expTitle.textContent = "DPRA — Why this call?";
     drawAxisBand(ctx,{brLo,brHi,thr,value:val,unit:'%'});
     expLegend.innerHTML = `<span class="sw sw-br"></span>Borderline range &nbsp;&nbsp;<span class="sw sw-thr"></span>Decision threshold`;
@@ -779,14 +789,15 @@ function explainAssay(id, res){
         <div style="font-weight:600;margin-bottom:6px">Decision</div>
         ${verdictBadge(vb)}
         <ul class="list" style="margin-top:8px">
-          <li>Model: <b>${useCys?'Cys‑only':'Mean (Cys+Lys)'}</b></li>
+          <li>Model: <b>${modelLabel}</b></li>
           <li>Threshold: <b>${thr}%</b></li>
           <li>Borderline: <b>${brLo}–${brHi}%</b></li>
-          <li>Entered value: <b>${(typeof val==='number')?val+'%':'—'}</b></li>
+          <li>Cys: <b>${hasCys?d.cysDepletion+'%':'—'}</b>, Lys: <b>${hasLys?d.lysDepletion+'%':'—'}</b></li>
+          <li>Value used: <b>${(typeof val==='number')?val.toFixed(2)+'%':'—'}</b></li>
           ${(d.invalidated ? '<li>Limitation flagged → set to <b>Inconclusive</b> in the assay.</li>' : '' )}
         </ul>
       </div>`;
-    expFoot.textContent = "Criteria reflect DPRA decision models and borderline ranges.";
+    expFoot.textContent = "Criteria reflect DPRA decision models and borderline ranges. Leaving Lys blank is treated as co-elution (Cys-only model).";
   }
   else if (id==="ADRA"){
     const d = state.inputs.ADRA||{};
@@ -1048,10 +1059,13 @@ btnCalcApply.onclick = ()=>{
   const id=intAssay; const runs=intRows; let anyLimit=false;
   runs.forEach(r=>{ if(r && r.limit) anyLimit=true; });
   if(id==='DPRA'){
+    // Interpreter runs only capture Cys-only% or a reported Mean%, no
+    // separate Lys - so this always lands on the Cys-only or Mean-fallback
+    // path in calcDPRA (leaving Lys unset), matching its prior behavior.
     const preferCys = runs.some(r=> typeof r.cys==='number');
     const vals = runs.map(r=> preferCys? r.cys : r.mean).filter(v=> typeof v==='number');
     const study = vals.length? (vals.reduce((a,b)=>a+b,0)/vals.length) : undefined;
-    ensureInputs(id); if(preferCys) state.inputs.DPRA.cysOnlyDepletion=study; else state.inputs.DPRA.meanDepletion=study; state.inputs.DPRA.invalidated=anyLimit||false;
+    ensureInputs(id); if(preferCys) state.inputs.DPRA.cysDepletion=study; else state.inputs.DPRA.meanDepletion=study; state.inputs.DPRA.invalidated=anyLimit||false;
   }
   else if(id==='ADRA'){
     const preferNAC = runs.some(r=> typeof r.nac==='number');
