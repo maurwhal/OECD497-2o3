@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Natsch PoD Calculator • Marvelous Maura Model (Offline)</title>
 <style>
-  :root { --bg:#f8fafc; --fg:#0f172a; --muted:#475569; --card:#ffffff; --border:#e2e8f0; --ok:#065f46; --bad:#9f1239; --low:#92400e; --warn:#9a3412; --pill-border:#d1fae5; --pill-bg:#ecfdf5; --pill-low-bg:#fef3c7; --pill-low-bd:#fde68a; --warnbg:#fff7ed; --warnbd:#fed7aa; }
+  :root { --bg:#f8fafc; --fg:#0f172a; --muted:#475569; --card:#ffffff; --border:#e2e8f0; --ok:#065f46; --bad:#9f1239; --low:#92400e; --warn:#9a3412; --accent:#0284c7; --accent-dark:#075985; --pill-border:#bae6fd; --pill-bg:#e0f2fe; --pill-low-bg:#fef3c7; --pill-low-bd:#fde68a; --warnbg:#fff7ed; --warnbd:#fed7aa; }
   *{box-sizing:border-box}
   body{ margin:0; font-family:Tahoma, "Segoe UI", ui-sans-serif, system-ui, -apple-system, Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif; background:var(--bg); color:var(--fg); background-size:40px 40px }
   .container{max-width:1152px;margin:0 auto;padding:24px;display:grid;gap:24px}
@@ -27,16 +27,15 @@
   table{width:100%;border-collapse:collapse;font-size:13px}
   th,td{text-align:left;padding:8px;border-bottom:1px solid var(--border)}
   th{color:var(--muted);font-weight:600;font-size:12px}
-  tr.best{background:#ecfdf5}
+  tr.best{background:var(--pill-bg)}
   tr.gated td{color:#94a3b8}
-  .pill{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--pill-bg);color:#065f46;border:1px solid var(--pill-border)}
+  .pill{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--pill-bg);color:var(--accent-dark);border:1px solid var(--pill-border)}
   .pill.warn{background:var(--warnbg);color:var(--warn);border-color:var(--warnbd)}
-  .pill.pass{background:#ecfdf5;color:#065f46;border:1px solid #d1fae5}
+  .pill.pass{background:var(--pill-bg);color:var(--accent-dark);border:1px solid var(--pill-border)}
   .pill.fail{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
   .icon-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:#fff;border-radius:999px;padding:6px 10px;font-size:12px;color:#0f172a;text-decoration:none}
-  fieldset{border:1px solid var(--border);border-radius:12px;padding:12px}
-  legend{font-size:13px;font-weight:600;padding:0 6px}
-  .warn-box{background:var(--warnbg);border:1px solid var(--warnbd);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:12px}
+  fieldset{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  legend{font-size:13px;font-weight:600;padding:0 6px;background:var(--card)}
 </style>
 </head>
 <body>
@@ -44,7 +43,7 @@
   <header class="row" style="justify-content:space-between;align-items:flex-end;">
     <div>
       <h1>Natsch Point-of-Departure Calculator</h1>
-      <div class="muted small">A <b>Marvelous Maura Model</b> • by <a href="https://www.linkedin.com/in/mauralavelle/" target="_blank" rel="noopener noreferrer">Maura Lavelle</a></div>
+      <div class="muted small">A <a href="https://github.com/maurwhal" target="_blank" rel="noopener noreferrer"><b>Marvelous Maura Model</b></a> • by <a href="https://www.linkedin.com/in/mauralavelle/" target="_blank" rel="noopener noreferrer">Maura Lavelle</a></div>
       <div class="small muted">Reproduces the regression-based PoD models from Natsch, "Integrated Skin Sensitization Assessment Based on OECD Methods (III): Adding Human Data to the Potency Assessment", ALTEX, doi:10.14573/altex.2302081s3 (Supplementary Material ESM3).</div>
     </div>
     <div class="row">
@@ -54,12 +53,8 @@
     </div>
   </header>
 
-  <div class="warn-box">
-    This is <b>not</b> the SARA-ICE tool. SARA-ICE (NICEATM/Unilever) uses a proprietary Bayesian model calibrated on 400+ ICE chemicals whose coefficients are not published, so it can't be reproduced here. This calculator instead reproduces the fully-published Natsch et al. linear regression models exactly as given in ESM3. Use the two "Load worked example" buttons below and check the Self-check panel to confirm this page reproduces the source spreadsheet's own examples before trusting it on a real material — this exists specifically so you don't have to take my arithmetic on faith.
-  </div>
-
   <div class="card">
-    <h2>Material</h2>
+    <h2>Material Information</h2>
     <div class="grid cols-3">
       <label class="grid" style="gap:4px"><span>Substance name</span><input type="text" id="matName"></label>
       <label class="grid" style="gap:4px"><span>CAS #</span><input type="text" id="matCas" placeholder="required for PubChem lookup"></label>
@@ -71,14 +66,14 @@
       <span class="small muted" id="pubchemStatus"></span>
     </div>
     <details id="pubchemSources" class="hidden" style="margin-top:8px">
-      <summary class="small" style="cursor:pointer;color:#2563eb">Sources</summary>
+      <summary class="small" style="cursor:pointer;color:var(--accent)">Sources</summary>
       <div id="pubchemSourcesBody" class="small" style="margin-top:8px;line-height:1.5"></div>
     </details>
     <div class="small muted" style="margin-top:6px">Looks up the compound on PubChem by CAS number. This needs internet access (unlike the rest of this calculator) and pulls from whatever experimental data PubChem has indexed — not every chemical has vapor pressure data, and where several sources disagree, only the first is auto-filled. Always check the Sources panel before trusting the filled values.</div>
     <div class="row" style="margin-top:12px">
       <button class="btn" id="btnLoadDNCB">Load worked example: DNCB</button>
       <button class="btn" id="btnLoadCA">Load worked example: Cinnamic aldehyde</button>
-      <button class="btn" id="btnClearAll">Clear</button>
+      <button class="btn" id="btnClearAll">Reset</button>
     </div>
   </div>
 

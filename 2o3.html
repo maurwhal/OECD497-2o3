@@ -8,14 +8,15 @@
   :root {
     --bg:#f8fafc; --fg:#0f172a; --muted:#475569; --card:#ffffff; --border:#e2e8f0;
     --ok:#065f46; --bad:#9f1239; --low:#92400e; --warn:#9a3412;
-    --pill-border:#d1fae5; --pill-bg:#ecfdf5; --pill-low-bg:#fef3c7; --pill-low-bd:#fde68a;
+    --accent:#0284c7; --accent-dark:#075985;
+    --pill-border:#bae6fd; --pill-bg:#e0f2fe; --pill-low-bg:#fef3c7; --pill-low-bd:#fde68a;
     --warnbg:#fff7ed; --warnbd:#fed7aa;
     --pattern-opacity: 0.08; /* Adjust the subtlety of the optional pattern */
   }
   *{box-sizing:border-box}
   body{
     margin:0;
-    font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Noto Sans",sans-serif;
+    font-family:Tahoma, "Segoe UI", ui-sans-serif, system-ui, -apple-system, Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
     background: var(--bg);
     color:var(--fg);
     /* Default: pattern ON (toggle can disable) */
@@ -34,7 +35,7 @@
   input[type="number"]:focus, input[type="text"]:focus, textarea:focus{outline:2px solid #93c5fd;outline-offset:1px}
   .icon-btn{transition:background .15s ease}
   .icon-btn:hover{background:#f1f5f9}
-  .pill{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--pill-bg);color:#065f46;border:1px solid var(--pill-border)}
+  .pill{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--pill-bg);color:var(--accent-dark);border:1px solid var(--pill-border)}
   .pill.low{background:var(--pill-low-bg);color:var(--low);border-color:var(--pill-low-bd)}
   .pill.warn{background:var(--warnbg);color:var(--warn);border-color:var(--warnbd)}
   .pill.bad{background:#fee2e2;color:#991b1b;border-color:#fecaca}
@@ -45,7 +46,7 @@
   .small{font-size:12px}
   .ke-tag{font-size:11px;color:#64748b;margin-top:6px}
   .warn-flag{color:var(--warn);font-size:12px}
-  .link-inline{background:none;border:none;padding:0;color:#2563eb;cursor:pointer;font-size:12px}
+  .link-inline{background:none;border:none;padding:0;color:var(--accent);cursor:pointer;font-size:12px}
   .icon-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:#fff;border-radius:999px;padding:6px 10px;font-size:12px;color:#0f172a;text-decoration:none}
 
   /* Modal (shared) */
@@ -86,13 +87,12 @@
   <header class="row" style="justify-content:space-between;align-items:flex-end;">
     <div>
       <h1>OECD 497 – 2‑out‑of‑3 Decision Helper</h1>
-      <div class="muted small">A <b>Marvelous Maura Model</b> • by <a href="https://www.linkedin.com/in/mauralavelle/" target="_blank" rel="noopener noreferrer">Maura Lavelle</a></div>
+      <div class="muted small">A <a href="https://github.com/maurwhal" target="_blank" rel="noopener noreferrer"><b>Marvelous Maura Model</b></a> • by <a href="https://www.linkedin.com/in/mauralavelle/" target="_blank" rel="noopener noreferrer">Maura Lavelle</a></div>
       <div class="small muted">Assay thresholds &amp; borderline ranges per OECD&nbsp;Guideline&nbsp;No.&nbsp;497 and TG&nbsp;442C/442D/442E validity/BR handling.</div>
     </div>
     <div class="row">
       <button class="btn" id="btnBR">BR cheat‑sheet</button>
-      <button class="btn" id="btnClear">Clear inputs</button>
-      <button class="btn" id="btnReset">Reset selection</button>
+      <button class="btn" id="btnReset">Reset</button>
       <button class="btn" id="btnBG">BG: Plain</button>
       <button class="btn" id="btnDA">OECD&nbsp;497 DA snippet</button>
       <a class="icon-btn" href="index.html">&larr; Hub</a>
@@ -101,7 +101,7 @@
   </header>
 
   <div class="card" id="materialCard">
-    <h2>Material</h2>
+    <h2>Material Information</h2>
     <div class="grid cols-3">
       <label class="grid" style="gap:4px"><span>Substance name</span><input type="text" id="matName" placeholder="e.g. Cinnamic aldehyde"></label>
       <label class="grid" style="gap:4px"><span>CAS #</span><input type="text" id="matCas" placeholder="e.g. 104-55-2"></label>
@@ -1127,7 +1127,6 @@ btnCalcApply.onclick = ()=>{
 };
 
 // ---------------- Buttons and modals ----------------
-document.getElementById('btnClear').onclick = ()=>{ state.inputs={}; state.raw={}; render(); };
 document.getElementById('btnReset').onclick = ()=>{ state.selected=new Set(["DPRA","KeratinoSens","HCLAT"]); state.inputs={}; state.raw={}; render(); };
 const modalBack=document.getElementById('modalBack');
 document.getElementById('btnBR').onclick = ()=>{ modalBack.classList.remove('hidden'); };
