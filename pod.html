@@ -303,10 +303,28 @@ document.getElementById('btnReset').onclick = ()=>{
 const PUBCHEM_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug';
 const PUBCHEM_VIEW_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug_view';
 
-async function pubchemFetchJSON(url){
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+// PubChem returns 503 with a JSON Fault body (e.g. PUGVIEW.ServerBusy /
+// "Too many requests or server too busy") when it's rate-limiting or under
+// load - this is routine and usually transient, not a real failure, so
+// retry a couple of times with backoff before giving up. On final failure,
+// surface PubChem's own Fault message instead of a bare "HTTP 503".
+async function pubchemFetchJSON(url, attempt){
+  attempt = attempt || 1;
   const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  return res.json();
+  if (res.ok) return res.json();
+  let faultMsg = null;
+  try {
+    const body = await res.json();
+    if (body && body.Fault) faultMsg = `${body.Fault.Code || ''}: ${body.Fault.Message || ''}`.trim();
+  } catch(e) { /* body wasn't JSON, or already consumed - fall through */ }
+  const retryable = (res.status === 503 || res.status === 429) && attempt < 3;
+  if (retryable) {
+    await sleep(attempt * 1200);
+    return pubchemFetchJSON(url, attempt + 1);
+  }
+  throw new Error(faultMsg || ('HTTP ' + res.status));
 }
 
 async function resolveCidFromCas(cas){
@@ -420,7 +438,11 @@ async function lookupPubChem(){
     update();
   } catch(err){
     console.error(err);
-    status.textContent = 'PubChem lookup failed: ' + (err && err.message ? err.message : 'unknown error') + '. This needs internet access; check the CAS number, or enter values manually.';
+    const msg = (err && err.message) || 'unknown error';
+    const busy = /ServerBusy|too many requests|server too busy/i.test(msg);
+    status.textContent = busy
+      ? 'PubChem is busy right now (already retried automatically) — wait a bit and click the button again, or enter MW/vapor pressure manually.'
+      : `PubChem lookup failed: ${msg}. This needs internet access; check the CAS number, or enter values manually.`;
   }
 }
 document.getElementById('btnPubchem').onclick = lookupPubChem;
