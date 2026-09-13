@@ -289,11 +289,11 @@ function ensureInputs(id){ if (!state.inputs[id]) state.inputs[id] = {}; return 
 function within(v,lo,hi){ return !(v==null || Number.isNaN(v)) && v>=lo && v<=hi; }
 function posNeg(v,thr,dir="greater"){ if (v==null || Number.isNaN(v)) return "Inconclusive"; return dir==="greater" ? (v>=thr?"Positive":"Negative") : (v<=thr?"Positive":"Negative"); }
 function hiLoFromBR(inBR,inc){ return inc ? "Low" : (inBR ? "Low" : "High"); }
-function overrideIfInvalidated(base, flag){ if (!flag) return base; return { call:"Inconclusive", confidence:"Low", details:[...(base.details||[]),"Flagged: limitation — set to Inconclusive"], br:base.br }; }
+function overrideIfInvalidated(base, flag, reason){ if (!flag) return base; return { call:"Inconclusive", confidence:"Low", details:[...(base.details||[]),`Flagged: ${reason||'limitation'} — set to Inconclusive`], br:base.br }; }
 function softWarnIcon(text){ const s=document.createElement('span'); s.className='warn-flag'; s.textContent='  ⚠︎ ' + text; return s; }
 
 // --- calculators (OECD 497 + TG 442C/D/E thresholds & BRs) ---
-function calcDPRA({cysDepletion,lysDepletion,meanDepletion,invalidated}={}){
+function calcDPRA({cysDepletion,lysDepletion,meanDepletion,invalidated,invalidatedReason}={}){
   // One Cys field drives both the hazard call and the house-style cell.
   // Lys present -> mean model (negatives floored to 0, matching the
   // house-style Avg convention); Lys blank -> treated as co-elution and
@@ -317,9 +317,9 @@ function calcDPRA({cysDepletion,lysDepletion,meanDepletion,invalidated}={}){
     inBR=within(value,brLo,brHi);
     if (inBR) details.push("Borderline range (Low confidence).");
   }
-  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR}, invalidated);
+  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR}, invalidated, invalidatedReason);
 }
-function calcADRA({meanDepletion,nacOnlyDepletion,invalidated}={}){
+function calcADRA({meanDepletion,nacOnlyDepletion,invalidated,invalidatedReason}={}){
   const details=[]; let call="Inconclusive"; let inBR=false;
   if (typeof nacOnlyDepletion==="number"){
     call=posNeg(nacOnlyDepletion,5.6); inBR=within(nacOnlyDepletion,4.7,6.8);
@@ -328,14 +328,14 @@ function calcADRA({meanDepletion,nacOnlyDepletion,invalidated}={}){
     call=posNeg(meanDepletion,4.9); inBR=within(meanDepletion,4.1,5.9);
     details.push(`Mean percent depletion = ${meanDepletion}% (pos ≥4.9; BR 4.1–5.9)`); if (inBR) details.push("Borderline range (Low confidence).");
   } else { details.push("No ADRA value provided"); }
-  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR}, invalidated);
+  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR}, invalidated, invalidatedReason);
 }
-function calcKDPRA({logKmax,invalidated}={}){
-  const details=[]; if (typeof logKmax!=="number"){ details.push("No kDPRA logKmax provided"); return overrideIfInvalidated({call:"Inconclusive",confidence:"Low",details}, invalidated); }
+function calcKDPRA({logKmax,invalidated,invalidatedReason}={}){
+  const details=[]; if (typeof logKmax!=="number"){ details.push("No kDPRA logKmax provided"); return overrideIfInvalidated({call:"Inconclusive",confidence:"Low",details}, invalidated, invalidatedReason); }
   details.push(`kDPRA logKmax = ${logKmax} (potency/IATA context; not used in 2o3 hazard)`);
-  return overrideIfInvalidated({call:"Inconclusive",confidence:"Low",details}, invalidated);
+  return overrideIfInvalidated({call:"Inconclusive",confidence:"Low",details}, invalidated, invalidatedReason);
 }
-function calcKeratinoSens({maxInduction,viabilityAtMax,invalidated}={}){
+function calcKeratinoSens({maxInduction,viabilityAtMax,invalidated,invalidatedReason}={}){
   const details=[]; let call="Inconclusive"; let inBR=false;
   if (typeof maxInduction==="number"){
     inBR = within(maxInduction,1.35,1.67);
@@ -349,17 +349,17 @@ function calcKeratinoSens({maxInduction,viabilityAtMax,invalidated}={}){
     }
     if (inBR) details.push("Borderline range (Low confidence).");
   } else details.push("No KeratinoSens value provided");
-  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR, needsViab:(typeof maxInduction==="number" && maxInduction>=1.5 && viabilityAtMax==null)}, invalidated);
+  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR, needsViab:(typeof maxInduction==="number" && maxInduction>=1.5 && viabilityAtMax==null)}, invalidated, invalidatedReason);
 }
-function calcLuSens({maxInduction,invalidated}={}){
+function calcLuSens({maxInduction,invalidated,invalidatedReason}={}){
   const details=[]; let call="Inconclusive"; let inBR=false;
   if (typeof maxInduction==="number"){
     call=posNeg(maxInduction,1.5); inBR=within(maxInduction,1.28,1.76);
     details.push(`Max luciferase induction = ${maxInduction}× (pos ≥1.5×; BR 1.28–1.76×)`); if (inBR) details.push("Borderline range (Low confidence).");
   } else details.push("No LuSens value provided");
-  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR}, invalidated);
+  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR}, invalidated, invalidatedReason);
 }
-function calcEpiSensA({atf3,gclm,dnajb2,il8,overrideReportCall,invalidated}={}){
+function calcEpiSensA({atf3,gclm,dnajb2,il8,overrideReportCall,invalidated,invalidatedReason}={}){
   const details=[]; const genePos={ ATF3: typeof atf3==="number"? atf3>15:false, GCLM: typeof gclm==="number"? gclm>2:false, DNAJB2: typeof dnajb2==="number"? dnajb2>2:false, IL8: typeof il8==="number"? il8>4:false };
   const genesAbove=Object.values(genePos).filter(Boolean).length;
   let call="Inconclusive";
@@ -372,9 +372,9 @@ function calcEpiSensA({atf3,gclm,dnajb2,il8,overrideReportCall,invalidated}={}){
   if (typeof dnajb2==="number") details.push(`DNAJB2 Imax = ${dnajb2}×`);
   if (typeof il8==="number") details.push(`IL‑8 Imax = ${il8}×`);
   if (inBR) details.push("Borderline marker present (Low confidence).");
-  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR, genePos}, invalidated);
+  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR, genePos}, invalidated, invalidatedReason);
 }
-function calcHCLAT({rfiCD86,rfiCD54,viabilityOK,invalidated}={}){
+function calcHCLAT({rfiCD86,rfiCD54,viabilityOK,invalidated,invalidatedReason}={}){
   const details=[]; let call="Inconclusive";
   const cd86Pos = typeof rfiCD86==="number" ? rfiCD86>=150:false;
   const cd54Pos = typeof rfiCD54==="number" ? rfiCD54>=200:false;
@@ -386,25 +386,25 @@ function calcHCLAT({rfiCD86,rfiCD54,viabilityOK,invalidated}={}){
   if (call!=="Inconclusive" && viabilityOK===false){ call = "Inconclusive"; details.push("Effective-dose viability <50% — set to Inconclusive."); }
   else if (viabilityOK===true){ details.push("Effective-dose viability ≥50% confirmed."); }
   if (inBR) details.push("Borderline range marker (Low confidence).");
-  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR, needsViab:(viabilityOK===false)}, invalidated);
+  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR, needsViab:(viabilityOK===false)}, invalidated, invalidatedReason);
 }
-function calcUSENS({siCD86,invalidated}={}){
+function calcUSENS({siCD86,invalidated,invalidatedReason}={}){
   const details=[]; let call="Inconclusive"; const inBR = within(siCD86,128,176);
   if (typeof siCD86==="number"){ call = siCD86>=150? "Positive":"Negative"; details.push(`SI CD86 = ${siCD86}% (pos ≥150; BR 128–176)`); if (inBR) details.push("Borderline range (Low confidence)."); }
   else details.push("No U-SENS input provided");
-  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR}, invalidated);
+  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR}, invalidated, invalidatedReason);
 }
-function calcIL8Luc({indIL8LA,invalidated}={}){
+function calcIL8Luc({indIL8LA,invalidated,invalidatedReason}={}){
   const details=[]; let call="Inconclusive"; const inBR = within(indIL8LA,1.25,1.57);
   if (typeof indIL8LA==="number"){ call = indIL8LA>=1.4? "Positive":"Negative"; details.push(`Ind‑IL8LA = ${indIL8LA}× (pos ≥1.4×; BR 1.25–1.57×)`); if (inBR) details.push("Borderline range (Low confidence)."); }
   else details.push("No IL‑8 Luc value provided");
-  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR}, invalidated);
+  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR}, invalidated, invalidatedReason);
 }
-function calcGARDskin({meanDV,invalidated}={}){
+function calcGARDskin({meanDV,invalidated,invalidatedReason}={}){
   const details=[]; let call="Inconclusive"; const inBR = within(meanDV,-0.45,0.45);
   if (typeof meanDV==="number"){ call = meanDV>0? "Positive":"Negative"; details.push(`Mean DV = ${meanDV} (pos > 0; BR −0.450 to +0.450)`); if (inBR) details.push("Borderline range (Low confidence)."); }
   else details.push("No GARDskin DV provided");
-  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR}, invalidated);
+  return overrideIfInvalidated({call, confidence:hiLoFromBR(inBR, call==="Inconclusive"), details, br:inBR}, invalidated, invalidatedReason);
 }
 
 function runAssay(id){
@@ -482,13 +482,19 @@ function makeNumberField(label, value, onChange, placeholder){
   });
   wrap.appendChild(inp); return wrap;
 }
-function makeLimitFlag(value, onChange){
+function makeLimitFlag(value, onChange, reasonValue, onReasonChange){
+  const wrap=document.createElement('div');
   const lab=document.createElement('label'); lab.style.cursor='pointer'; lab.style.fontSize='12px';
   lab.style.display='flex'; lab.style.flexWrap='nowrap'; lab.style.alignItems='flex-start'; lab.style.gap='8px';
   const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!value; cb.style.flex='0 0 auto'; cb.style.marginTop='2px'; cb.addEventListener('change', e=> onChange(e.target.checked));
   lab.appendChild(cb);
   const span=document.createElement('span'); span.style.flex='1 1 auto'; span.innerHTML='Precipitation/insolubility or other limitation → set this assay to <b>Inconclusive</b>'; lab.appendChild(span);
-  return lab;
+  wrap.appendChild(lab);
+  const reasonInp=document.createElement('input'); reasonInp.type='text'; reasonInp.placeholder='reason for house-style note, e.g. "precipitation" (optional)';
+  reasonInp.style.marginTop='6px'; reasonInp.style.fontSize='12px'; reasonInp.value=reasonValue||'';
+  reasonInp.addEventListener('input', e=> onReasonChange(e.target.value));
+  wrap.appendChild(reasonInp);
+  return wrap;
 }
 function makeRadioCall(label, value, onChange){
   const wrap=document.createElement('div'); wrap.className='grid'; wrap.style.gap='6px';
@@ -515,6 +521,7 @@ function render(){
       if (id==="DPRA"){
         wrap.appendChild(makeNumberField("DPRA – Cys depletion (%)", data.cysDepletion, v=>{ensureInputs(id).cysDepletion=v; update();}));
         wrap.appendChild(makeNumberField("DPRA – Lys depletion (%)", data.lysDepletion, v=>{ensureInputs(id).lysDepletion=v; update();}));
+        const dpraMeanRow=document.createElement('div'); dpraMeanRow.id='dpraAutoMean'; dpraMeanRow.className='small muted'; wrap.appendChild(dpraMeanRow);
         wrap.appendChild(makeNumberField("DPRA – Mean peptide depletion (%) (only if Cys/Lys aren't available separately)", data.meanDepletion, v=>{ensureInputs(id).meanDepletion=v; update();}));
       } else if (id==="ADRA"){
         wrap.appendChild(makeNumberField("ADRA – Mean depletion (%) (either probe)", data.meanDepletion, v=>{ensureInputs(id).meanDepletion=v; update();}));
@@ -524,7 +531,7 @@ function render(){
         wrap.appendChild(makeNumberField("kDPRA – % depletion @24h,5mM (for house‑style cell)", data.pctDepletion, v=>{ensureInputs(id).pctDepletion=v; update();}));
         const p=document.createElement('div'); p.className='small muted'; p.textContent='Recorded for potency/IATA context (not used in 2o3 hazard). Also drives the house-style 1A/Not 1A/BL classification below (442C: 1A cutoff log kmax ≥ -2.0, BR -2.06 to -1.93).'; wrap.appendChild(p);
       }
-      wrap.appendChild(makeLimitFlag(data.invalidated, v=>{ensureInputs(id).invalidated=v; update();}));
+      wrap.appendChild(makeLimitFlag(data.invalidated, v=>{ensureInputs(id).invalidated=v; update();}, data.invalidatedReason, v=>{ensureInputs(id).invalidatedReason=v; update();}));
       // Interpreter button (also available on cards)
       const btn=document.createElement('button'); btn.className='btn'; btn.textContent='Report interpreter'; btn.onclick=()=>openInterpreter(id); wrap.appendChild(btn);
       sec1.appendChild(wrap);
@@ -554,7 +561,7 @@ function render(){
         wrap.appendChild(makeNumberField("EpiSensA – IL‑8 Imax (fold)", data.il8, v=>{ensureInputs(id).il8=v; update();}));
         wrap.appendChild(makeRadioCall("EpiSensA – Use report's overall call (optional)", data.overrideReportCall||"", v=>{ensureInputs(id).overrideReportCall=v; update();}));
       }
-      wrap.appendChild(makeLimitFlag(data.invalidated, v=>{ensureInputs(id).invalidated=v; update();}));
+      wrap.appendChild(makeLimitFlag(data.invalidated, v=>{ensureInputs(id).invalidated=v; update();}, data.invalidatedReason, v=>{ensureInputs(id).invalidatedReason=v; update();}));
       const btn=document.createElement('button'); btn.className='btn'; btn.textContent='Report interpreter'; btn.onclick=()=>openInterpreter(id); wrap.appendChild(btn);
       sec2.appendChild(wrap);
     }
@@ -584,7 +591,7 @@ function render(){
       } else if (id==="GARDskin"){
         wrap.appendChild(makeNumberField("GARDskin – Mean DV", data.meanDV, v=>{ensureInputs(id).meanDV=v; update();}));
       }
-      wrap.appendChild(makeLimitFlag(data.invalidated, v=>{ensureInputs(id).invalidated=v; update();}));
+      wrap.appendChild(makeLimitFlag(data.invalidated, v=>{ensureInputs(id).invalidated=v; update();}, data.invalidatedReason, v=>{ensureInputs(id).invalidatedReason=v; update();}));
       const btn=document.createElement('button'); btn.className='btn'; btn.textContent='Report interpreter'; btn.onclick=()=>openInterpreter(id); wrap.appendChild(btn);
       sec3.appendChild(wrap);
     }
@@ -665,42 +672,64 @@ function update(){
   // DA snippet content
   buildDASnippet(results, final, bestByKE);
   renderHouseStyle();
+  updateDpraAutoMean();
 }
 
 // ---------------- House-style output (RIFM High-EC3 legend) ----------------
 // Uses the dedicated "for house-style cell" fields above, which are distinct
 // from the RFI%/SI% fields used for the hazard call (different units/meanings
 // — never conflate a % induction value with a µg/mL concentration).
+function updateDpraAutoMean(){
+  const elm = document.getElementById('dpraAutoMean');
+  if (!elm) return;
+  const d = state.inputs.DPRA || {};
+  const cys = d.cysDepletion, lys = d.lysDepletion;
+  if (typeof cys === 'number' && typeof lys === 'number'){
+    const mean = (Math.max(cys,0) + Math.max(lys,0)) / 2;
+    elm.textContent = `Auto-calculated mean (negatives floored to 0): ${mean.toFixed(2)}%`;
+  } else {
+    elm.textContent = 'Enter both Cys and Lys to auto-calculate the mean.';
+  }
+}
+
 function renderHouseStyle(){
   const out = document.getElementById('houseStyleOut');
   out.innerHTML='';
   if (typeof HouseStyle === 'undefined') { out.textContent='(house-style module failed to load)'; return; }
   const cells = [];
 
+  // "invalidated" (limitation flagged) forces the CALL to Inconclusive (via
+  // runAssay(...).call below) but must NOT drop the run from the rendered
+  // cell - the source values are still real and still worth showing; only
+  // the call and a trailing note change. Do not set run.exclude for this:
+  // that flag means "drop this run from an average across MULTIPLE runs",
+  // not "hide this run's own values" - with a single run it wipes them.
+  function limitNote(d){ return d.invalidated ? (d.invalidatedReason || 'limitation') : undefined; }
+
   if (state.selected.has('DPRA')){
     const d = state.inputs.DPRA || {};
-    const run = { cys: d.cysDepletion, lys: d.lysDepletion, exclude: !!d.invalidated };
+    const run = { cys: d.cysDepletion, lys: d.lysDepletion };
     if (d.cysDepletion!=null || d.lysDepletion!=null){
-      cells.push(['DPRA', HouseStyle.render_dpra([run], runAssay('DPRA').call)]);
+      cells.push(['DPRA', HouseStyle.render_dpra([run], runAssay('DPRA').call, false, limitNote(d))]);
     }
   }
 
   if (state.selected.has('KeratinoSens')){
     const d = state.inputs.KeratinoSens || {};
-    const run = { imax:d.maxInduction, ec15:d.ec15, ic50:d.ic50, ic30:d.ic30, exclude: !!d.invalidated };
-    cells.push(['KeratinoSens', HouseStyle.render_ks([run], runAssay('KeratinoSens').call)]);
+    const run = { imax:d.maxInduction, ec15:d.ec15, ic50:d.ic50, ic30:d.ic30 };
+    cells.push(['KeratinoSens', HouseStyle.render_ks([run], runAssay('KeratinoSens').call, limitNote(d))]);
   }
 
   if (state.selected.has('HCLAT')){
     const d = state.inputs.HCLAT || {};
-    const run = { ec150:d.ec150, ec200:d.ec200, cv75:d.cv75, exclude: !!d.invalidated };
-    cells.push(['h-CLAT', HouseStyle.render_hclat([run], runAssay('HCLAT').call)]);
+    const run = { ec150:d.ec150, ec200:d.ec200, cv75:d.cv75 };
+    cells.push(['h-CLAT', HouseStyle.render_hclat([run], runAssay('HCLAT').call, limitNote(d))]);
   }
 
   if (state.selected.has('USENS')){
     const d = state.inputs.USENS || {};
-    const run = { ec150:d.ec150, cv70:d.cv70, exclude: !!d.invalidated };
-    cells.push(['U-SENS', HouseStyle.render_usens([run], runAssay('USENS').call)]);
+    const run = { ec150:d.ec150, cv70:d.cv70 };
+    cells.push(['U-SENS', HouseStyle.render_usens([run], runAssay('USENS').call, limitNote(d))]);
   }
 
   if (state.selected.has('kDPRA')){
@@ -709,8 +738,8 @@ function renderHouseStyle(){
     // Check the borderline band before the 1A cutoff, since the BR band
     // straddles -2.0 (verified against 442C text).
     const kdCallRaw = lk===null ? 'n.d.' : (within(lk,-2.06,-1.93) ? 'BL' : (lk >= -2.0 ? '1A' : 'Not 1A'));
-    const run = { log_kmax: d.logKmax, pct_depletion: d.pctDepletion, exclude: !!d.invalidated };
-    cells.push(['kDPRA', HouseStyle.render_kdpra([run], kdCallRaw)]);
+    const run = { log_kmax: d.logKmax, pct_depletion: d.pctDepletion };
+    cells.push(['kDPRA', HouseStyle.render_kdpra([run], kdCallRaw, limitNote(d))]);
   }
 
   if (!cells.length){ out.innerHTML = '<div class="small muted">Enter assay values above to see house-style cells.</div>'; return; }
