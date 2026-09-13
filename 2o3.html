@@ -686,7 +686,8 @@ function updateDpraAutoMean(){
   const cys = d.cysDepletion, lys = d.lysDepletion;
   if (typeof cys === 'number' && typeof lys === 'number'){
     const mean = (Math.max(cys,0) + Math.max(lys,0)) / 2;
-    elm.textContent = `Auto-calculated mean (negatives floored to 0): ${mean.toFixed(2)}%`;
+    const meanTxt = mean.toFixed(2).replace(/0+$/,'').replace(/\.$/,'');
+    elm.textContent = `Auto-calculated mean (negatives floored to 0): ${meanTxt}%`;
   } else {
     elm.textContent = 'Enter both Cys and Lys to auto-calculate the mean.';
   }
