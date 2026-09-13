@@ -707,30 +707,43 @@ function renderHouseStyle(){
   // not "hide this run's own values" - with a single run it wipes them.
   function limitNote(d){ return d.invalidated ? (d.invalidatedReason || 'limitation') : undefined; }
 
+  // House-style-only call text: a value inside the borderline range keeps its
+  // underlying Positive/Negative lean but is stacked as "BL/Pos" or "BL/Neg"
+  // (leftmost = decision carried forward, rest = lower-confidence read) per
+  // the High-EC3 house-style legend. "Inconclusive" (no data, or a flagged
+  // limitation) is left as-is - it isn't a borderline lean either way. This
+  // only changes the house-style cell text, not the hazard call, the 2o3
+  // combination, or the card's confidence pill/coloring.
+  function houseStyleCall(res){
+    if (res.call === 'Inconclusive') return 'Inconclusive';
+    if (res.br) return 'BL/' + (res.call === 'Positive' ? 'Pos' : 'Neg');
+    return res.call;
+  }
+
   if (state.selected.has('DPRA')){
     const d = state.inputs.DPRA || {};
     const run = { cys: d.cysDepletion, lys: d.lysDepletion };
     if (d.cysDepletion!=null || d.lysDepletion!=null){
-      cells.push(['DPRA', HouseStyle.render_dpra([run], runAssay('DPRA').call, false, limitNote(d))]);
+      cells.push(['DPRA', HouseStyle.render_dpra([run], houseStyleCall(runAssay('DPRA')), false, limitNote(d))]);
     }
   }
 
   if (state.selected.has('KeratinoSens')){
     const d = state.inputs.KeratinoSens || {};
     const run = { imax:d.maxInduction, ec15:d.ec15, ic50:d.ic50, ic30:d.ic30 };
-    cells.push(['KeratinoSens', HouseStyle.render_ks([run], runAssay('KeratinoSens').call, limitNote(d))]);
+    cells.push(['KeratinoSens', HouseStyle.render_ks([run], houseStyleCall(runAssay('KeratinoSens')), limitNote(d))]);
   }
 
   if (state.selected.has('HCLAT')){
     const d = state.inputs.HCLAT || {};
     const run = { ec150:d.ec150, ec200:d.ec200, cv75:d.cv75 };
-    cells.push(['h-CLAT', HouseStyle.render_hclat([run], runAssay('HCLAT').call, limitNote(d))]);
+    cells.push(['h-CLAT', HouseStyle.render_hclat([run], houseStyleCall(runAssay('HCLAT')), limitNote(d))]);
   }
 
   if (state.selected.has('USENS')){
     const d = state.inputs.USENS || {};
     const run = { ec150:d.ec150, cv70:d.cv70 };
-    cells.push(['U-SENS', HouseStyle.render_usens([run], runAssay('USENS').call, limitNote(d))]);
+    cells.push(['U-SENS', HouseStyle.render_usens([run], houseStyleCall(runAssay('USENS')), limitNote(d))]);
   }
 
   if (state.selected.has('kDPRA')){
