@@ -60,6 +60,13 @@ LLNA-trained and extended-PV-trained model families. Includes a built-in
 self-check against the paper's own DNCB and cinnamic aldehyde worked
 examples; **check that self-check panel before trusting a real result.**
 
+Also includes an optional **"Look up MW & vapor pressure (PubChem)"**
+button that resolves the entered CAS number on PubChem and fills those two
+fields from PubChem's computed MW and experimental vapor pressure data,
+with an expandable Sources panel showing exactly what was found and where
+(with links). This is the one feature in the toolkit that sends anything
+(the CAS number) to a third party — see `PRIVACY.md`.
+
 This is not SARA-ICE — see the hub page (`index.html`) for why.
 
 ## How to use
@@ -81,8 +88,10 @@ This is not SARA-ICE — see the hub page (`index.html`) for why.
 ## Privacy and Data Handling
 
 See `PRIVACY.md`. In short: everything runs in your browser, nothing is
-uploaded anywhere, except that the 2o3 page's PDF-upload feature loads the
-pdf.js library from a CDN on first use (the PDF itself is never uploaded).
+uploaded anywhere, except (a) the 2o3 page's PDF-upload feature loads the
+pdf.js library from a CDN on first use (the PDF itself is never uploaded),
+and (b) the PoD calculator's PubChem lookup button sends the CAS number you
+entered to PubChem to retrieve MW/vapor pressure data.
 
 ## Notes
 

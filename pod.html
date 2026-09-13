@@ -58,10 +58,19 @@
     <h2>Material</h2>
     <div class="grid cols-3">
       <label class="grid" style="gap:4px"><span>Substance name</span><input type="text" id="matName"></label>
-      <label class="grid" style="gap:4px"><span>CAS #</span><input type="text" id="matCas"></label>
+      <label class="grid" style="gap:4px"><span>CAS #</span><input type="text" id="matCas" placeholder="required for PubChem lookup"></label>
       <label class="grid" style="gap:4px"><span>MW (g/mol)</span><input type="number" id="mw" placeholder="required"></label>
     </div>
     <label class="grid" style="gap:4px;margin-top:10px;max-width:320px"><span>Vapor pressure (Pa)</span><input type="number" id="vp" placeholder="e.g. 4.6 (0 if negligible/unknown)"></label>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="btnPubchem">Look up MW &amp; vapor pressure (PubChem)</button>
+      <span class="small muted" id="pubchemStatus"></span>
+    </div>
+    <details id="pubchemSources" class="hidden" style="margin-top:8px">
+      <summary class="small" style="cursor:pointer;color:#2563eb">Sources</summary>
+      <div id="pubchemSourcesBody" class="small" style="margin-top:8px;line-height:1.5"></div>
+    </details>
+    <div class="small muted" style="margin-top:6px">Looks up the compound on PubChem by CAS number. This needs internet access (unlike the rest of this calculator) and pulls from whatever experimental data PubChem has indexed — not every chemical has vapor pressure data, and where several sources disagree, only the first is auto-filled. Always check the Sources panel before trusting the filled values.</div>
     <div class="row" style="margin-top:12px">
       <button class="btn" id="btnLoadDNCB">Load worked example: DNCB</button>
       <button class="btn" id="btnLoadCA">Load worked example: Cinnamic aldehyde</button>
@@ -123,6 +132,18 @@
 
 <script>
 'use strict';
+
+// Shared material identity across pages (2o3.html writes/reads the same key)
+(function(){
+  const KEY='skinsens_material_v1';
+  function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ return {}; } }
+  function save(m){ try{ localStorage.setItem(KEY, JSON.stringify(m)); }catch(e){} }
+  const m = load();
+  const elName=document.getElementById('matName'), elCas=document.getElementById('matCas'), elMw=document.getElementById('mw');
+  if(m.name) elName.value=m.name; if(m.cas) elCas.value=m.cas; if(m.mw && !elMw.value) elMw.value=m.mw;
+  [elName,elCas,elMw].forEach(el=> el.addEventListener('input', ()=> save({name:elName.value, cas:elCas.value, mw:elMw.value})));
+})();
+
 const log10 = Math.log10;
 
 function lognormVP(vp){ return (vp!=null && vp>10) ? (log10(vp)-1) : 0; }
@@ -257,8 +278,140 @@ document.getElementById('btnLoadCA').onclick = ()=> loadExample(CA);
 document.getElementById('btnClearAll').onclick = ()=>{
   ['matName','matCas','mw','vp','ec15','ec3','ic50','kmax','cd86','cd54','cv75'].forEach(id=> document.getElementById(id).value='');
   document.getElementById('ksRating').checked=false; document.getElementById('hclatRating').checked=false;
+  document.getElementById('pubchemSources').classList.add('hidden');
+  document.getElementById('pubchemStatus').textContent='';
   update();
 };
+
+// ---------- PubChem lookup (MW + experimental vapor pressure, with sources) ----------
+// Uses PubChem's public PUG-REST/PUG-View APIs. Needs internet access, unlike
+// the rest of this calculator. Never silently guesses a unit conversion it
+// isn't confident about - if vapor pressure can't be confidently parsed to
+// Pa, the raw string is shown in Sources for manual entry instead.
+const PUBCHEM_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug';
+const PUBCHEM_VIEW_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug_view';
+
+async function pubchemFetchJSON(url){
+  const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+async function resolveCidFromCas(cas){
+  // CAS numbers are indexed in PubChem as a synonym/registry id, not a
+  // dedicated field, so try the xref RegistryID endpoint first, then fall
+  // back to a plain name search (CAS numbers are valid PubChem "names" too).
+  try {
+    const j = await pubchemFetchJSON(`${PUBCHEM_BASE}/compound/xref/RegistryID/${encodeURIComponent(cas)}/cids/JSON`);
+    const cid = j?.IdentifierList?.CID?.[0];
+    if (cid) return cid;
+  } catch(e) { /* fall through to name search */ }
+  const j2 = await pubchemFetchJSON(`${PUBCHEM_BASE}/compound/name/${encodeURIComponent(cas)}/cids/JSON`);
+  const cid2 = j2?.IdentifierList?.CID?.[0];
+  if (!cid2) throw new Error('No PubChem CID found for CAS ' + cas);
+  return cid2;
+}
+
+function findSectionsByHeading(root, heading, out){
+  out = out || [];
+  if (!root) return out;
+  const sections = root.Section || (root.Record && root.Record.Section) || [];
+  for (const sec of sections){
+    if (sec.TOCHeading === heading) out.push(sec);
+    findSectionsByHeading(sec, heading, out);
+  }
+  return out;
+}
+
+function parseVaporPressureToPa(str){
+  if (!str) return null;
+  const s = String(str);
+  // Scientific-notation style used by some legacy sources, e.g. "1.4X10-1 mm Hg"
+  let m = s.match(/([\d.]+)\s*[xX]\s*10\s*(-?\d+)/);
+  let num = null;
+  if (m){
+    num = parseFloat(m[1]) * Math.pow(10, parseInt(m[2],10));
+  } else {
+    m = s.match(/([\d.]+(?:[eE]-?\d+)?)/);
+    if (m) num = parseFloat(m[1]);
+  }
+  if (num==null || Number.isNaN(num)) return null;
+  const low = s.toLowerCase();
+  let factor = null;
+  if (low.includes('mmhg') || low.includes('mm hg') || low.includes('torr')) factor = 133.322;
+  else if (low.includes('kpa')) factor = 1000;
+  else if (low.includes('bar')) factor = 100000;
+  else if (low.includes('atm')) factor = 101325;
+  else if (low.includes(' pa') || low.endsWith('pa') || low.includes('pascal')) factor = 1;
+  if (factor==null) return null; // unrecognized unit - don't guess
+  return num * factor;
+}
+
+async function lookupPubChem(){
+  const status = document.getElementById('pubchemStatus');
+  const sourcesBox = document.getElementById('pubchemSources');
+  const sourcesBody = document.getElementById('pubchemSourcesBody');
+  const cas = document.getElementById('matCas').value.trim();
+  if (!cas){ status.textContent = 'Enter a CAS # first.'; return; }
+  status.textContent = 'Looking up ' + cas + ' on PubChem...';
+  sourcesBox.classList.add('hidden');
+  sourcesBody.innerHTML = '';
+  try {
+    const cid = await resolveCidFromCas(cas);
+    const compoundUrl = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}`;
+    const sourceLines = [`<div>PubChem CID <a href="${compoundUrl}" target="_blank" rel="noopener noreferrer">${cid}</a> (resolved from CAS ${cas})</div>`];
+
+    // Molecular weight (PubChem's own computed property)
+    const propJson = await pubchemFetchJSON(`${PUBCHEM_BASE}/compound/cid/${cid}/property/MolecularWeight/JSON`);
+    const mwVal = propJson?.PropertyTable?.Properties?.[0]?.MolecularWeight;
+    if (mwVal){
+      setVal('mw', mwVal);
+      sourceLines.push(`<div><b>MW</b>: ${mwVal} g/mol — PubChem computed property, CID ${cid}</div>`);
+    }
+
+    // Experimental vapor pressure, via PUG View (nested Section tree + a
+    // top-level Reference list keyed by ReferenceNumber)
+    let vpApplied = false;
+    try {
+      const view = await pubchemFetchJSON(`${PUBCHEM_VIEW_BASE}/data/compound/${cid}/JSON`);
+      const refs = {};
+      (view?.Record?.Reference || []).forEach(r=> refs[r.ReferenceNumber] = r);
+      const vpSections = findSectionsByHeading(view.Record, 'Vapor Pressure', []);
+      const entries = [];
+      vpSections.forEach(sec=>{
+        (sec.Information || []).forEach(info=>{
+          const strs = (info.Value && info.Value.StringWithMarkup) || [];
+          strs.forEach(sw=>{
+            const ref = refs[info.ReferenceNumber];
+            entries.push({ text: sw.String, source: ref ? ref.SourceName : null, url: ref ? ref.URL : null });
+          });
+        });
+      });
+      if (entries.length){
+        sourceLines.push('<div style="margin-top:6px"><b>Vapor pressure — found ' + entries.length + ' record(s):</b></div>');
+        entries.forEach((e,i)=>{
+          const pa = parseVaporPressureToPa(e.text);
+          if (i===0 && pa!=null){ setVal('vp', pa.toFixed(6).replace(/0+$/,'').replace(/\.$/,'')); vpApplied = true; }
+          sourceLines.push(`<div style="margin-left:8px">${i===0?'&#9654; ':''}${e.text}${pa!=null?` (&asymp; ${pa.toFixed(3)} Pa)`:' (unit not recognized — enter manually)'} ${e.source? '&mdash; ' + e.source : ''} ${e.url? `<a href="${e.url}" target="_blank" rel="noopener noreferrer">source</a>`:''}</div>`);
+        });
+      } else {
+        sourceLines.push('<div style="margin-top:6px">No experimental vapor pressure record found on PubChem for this compound — enter it manually if you have it.</div>');
+      }
+    } catch(e){
+      sourceLines.push('<div style="margin-top:6px">Could not retrieve experimental property data (vapor pressure) from PubChem: ' + e.message + '</div>');
+    }
+
+    sourcesBody.innerHTML = sourceLines.join('');
+    sourcesBox.classList.remove('hidden');
+    sourcesBox.open = true;
+    status.textContent = mwVal ? `Found MW${vpApplied? ' and vapor pressure':''} for CID ${cid} — see Sources below.` : 'Found the compound but no molecular weight property was returned — see Sources below.';
+    update();
+  } catch(err){
+    console.error(err);
+    status.textContent = 'PubChem lookup failed: ' + (err && err.message ? err.message : 'unknown error') + '. This needs internet access; check the CAS number, or enter values manually.';
+  }
+}
+document.getElementById('btnPubchem').onclick = lookupPubChem;
 
 // ---------- Self-check against independently-computed ESM3 reference values ----------
 // These reference numbers were computed directly from the ESM3 formulas (not
