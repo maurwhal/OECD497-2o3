@@ -510,15 +510,15 @@ function render(){
       const wrap=document.createElement('div'); wrap.className='grid'; wrap.style.gap='8px'; wrap.style.margin='8px 0 8px';
       const data = state.inputs[id] || {};
       if (id==="DPRA"){
-        wrap.appendChild(makeNumberField("DPRA – Cys depletion (%)", data.cysDepletion, v=>{ensureInputs(id).cysDepletion=v; update();}, "required for 2o3"));
-        wrap.appendChild(makeNumberField("DPRA – Lys depletion (%)", data.lysDepletion, v=>{ensureInputs(id).lysDepletion=v; update();}, "leave blank if co-elution (uses Cys-only model)"));
-        wrap.appendChild(makeNumberField("DPRA – Mean peptide depletion (%) (only if Cys/Lys aren't available separately)", data.meanDepletion, v=>{ensureInputs(id).meanDepletion=v; update();}, "optional — fallback only"));
+        wrap.appendChild(makeNumberField("DPRA – Cys depletion (%)", data.cysDepletion, v=>{ensureInputs(id).cysDepletion=v; update();}));
+        wrap.appendChild(makeNumberField("DPRA – Lys depletion (%)", data.lysDepletion, v=>{ensureInputs(id).lysDepletion=v; update();}));
+        wrap.appendChild(makeNumberField("DPRA – Mean peptide depletion (%) (only if Cys/Lys aren't available separately)", data.meanDepletion, v=>{ensureInputs(id).meanDepletion=v; update();}));
       } else if (id==="ADRA"){
-        wrap.appendChild(makeNumberField("ADRA – Mean depletion (%) (either probe)", data.meanDepletion, v=>{ensureInputs(id).meanDepletion=v; update();}, "optional for 2o3"));
-        wrap.appendChild(makeNumberField("ADRA – NAC-only depletion (%) (optional)", data.nacOnlyDepletion, v=>{ensureInputs(id).nacOnlyDepletion=v; update();}, "optional for 2o3"));
+        wrap.appendChild(makeNumberField("ADRA – Mean depletion (%) (either probe)", data.meanDepletion, v=>{ensureInputs(id).meanDepletion=v; update();}));
+        wrap.appendChild(makeNumberField("ADRA – NAC-only depletion (%) (optional)", data.nacOnlyDepletion, v=>{ensureInputs(id).nacOnlyDepletion=v; update();}));
       } else if (id==="kDPRA"){
-        wrap.appendChild(makeNumberField("kDPRA – log Kmax (potency; not used in 2o3)", data.logKmax, v=>{ensureInputs(id).logKmax=v; update();}, "optional for 2o3 (potency only)"));
-        wrap.appendChild(makeNumberField("kDPRA – % depletion @24h,5mM (for house‑style cell)", data.pctDepletion, v=>{ensureInputs(id).pctDepletion=v; update();}, "optional — house-style only"));
+        wrap.appendChild(makeNumberField("kDPRA – log Kmax (potency; not used in 2o3)", data.logKmax, v=>{ensureInputs(id).logKmax=v; update();}));
+        wrap.appendChild(makeNumberField("kDPRA – % depletion @24h,5mM (for house‑style cell)", data.pctDepletion, v=>{ensureInputs(id).pctDepletion=v; update();}));
         const p=document.createElement('div'); p.className='small muted'; p.textContent='Recorded for potency/IATA context (not used in 2o3 hazard). Also drives the house-style 1A/Not 1A/BL classification below (442C: 1A cutoff log kmax ≥ -2.0, BR -2.06 to -1.93).'; wrap.appendChild(p);
       }
       wrap.appendChild(makeLimitFlag(data.invalidated, v=>{ensureInputs(id).invalidated=v; update();}));
@@ -537,18 +537,18 @@ function render(){
       const wrap=document.createElement('div'); wrap.className='grid'; wrap.style.gap='8px'; wrap.style.margin='8px 0 8px';
       const data = state.inputs[id] || {};
       if (id==="KeratinoSens"){
-        wrap.appendChild(makeNumberField("KeratinoSens – Max luciferase induction (fold)", data.maxInduction, v=>{ensureInputs(id).maxInduction=v; update();}, "required for 2o3"));
-        wrap.appendChild(makeNumberField("KeratinoSens – Viability at that concentration (%)", data.viabilityAtMax, v=>{ensureInputs(id).viabilityAtMax=v; update();}, "required for 2o3 (to confirm positive)"));
-        wrap.appendChild(makeNumberField("KeratinoSens – EC1.5 (µM) (for house‑style cell)", data.ec15, v=>{ensureInputs(id).ec15=v; update();}, "optional — house-style only"));
-        wrap.appendChild(makeNumberField("KeratinoSens – IC50 (µM) (for house‑style cell)", data.ic50, v=>{ensureInputs(id).ic50=v; update();}, "optional — house-style only"));
-        wrap.appendChild(makeNumberField("KeratinoSens – IC30 (µM) (for house‑style cell)", data.ic30, v=>{ensureInputs(id).ic30=v; update();}, "optional — house-style only"));
+        wrap.appendChild(makeNumberField("KeratinoSens – Max luciferase induction (fold)", data.maxInduction, v=>{ensureInputs(id).maxInduction=v; update();}));
+        wrap.appendChild(makeNumberField("KeratinoSens – Viability at that concentration (%)", data.viabilityAtMax, v=>{ensureInputs(id).viabilityAtMax=v; update();}));
+        wrap.appendChild(makeNumberField("KeratinoSens – EC1.5 (µM) (for house‑style cell)", data.ec15, v=>{ensureInputs(id).ec15=v; update();}));
+        wrap.appendChild(makeNumberField("KeratinoSens – IC50 (µM) (for house‑style cell)", data.ic50, v=>{ensureInputs(id).ic50=v; update();}));
+        wrap.appendChild(makeNumberField("KeratinoSens – IC30 (µM) (for house‑style cell)", data.ic30, v=>{ensureInputs(id).ic30=v; update();}));
       } else if (id==="LuSens"){
-        wrap.appendChild(makeNumberField("LuSens – Max luciferase induction (fold)", data.maxInduction, v=>{ensureInputs(id).maxInduction=v; update();}, "optional for 2o3"));
+        wrap.appendChild(makeNumberField("LuSens – Max luciferase induction (fold)", data.maxInduction, v=>{ensureInputs(id).maxInduction=v; update();}));
       } else if (id==="EpiSensA"){
-        wrap.appendChild(makeNumberField("EpiSensA – ATF3 Imax (fold)", data.atf3, v=>{ensureInputs(id).atf3=v; update();}, "optional for 2o3"));
-        wrap.appendChild(makeNumberField("EpiSensA – GCLM Imax (fold)", data.gclm, v=>{ensureInputs(id).gclm=v; update();}, "optional for 2o3"));
-        wrap.appendChild(makeNumberField("EpiSensA – DNAJB2 Imax (fold)", data.dnajb2, v=>{ensureInputs(id).dnajb2=v; update();}, "optional for 2o3"));
-        wrap.appendChild(makeNumberField("EpiSensA – IL‑8 Imax (fold)", data.il8, v=>{ensureInputs(id).il8=v; update();}, "optional for 2o3"));
+        wrap.appendChild(makeNumberField("EpiSensA – ATF3 Imax (fold)", data.atf3, v=>{ensureInputs(id).atf3=v; update();}));
+        wrap.appendChild(makeNumberField("EpiSensA – GCLM Imax (fold)", data.gclm, v=>{ensureInputs(id).gclm=v; update();}));
+        wrap.appendChild(makeNumberField("EpiSensA – DNAJB2 Imax (fold)", data.dnajb2, v=>{ensureInputs(id).dnajb2=v; update();}));
+        wrap.appendChild(makeNumberField("EpiSensA – IL‑8 Imax (fold)", data.il8, v=>{ensureInputs(id).il8=v; update();}));
         wrap.appendChild(makeRadioCall("EpiSensA – Use report's overall call (optional)", data.overrideReportCall||"", v=>{ensureInputs(id).overrideReportCall=v; update();}));
       }
       wrap.appendChild(makeLimitFlag(data.invalidated, v=>{ensureInputs(id).invalidated=v; update();}));
@@ -566,20 +566,20 @@ function render(){
       const wrap=document.createElement('div'); wrap.className='grid'; wrap.style.gap='8px'; wrap.style.margin='8px 0 8px';
       const data = state.inputs[id] || {};
       if (id==="HCLAT"){
-        wrap.appendChild(makeNumberField("h‑CLAT – RFI CD86 (%)", data.rfiCD86, v=>{ensureInputs(id).rfiCD86=v; update();}, "required for 2o3 (or CD54 below)"));
-        wrap.appendChild(makeNumberField("h‑CLAT – RFI CD54 (%)", data.rfiCD54, v=>{ensureInputs(id).rfiCD54=v; update();}, "required for 2o3 (or CD86 above)"));
+        wrap.appendChild(makeNumberField("h‑CLAT – RFI CD86 (%)", data.rfiCD86, v=>{ensureInputs(id).rfiCD86=v; update();}));
+        wrap.appendChild(makeNumberField("h‑CLAT – RFI CD54 (%)", data.rfiCD54, v=>{ensureInputs(id).rfiCD54=v; update();}));
         wrap.appendChild(makeCheckbox("h‑CLAT – Viability ≥50% at effective dose", (data.viabilityOK ?? true), v=>{ensureInputs(id).viabilityOK=v; update();}));
-        wrap.appendChild(makeNumberField("h‑CLAT – EC150 (µg/mL) (for house‑style cell)", data.ec150, v=>{ensureInputs(id).ec150=v; update();}, "optional — house-style only"));
-        wrap.appendChild(makeNumberField("h‑CLAT – EC200 (µg/mL) (for house‑style cell)", data.ec200, v=>{ensureInputs(id).ec200=v; update();}, "optional — house-style only"));
-        wrap.appendChild(makeNumberField("h‑CLAT – CV75 (µg/mL) (for house‑style cell)", data.cv75, v=>{ensureInputs(id).cv75=v; update();}, "optional — house-style only"));
+        wrap.appendChild(makeNumberField("h‑CLAT – EC150 (µg/mL) (for house‑style cell)", data.ec150, v=>{ensureInputs(id).ec150=v; update();}));
+        wrap.appendChild(makeNumberField("h‑CLAT – EC200 (µg/mL) (for house‑style cell)", data.ec200, v=>{ensureInputs(id).ec200=v; update();}));
+        wrap.appendChild(makeNumberField("h‑CLAT – CV75 (µg/mL) (for house‑style cell)", data.cv75, v=>{ensureInputs(id).cv75=v; update();}));
       } else if (id==="USENS"){
-        wrap.appendChild(makeNumberField("U‑SENS – SI CD86 (%)", data.siCD86, v=>{ensureInputs(id).siCD86=v; update();}, "optional for 2o3"));
-        wrap.appendChild(makeNumberField("U‑SENS – EC150 (µg/mL) (for house‑style cell)", data.ec150, v=>{ensureInputs(id).ec150=v; update();}, "optional — house-style only"));
-        wrap.appendChild(makeNumberField("U‑SENS – CV70 (µg/mL) (for house‑style cell)", data.cv70, v=>{ensureInputs(id).cv70=v; update();}, "optional — house-style only"));
+        wrap.appendChild(makeNumberField("U‑SENS – SI CD86 (%)", data.siCD86, v=>{ensureInputs(id).siCD86=v; update();}));
+        wrap.appendChild(makeNumberField("U‑SENS – EC150 (µg/mL) (for house‑style cell)", data.ec150, v=>{ensureInputs(id).ec150=v; update();}));
+        wrap.appendChild(makeNumberField("U‑SENS – CV70 (µg/mL) (for house‑style cell)", data.cv70, v=>{ensureInputs(id).cv70=v; update();}));
       } else if (id==="IL8Luc"){
-        wrap.appendChild(makeNumberField("IL‑8 Luc – Ind‑IL8LA (fold)", data.indIL8LA, v=>{ensureInputs(id).indIL8LA=v; update();}, "optional for 2o3"));
+        wrap.appendChild(makeNumberField("IL‑8 Luc – Ind‑IL8LA (fold)", data.indIL8LA, v=>{ensureInputs(id).indIL8LA=v; update();}));
       } else if (id==="GARDskin"){
-        wrap.appendChild(makeNumberField("GARDskin – Mean DV", data.meanDV, v=>{ensureInputs(id).meanDV=v; update();}, "optional for 2o3"));
+        wrap.appendChild(makeNumberField("GARDskin – Mean DV", data.meanDV, v=>{ensureInputs(id).meanDV=v; update();}));
       }
       wrap.appendChild(makeLimitFlag(data.invalidated, v=>{ensureInputs(id).invalidated=v; update();}));
       const btn=document.createElement('button'); btn.className='btn'; btn.textContent='Report interpreter'; btn.onclick=()=>openInterpreter(id); wrap.appendChild(btn);
