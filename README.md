@@ -34,7 +34,8 @@ insolubility, viability gates) are handled per OECD guidance.
 
 Also includes:
 - A **Report interpreter** modal for entering up to 3 runs per assay with
-  averaging and an Excel-blurb (TSV) export.
+  averaging, applied straight into the assay call and the house-style cells
+  below (no separate copy-paste format to keep in sync).
 - An **OECD 497 DA snippet** — an auto-generated, copy-ready summary
   paragraph.
 - A canvas-based **"Explain this call"** view per assay showing the

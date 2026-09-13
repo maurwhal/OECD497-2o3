@@ -7,18 +7,21 @@
 <style>
   :root { --bg:#f8fafc; --fg:#0f172a; --muted:#475569; --card:#ffffff; --border:#e2e8f0; --ok:#065f46; --bad:#9f1239; --low:#92400e; --warn:#9a3412; --pill-border:#d1fae5; --pill-bg:#ecfdf5; --pill-low-bg:#fef3c7; --pill-low-bd:#fde68a; --warnbg:#fff7ed; --warnbd:#fed7aa; }
   *{box-sizing:border-box}
-  body{ margin:0; font-family:Tahoma, "Segoe UI", ui-sans-serif, system-ui, -apple-system, Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif; background:var(--bg); color:var(--fg) }
+  body{ margin:0; font-family:Tahoma, "Segoe UI", ui-sans-serif, system-ui, -apple-system, Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif; background:var(--bg); color:var(--fg); background-size:40px 40px }
   .container{max-width:1152px;margin:0 auto;padding:24px;display:grid;gap:24px}
   h1{font-size:24px;margin:0 0 6px 0} h2{font-size:18px;margin:0 0 12px 0}
   .muted{color:var(--muted)} .small{font-size:12px}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 1px 1px rgba(0,0,0,.04);padding:16px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 1px 2px rgba(0,0,0,.04);padding:16px}
   .grid{display:grid;gap:16px} .cols-2{grid-template-columns:repeat(2,minmax(0,1fr))} .cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
   @media (max-width:960px){ .cols-2,.cols-3{grid-template-columns:1fr} }
   .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .btn{background:#fff;border:1px solid var(--border);border-radius:12px;padding:8px 12px;cursor:pointer}
+  .btn{background:#fff;border:1px solid var(--border);border-radius:12px;padding:8px 12px;cursor:pointer;transition:background .15s ease,border-color .15s ease}
+  .btn:hover{background:#f1f5f9;border-color:#cbd5e1}
   .btn:active{transform:translateY(1px)}
   .btn.primary{background:#0f172a;color:#fff;border-color:#0f172a}
   input[type="number"],input[type="text"]{padding:8px;border:1px solid var(--border);border-radius:12px;width:100%}
+  input[type="number"]:focus,input[type="text"]:focus{outline:2px solid #93c5fd;outline-offset:1px}
+  .icon-btn:hover{background:#f1f5f9}
   label{font-size:14px}
   .list{font-size:12px;color:#334155;line-height:1.4}
   table{width:100%;border-collapse:collapse;font-size:13px}
@@ -45,6 +48,7 @@
       <div class="small muted">Reproduces the regression-based PoD models from Natsch, "Integrated Skin Sensitization Assessment Based on OECD Methods (III): Adding Human Data to the Potency Assessment", ALTEX, doi:10.14573/altex.2302081s3 (Supplementary Material ESM3).</div>
     </div>
     <div class="row">
+      <button class="btn" id="btnBG">BG: Plain</button>
       <a class="icon-btn" href="index.html">&larr; Hub</a>
       <a class="icon-btn" href="2o3.html">2o3 Hazard tool</a>
     </div>
@@ -132,6 +136,20 @@
 
 <script>
 'use strict';
+
+// ---------- Pattern background toggle (same puzzle pattern as 2o3.html) ----------
+(function(){
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'>
+    <rect width='40' height='40' fill='%23f8fafc'/>
+    <path d='M0,0 h40 v40 h-40 z M20,0 v8 c2,0 3.5,1.5 3.5,3.5S22,15 20,15v10c2,0 3.5,1.5 3.5,3.5S22,32 20,32v8 M0,20 h8 c0,-2 1.5,-3.5 3.5,-3.5S15,18 15,20h10c0,-2 1.5,-3.5 3.5,-3.5S32,18 32,20h8' fill='none' stroke='%230f172a' stroke-opacity='0.08' stroke-width='1.1'/>
+  </svg>`;
+  const uri = `url("data:image/svg+xml,${svg.replace(/\n|\s{2,}/g,' ')}")`;
+  document.body.style.backgroundImage = uri;
+  document.body.style.backgroundSize = '40px 40px';
+  let on = true;
+  const b=document.getElementById('btnBG'); b.textContent='BG: Plain';
+  b.onclick = ()=>{ on=!on; b.textContent = on? 'BG: Plain' : 'BG: Pattern'; document.body.style.backgroundImage = on? uri : 'none'; };
+})();
 
 // Shared material identity across pages (2o3.html writes/reads the same key)
 (function(){
