@@ -47,9 +47,10 @@
       <div class="small muted">Reproduces the regression-based PoD models from Natsch, "Integrated Skin Sensitization Assessment Based on OECD Methods (III): Adding Human Data to the Potency Assessment", ALTEX, doi:10.14573/altex.2302081s3 (Supplementary Material ESM3).</div>
     </div>
     <div class="row">
-      <button class="btn" id="btnBG">BG: Plain</button>
       <a class="icon-btn" href="index.html">&larr; Hub</a>
-      <a class="icon-btn" href="2o3.html">2o3 Hazard tool</a>
+      <a class="icon-btn" href="2o3.html">OECD 497 2o3</a>
+      <button class="btn" id="btnBG">BG: Plain</button>
+      <button class="btn" id="btnReset">Reset</button>
     </div>
   </header>
 
@@ -73,15 +74,13 @@
     <div class="row" style="margin-top:12px">
       <button class="btn" id="btnLoadDNCB">Load worked example: DNCB</button>
       <button class="btn" id="btnLoadCA">Load worked example: Cinnamic aldehyde</button>
-      <button class="btn" id="btnClearAll">Reset</button>
     </div>
   </div>
 
   <div class="grid cols-3">
     <fieldset>
       <legend>KeratinoSens (TG 442D)</legend>
-      <label class="row" style="gap:6px"><input type="checkbox" id="ksRating"><span>KeratinoSens performed (rated positive or negative)</span></label>
-      <div class="grid" style="gap:8px;margin-top:8px">
+      <div class="grid" style="gap:8px">
         <label class="grid" style="gap:4px"><span>EC1.5 (mM, per ESM3 convention — see worked examples)</span><input type="number" id="ec15" step="any"></label>
         <label class="grid" style="gap:4px"><span>EC3.0 (mM) — conc. giving 3-fold induction</span><input type="number" id="ec3" step="any"></label>
         <label class="grid" style="gap:4px"><span>IC50 (mM)</span><input type="number" id="ic50" step="any"></label>
@@ -95,8 +94,7 @@
     </fieldset>
     <fieldset>
       <legend>h-CLAT (TG 442E)</legend>
-      <label class="row" style="gap:6px"><input type="checkbox" id="hclatRating"><span>h-CLAT performed (rated positive or negative)</span></label>
-      <div class="grid" style="gap:8px;margin-top:8px">
+      <div class="grid" style="gap:8px">
         <label class="grid" style="gap:4px"><span>CD86 EC150 (mg/mL, per ESM3 convention)</span><input type="number" id="cd86" step="any"></label>
         <label class="grid" style="gap:4px"><span>CD54 EC200 (mg/mL, per ESM3 convention)</span><input type="number" id="cd54" step="any"></label>
         <label class="grid" style="gap:4px"><span>CV75 (mg/mL, per ESM3 convention)</span><input type="number" id="cv75" step="any"></label>
@@ -124,8 +122,9 @@
   </div>
 
   <footer class="card">
-    <div class="small muted">Natsch PoD Calculator — a <b>Marvelous Maura Model</b>. All calculation is client-side; nothing is uploaded anywhere.</div>
+    <div class="small muted">Natsch PoD Calculator — a <a href="https://github.com/maurwhal" target="_blank" rel="noopener noreferrer"><b>Marvelous Maura Model</b></a>. All calculation is client-side; nothing is uploaded anywhere.</div>
     <div class="small muted">Disclaimer: provided for informational purposes. Final scientific interpretation and unit verification against source data remain the responsibility of the user.</div>
+    <div class="small muted" style="margin-top:8px"><b>Sources:</b> Natsch A. et al., <a href="https://doi.org/10.14573/altex.2302081s3" target="_blank" rel="noopener noreferrer">"Integrated Skin Sensitization Assessment Based on OECD Methods (III): Adding Human Data to the Potency Assessment"</a>, ALTEX (Supplementary Material ESM3, the source of every equation on this page) · <a href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noopener noreferrer">PubChem</a> (used by the MW/vapor pressure lookup above).</div>
   </footer>
 </div>
 
@@ -165,11 +164,11 @@ function lognormVP(vp){ return (vp!=null && vp>10) ? (log10(vp)-1) : 0; }
 // units (see the on-page notes + worked examples). Returns null fields when a
 // required input is missing ("not sufficient data" gating, matching ESM3).
 function computeAll(inp){
-  const { mw, vp, ksOn, ec15, ec3, ic50, kmax, hclatOn, cd86, cd54, cv75 } = inp;
+  const { mw, vp, ec15, ec3, ic50, kmax, cd86, cd54, cv75 } = inp;
   const E5 = lognormVP(vp);
-  const haveKS = ksOn && ec15!=null && ec3!=null && ic50!=null;
+  const haveKS = ec15!=null && ec3!=null && ic50!=null;
   const haveKmax = kmax!=null;
-  const haveHclat = hclatOn && cd86!=null && cd54!=null && cv75!=null;
+  const haveHclat = cd86!=null && cd54!=null && cv75!=null;
 
   const E9 = haveKS ? (-log10(ec15)+log10(4000)) : null;   // LOG norm EC1.5 KS
   const E11 = haveKS ? (-log10(ec3)+log10(4000)) : null;   // LOG norm EC3 KS
@@ -247,10 +246,8 @@ function readInputs(){
   const num = id => { const v = document.getElementById(id).value; return v===''? null : Number(v); };
   return {
     mw: num('mw'), vp: num('vp'),
-    ksOn: document.getElementById('ksRating').checked,
     ec15: num('ec15'), ec3: num('ec3'), ic50: num('ic50'),
     kmax: num('kmax'),
-    hclatOn: document.getElementById('hclatRating').checked,
     cd86: num('cd86'), cd54: num('cd54'), cv75: num('cv75'),
   };
 }
@@ -265,9 +262,6 @@ function update(){
 ['mw','vp','ec15','ec3','ic50','kmax','cd86','cd54','cv75'].forEach(id=>{
   document.getElementById(id).addEventListener('input', update);
 });
-['ksRating','hclatRating'].forEach(id=>{
-  document.getElementById(id).addEventListener('change', update);
-});
 
 function setVal(id,v){ document.getElementById(id).value = (v===undefined||v===null)?'':v; }
 
@@ -275,10 +269,8 @@ function loadExample(ex){
   document.getElementById('matName').value = ex.name;
   document.getElementById('matCas').value = ex.cas;
   setVal('mw', ex.mw); setVal('vp', ex.vp);
-  document.getElementById('ksRating').checked = true;
   setVal('ec15', ex.ec15); setVal('ec3', ex.ec3); setVal('ic50', ex.ic50);
   setVal('kmax', ex.kmax);
-  document.getElementById('hclatRating').checked = true;
   setVal('cd86', ex.cd86); setVal('cd54', ex.cd54); setVal('cv75', ex.cv75);
   update();
 }
@@ -288,9 +280,8 @@ const CA = { name:'Cinnamic aldehyde', cas:'104-55-2', mw:132.16, vp:4.6, ec15:1
 
 document.getElementById('btnLoadDNCB').onclick = ()=> loadExample(DNCB);
 document.getElementById('btnLoadCA').onclick = ()=> loadExample(CA);
-document.getElementById('btnClearAll').onclick = ()=>{
+document.getElementById('btnReset').onclick = ()=>{
   ['matName','matCas','mw','vp','ec15','ec3','ic50','kmax','cd86','cd54','cv75'].forEach(id=> document.getElementById(id).value='');
-  document.getElementById('ksRating').checked=false; document.getElementById('hclatRating').checked=false;
   document.getElementById('pubchemSources').classList.add('hidden');
   document.getElementById('pubchemStatus').textContent='';
   update();
@@ -443,7 +434,7 @@ function runSelfCheck(){
   const cases = [['DNCB', DNCB], ['CA', CA]];
   let allPass = true;
   cases.forEach(([key, ex])=>{
-    const inp = { mw:ex.mw, vp:ex.vp, ksOn:true, ec15:ex.ec15, ec3:ex.ec3, ic50:ex.ic50, kmax:ex.kmax, hclatOn:true, cd86:ex.cd86, cd54:ex.cd54, cv75:ex.cv75 };
+    const inp = { mw:ex.mw, vp:ex.vp, ec15:ex.ec15, ec3:ex.ec3, ic50:ex.ic50, kmax:ex.kmax, cd86:ex.cd86, cd54:ex.cd54, cv75:ex.cv75 };
     const eqs = computeAll(inp);
     const exp = EXPECTED[key];
     const row = document.createElement('div');

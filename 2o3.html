@@ -6,7 +6,7 @@
 <title>OECD 497 – 2‑out‑of‑3 Decision Helper • Marvelous Maura Model (Offline)</title>
 <style>
   :root {
-    --bg:#f8fafc; --fg:#0f172a; --muted:#475569; --card:#ffffff; --border:#e2e8f0;
+    --bg:#eaf3fb; --fg:#14213d; --muted:#3d5a80; --card:#ffffff; --border:#dbe9f7;
     --ok:#065f46; --bad:#9f1239; --low:#92400e; --warn:#9a3412;
     --accent:#0284c7; --accent-dark:#075985;
     --pill-border:#bae6fd; --pill-bg:#e0f2fe; --pill-low-bg:#fef3c7; --pill-low-bd:#fde68a;
@@ -91,12 +91,12 @@
       <div class="small muted">Assay thresholds &amp; borderline ranges per OECD&nbsp;Guideline&nbsp;No.&nbsp;497 and TG&nbsp;442C/442D/442E validity/BR handling.</div>
     </div>
     <div class="row">
-      <button class="btn" id="btnBR">BR cheat‑sheet</button>
-      <button class="btn" id="btnReset">Reset</button>
-      <button class="btn" id="btnBG">BG: Plain</button>
-      <button class="btn" id="btnDA">OECD&nbsp;497 DA snippet</button>
       <a class="icon-btn" href="index.html">&larr; Hub</a>
       <a class="icon-btn" href="pod.html">PoD calculator</a>
+      <button class="btn" id="btnBG">BG: Plain</button>
+      <button class="btn" id="btnBR">BR cheat‑sheet</button>
+      <button class="btn" id="btnDA">OECD&nbsp;497 DA snippet</button>
+      <button class="btn" id="btnReset">Reset</button>
     </div>
   </header>
 
@@ -136,8 +136,9 @@
   </div>
 
   <footer class="card">
-    <div class="small muted">OECD 497 2‑out‑of‑3 Decision Helper — a <b>Marvelous Maura Model</b>.</div>
+    <div class="small muted">OECD 497 2‑out‑of‑3 Decision Helper — a <a href="https://github.com/maurwhal" target="_blank" rel="noopener noreferrer"><b>Marvelous Maura Model</b></a>.</div>
     <div class="small muted">No external links or resources are loaded except pdf.js (only if you use PDF upload); all logic and visuals are otherwise client‑side.</div>
+    <div class="small muted" style="margin-top:8px"><b>Sources:</b> <a href="https://www.oecd.org/en/publications/guideline-no-497-defined-approaches-on-skin-sensitisation_b92879a4-en.html" target="_blank" rel="noopener noreferrer">OECD Guideline No. 497 — Defined Approaches on Skin Sensitisation</a>.</div>
   </footer>
 </div>
 
@@ -236,8 +237,8 @@
 // ---------------- Pattern toggle (inline SVG, default ON) ----------------
 (function(){
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'>
-    <rect width='40' height='40' fill='%23f8fafc'/>
-    <path d='M0,0 h40 v40 h-40 z M20,0 v8 c2,0 3.5,1.5 3.5,3.5S22,15 20,15v10c2,0 3.5,1.5 3.5,3.5S22,32 20,32v8 M0,20 h8 c0,-2 1.5,-3.5 3.5,-3.5S15,18 15,20h10c0,-2 1.5,-3.5 3.5,-3.5S32,18 32,20h8' fill='none' stroke='%230f172a' stroke-opacity='0.08' stroke-width='1.1'/>
+    <rect width='40' height='40' fill='%23eaf3fb'/>
+    <path d='M0,0 h40 v40 h-40 z M20,0 v8 c2,0 3.5,1.5 3.5,3.5S22,15 20,15v10c2,0 3.5,1.5 3.5,3.5S22,32 20,32v8 M0,20 h8 c0,-2 1.5,-3.5 3.5,-3.5S15,18 15,20h10c0,-2 1.5,-3.5 3.5,-3.5S32,18 32,20h8' fill='none' stroke='%2314213d' stroke-opacity='0.10' stroke-width='1.1'/>
   </svg>`;
   const uri = `url("data:image/svg+xml,${svg.replace(/\n|\s{2,}/g,' ')}")`;
   document.body.style.backgroundImage = uri; // ON by default
@@ -464,11 +465,12 @@ function makeSection(title){
   return d;
 }
 function makeCheckbox(label, checked, onChange){
-  const lab=document.createElement('label'); lab.className='row'; lab.style.cursor='pointer'; lab.style.gap='8px';
-  const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=checked;
+  const lab=document.createElement('label'); lab.style.cursor='pointer';
+  lab.style.display='flex'; lab.style.flexWrap='nowrap'; lab.style.alignItems='flex-start'; lab.style.gap='8px';
+  const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=checked; cb.style.flex='0 0 auto'; cb.style.marginTop='3px';
   cb.addEventListener('change', e=> onChange(e.target.checked));
   lab.appendChild(cb);
-  const span=document.createElement('span'); span.textContent=label; span.style.fontSize='14px'; lab.appendChild(span);
+  const span=document.createElement('span'); span.textContent=label; span.style.fontSize='14px'; span.style.flex='1 1 auto'; lab.appendChild(span);
   return lab;
 }
 function makeNumberField(label, value, onChange, placeholder){
@@ -481,10 +483,11 @@ function makeNumberField(label, value, onChange, placeholder){
   wrap.appendChild(inp); return wrap;
 }
 function makeLimitFlag(value, onChange){
-  const lab=document.createElement('label'); lab.className='row'; lab.style.cursor='pointer'; lab.style.gap='8px'; lab.style.fontSize='12px';
-  const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!value; cb.addEventListener('change', e=> onChange(e.target.checked));
+  const lab=document.createElement('label'); lab.style.cursor='pointer'; lab.style.fontSize='12px';
+  lab.style.display='flex'; lab.style.flexWrap='nowrap'; lab.style.alignItems='flex-start'; lab.style.gap='8px';
+  const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!value; cb.style.flex='0 0 auto'; cb.style.marginTop='2px'; cb.addEventListener('change', e=> onChange(e.target.checked));
   lab.appendChild(cb);
-  const span=document.createElement('span'); span.innerHTML='Precipitation/insolubility or other limitation → set this assay to <b>Inconclusive</b>'; lab.appendChild(span);
+  const span=document.createElement('span'); span.style.flex='1 1 auto'; span.innerHTML='Precipitation/insolubility or other limitation → set this assay to <b>Inconclusive</b>'; lab.appendChild(span);
   return lab;
 }
 function makeRadioCall(label, value, onChange){
