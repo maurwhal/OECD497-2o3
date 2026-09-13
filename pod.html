@@ -84,7 +84,7 @@
         <label class="grid" style="gap:4px"><span>EC1.5 (mM, per ESM3 convention — see worked examples)</span><input type="number" id="ec15" step="any"></label>
         <label class="grid" style="gap:4px"><span>EC3.0 (mM) — conc. giving 3-fold induction</span><input type="number" id="ec3" step="any"></label>
         <label class="grid" style="gap:4px"><span>IC50 (mM)</span><input type="number" id="ic50" step="any"></label>
-        <div class="small muted">All three fields (EC1.5, EC3.0, IC50) are needed for any KeratinoSens-based model below — a partial set is treated as not sufficient data rather than guessed. No induction/cytotoxicity reached at top concentration → enter 4000 mM (the ESM3 default), not blank.</div>
+        <div class="small muted">Each model below uses whichever of these three it needs — EC1.5+IC50 covers most of them, EC3.0 only feeds Equation 7, and Equation 5e only needs EC1.5. Fill in whatever you have; a missing field only blocks the models that actually use it. No induction/cytotoxicity reached at top concentration → enter 4000 mM (the ESM3 default), not blank.</div>
       </div>
     </fieldset>
     <fieldset>
@@ -117,7 +117,7 @@
 
   <div class="card">
     <h2>Self-check against the ESM3 worked examples</h2>
-    <div class="small muted" style="margin-bottom:8px">Loads each worked example internally and compares this page's output to values independently computed from the ESM3 formulas. If anything shows FAIL, do not trust this calculator's numbers until it's fixed.</div>
+    <div class="small muted" style="margin-bottom:8px">Loads four worked examples internally (two with complete data, two with deliberately partial data) and compares this page's live output to values independently computed from the ESM3 formulas. If anything shows FAIL, do not trust this calculator's numbers until it's fixed.</div>
     <div id="selfCheckOut" class="grid" style="gap:6px"></div>
   </div>
 
@@ -166,14 +166,22 @@ function lognormVP(vp){ return (vp!=null && vp>10) ? (log10(vp)-1) : 0; }
 function computeAll(inp){
   const { mw, vp, ec15, ec3, ic50, kmax, cd86, cd54, cv75 } = inp;
   const E5 = lognormVP(vp);
-  const haveKS = ec15!=null && ec3!=null && ic50!=null;
+  // Gate each of EC1.5/EC3/IC50 independently rather than as an all-or-
+  // nothing KS block: the equations don't all use the same subset (Eq1/5/6/
+  // 1d/5d/6d use EC1.5+IC50 but not EC3; Eq7 uses EC3+IC50 but not EC1.5;
+  // Eq5e uses EC1.5 alone) - verified against 7 real worked examples with
+  // partial KS data, where e.g. Eq1 correctly computes from EC1.5+IC50 alone
+  // even with EC3 left blank.
+  const haveEC15 = ec15!=null;
+  const haveEC3 = ec3!=null;
+  const haveIC50 = ic50!=null;
   const haveKmax = kmax!=null;
   const haveHclat = cd86!=null && cd54!=null && cv75!=null;
 
-  const E9 = haveKS ? (-log10(ec15)+log10(4000)) : null;   // LOG norm EC1.5 KS
-  const E11 = haveKS ? (-log10(ec3)+log10(4000)) : null;   // LOG norm EC3 KS
-  const E13 = haveKS ? (-log10(ic50)+log10(4000)) : null;  // LOG norm IC50 KS
-  const E19 = haveKmax ? (kmax+3.5) : null;                // LOG norm Kmax
+  const E9 = haveEC15 ? (-log10(ec15)+log10(4000)) : null;   // LOG norm EC1.5 KS
+  const E11 = haveEC3 ? (-log10(ec3)+log10(4000)) : null;    // LOG norm EC3 KS
+  const E13 = haveIC50 ? (-log10(ic50)+log10(4000)) : null;  // LOG norm IC50 KS
+  const E19 = haveKmax ? (kmax+3.5) : null;                  // LOG norm Kmax
 
   let E24=null, E26=null;
   if (haveHclat && mw){
@@ -191,17 +199,17 @@ function computeAll(inp){
   }
 
   const eqs = {};
-  eqs.eq1 = (haveKS && haveKmax) ? fromPED(0.4156+0.1507*E9+0.3577*E13+0.4038*E19-0.213*E5) : fromPED(null);
+  eqs.eq1 = (haveEC15 && haveIC50 && haveKmax) ? fromPED(0.4156+0.1507*E9+0.3577*E13+0.4038*E19-0.213*E5) : fromPED(null);
   eqs.eq4 = (haveKmax && haveHclat) ? fromPED(0.181+0.2089*E24+0.3511*E26+0.3638*E19-0.1862*E5) : fromPED(null);
-  eqs.eq5 = (haveKS && haveKmax && haveHclat) ? fromPED(0.198+0.1971*E24+0.207*E26+0.3445*E19-0.1855*E5+0.0893*E9+0.109*E13) : fromPED(null);
-  eqs.eq6 = (haveKS && haveHclat) ? fromPED(0.084+0.2832*E24+0.331*E26-0.1241*E5+0.2179*E9+0.055*E13) : fromPED(null);
-  eqs.eq7 = (haveKS && haveHclat) ? fromPED(0.202+0.2226*E24+0.313*E26-0.1508*E5+0.4003*E11+0.023*E13) : fromPED(null);
+  eqs.eq5 = (haveEC15 && haveIC50 && haveKmax && haveHclat) ? fromPED(0.198+0.1971*E24+0.207*E26+0.3445*E19-0.1855*E5+0.0893*E9+0.109*E13) : fromPED(null);
+  eqs.eq6 = (haveEC15 && haveIC50 && haveHclat) ? fromPED(0.084+0.2832*E24+0.331*E26-0.1241*E5+0.2179*E9+0.055*E13) : fromPED(null);
+  eqs.eq7 = (haveEC3 && haveIC50 && haveHclat) ? fromPED(0.202+0.2226*E24+0.313*E26-0.1508*E5+0.4003*E11+0.023*E13) : fromPED(null);
 
-  eqs.eq1d = (haveKS && haveKmax) ? fromPED(0.418+0.3038*E9+0.081*E13+0.4539*E19-0.0774*E5) : fromPED(null);
+  eqs.eq1d = (haveEC15 && haveIC50 && haveKmax) ? fromPED(0.418+0.3038*E9+0.081*E13+0.4539*E19-0.0774*E5) : fromPED(null);
   eqs.eq4d = (haveKmax && haveHclat) ? fromPED(0.28+0.36*E24+0.073*E26+0.4465*E19-0.0429*E5) : fromPED(null);
-  eqs.eq5d = (haveKS && haveKmax && haveHclat) ? fromPED(0.237+0.3593*E24+0.011*E26+0.3842*E19-0.0612*E5+0.2573*E9+-0.175*E13) : fromPED(null);
-  eqs.eq6d = (haveKS && haveHclat) ? fromPED(0.165+0.5*E24+0.035*E26-0.0189*E5+0.415*E9+-0.196*E13) : fromPED(null);
-  eqs.eq5e = (haveKS && haveKmax && haveHclat) ? fromPED(0.211+0.3064*E24+0.3821*E19+0.2142*E9) : fromPED(null);
+  eqs.eq5d = (haveEC15 && haveIC50 && haveKmax && haveHclat) ? fromPED(0.237+0.3593*E24+0.011*E26+0.3842*E19-0.0612*E5+0.2573*E9+-0.175*E13) : fromPED(null);
+  eqs.eq6d = (haveEC15 && haveIC50 && haveHclat) ? fromPED(0.165+0.5*E24+0.035*E26-0.0189*E5+0.415*E9+-0.196*E13) : fromPED(null);
+  eqs.eq5e = (haveEC15 && haveKmax && haveHclat) ? fromPED(0.211+0.3064*E24+0.3821*E19+0.2142*E9) : fromPED(null);
 
   return eqs;
 }
@@ -421,17 +429,32 @@ document.getElementById('btnPubchem').onclick = lookupPubChem;
 // These reference numbers were computed directly from the ESM3 formulas (not
 // from this page's code) — see the project notes. If this page's live output
 // stops matching them, something in the port above is wrong.
+//
+// PARTIAL1/PARTIAL2 are real worked examples (not this project's own) with
+// deliberately incomplete data, specifically to exercise the per-field
+// gating logic (which equation needs which of EC1.5/EC3/IC50/kDPRA/h-CLAT) -
+// DNCB and CA both have full data, so they never touch that gating at all.
+// 'gated' means that equation is expected to report not-sufficient-data.
+const GATED = 'gated';
 const EXPECTED = {
   DNCB: { eq1:{pct:0.1800,dsa:44.9996}, eq4:{pct:0.1916,dsa:47.9066}, eq5:{pct:0.1647,dsa:41.1713}, eq6:{pct:0.2586,dsa:64.6576}, eq7:{pct:0.1364,dsa:34.1020},
           eq1d:{pct:0.2282,dsa:57.0406}, eq4d:{pct:0.1813,dsa:45.3247}, eq5d:{pct:0.2088,dsa:52.2023}, eq6d:{pct:0.3332,dsa:83.2943}, eq5e:{pct:0.1713,dsa:42.8173} },
   CA:   { eq1:{pct:1.0155,dsa:253.8726}, eq4:{pct:0.8055,dsa:201.3731}, eq5:{pct:0.7975,dsa:199.3846}, eq6:{pct:1.1127,dsa:278.1676}, eq7:{pct:0.9172,dsa:229.3122},
           eq1d:{pct:0.7823,dsa:195.5873}, eq4d:{pct:0.6701,dsa:167.5172}, eq5d:{pct:0.5585,dsa:139.6314}, eq6d:{pct:0.7800,dsa:195.0069}, eq5e:{pct:0.6405,dsa:160.1181} },
+  PARTIAL1: { eq1:{pct:2.4262,dsa:606.5399}, eq4:{pct:4.1463,dsa:1036.5713}, eq5:{pct:4.5185,dsa:1129.6264}, eq6:{pct:12.1403,dsa:3035.0672}, eq7:GATED,
+          eq1d:{pct:1.7830,dsa:445.7540}, eq4d:{pct:8.2989,dsa:2074.7158}, eq5d:{pct:7.8827,dsa:1970.6814}, eq6d:{pct:31.1745,dsa:7793.6337}, eq5e:{pct:7.1298,dsa:1782.4437} },
+  PARTIAL2: { eq1:{pct:17.1679,dsa:4291.9860}, eq4:GATED, eq5:GATED, eq6:GATED, eq7:GATED,
+          eq1d:{pct:59.0606,dsa:14765.1426}, eq4d:GATED, eq5d:GATED, eq6d:GATED, eq5e:GATED },
 };
+// EC3 and hCLAT/kDPRA are deliberately left out here (undefined) to match
+// the source worked examples exactly.
+const PARTIAL1 = { name:'(partial KS data — no EC3.0)', mw:349.47, vp:0.0000052, ec15:24.8333, ic50:259.3333, kmax:-1.06, cd86:5000, cd54:5000, cv75:44.1 };
+const PARTIAL2 = { name:'(no h-CLAT data)', mw:222.37, vp:2.2876, ec15:4000, ic50:45.1, kmax:-3.5 };
 
 function runSelfCheck(){
   const out = document.getElementById('selfCheckOut');
   out.innerHTML = '';
-  const cases = [['DNCB', DNCB], ['CA', CA]];
+  const cases = [['DNCB', DNCB], ['CA', CA], ['PARTIAL1', PARTIAL1], ['PARTIAL2', PARTIAL2]];
   let allPass = true;
   cases.forEach(([key, ex])=>{
     const inp = { mw:ex.mw, vp:ex.vp, ec15:ex.ec15, ec3:ex.ec3, ic50:ex.ic50, kmax:ex.kmax, cd86:ex.cd86, cd54:ex.cd54, cv75:ex.cv75 };
@@ -443,9 +466,14 @@ function runSelfCheck(){
     Object.keys(exp).forEach(eqKey=>{
       const got = eqs[eqKey];
       const want = exp[eqKey];
-      const ok = got.pct!=null && Math.abs(got.pct-want.pct) < 0.001 && Math.abs(got.dsa-want.dsa) < 0.01;
+      let ok;
+      if (want === GATED) {
+        ok = got.pct == null;
+      } else {
+        ok = got.pct!=null && Math.abs(got.pct-want.pct) < 0.001 && Math.abs(got.dsa-want.dsa) < 0.01;
+      }
       if (!ok) rowPass = false;
-      parts.push(`${eqKey}:${ok?'OK':'FAIL('+fmt(got.pct)+' vs '+want.pct+')'}`);
+      parts.push(`${eqKey}:${ok?'OK':'FAIL('+(got.pct==null?'gated':fmt(got.pct))+' vs '+(want===GATED?'gated':want.pct)+')'}`);
     });
     allPass = allPass && rowPass;
     row.innerHTML = `<span class="pill ${rowPass?'pass':'fail'}">${rowPass?'PASS':'FAIL'}</span> ${ex.name} — ${parts.join(', ')}`;
