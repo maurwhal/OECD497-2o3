@@ -248,6 +248,17 @@ function renderTable(tblId, rows, eqs){
   });
   html += '</tbody>';
   tbl.innerHTML = html;
+  return bestKey ? { model: bestKey, pct: eqs[bestKey].pct, dsa: eqs[bestKey].dsa } : null;
+}
+
+// Publish the most-complete LLNA/PV result so potency.html can offer a
+// one-click autofill instead of retyping the DSA value there.
+function publishBestForPotency(bestLlna, bestPv){
+  const KEY='skinsens_last_pod_v1';
+  try {
+    if (bestLlna || bestPv) localStorage.setItem(KEY, JSON.stringify({ llna: bestLlna, pv: bestPv }));
+    else localStorage.removeItem(KEY);
+  } catch(e){}
 }
 
 function readInputs(){
@@ -263,8 +274,9 @@ function readInputs(){
 function update(){
   const inp = readInputs();
   const eqs = computeAll(inp);
-  renderTable('tblLLNA', LLNA_ROWS, eqs);
-  renderTable('tblPV', PV_ROWS, eqs);
+  const bestLlna = renderTable('tblLLNA', LLNA_ROWS, eqs);
+  const bestPv = renderTable('tblPV', PV_ROWS, eqs);
+  publishBestForPotency(bestLlna, bestPv);
 }
 
 ['mw','vp','ec15','ec3','ic50','kmax','cd86','cd54','cv75'].forEach(id=>{

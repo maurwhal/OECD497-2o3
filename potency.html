@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Potency Category Classifier • Marvelous Maura Model (Offline)</title>
+<style>
+  :root { --bg:#eaf3fb; --fg:#14213d; --muted:#3d5a80; --card:#ffffff; --border:#dbe9f7; --ok:#065f46; --bad:#9f1239; --low:#92400e; --warn:#9a3412; --accent:#0284c7; --accent-dark:#075985; --pill-border:#bae6fd; --pill-bg:#e0f2fe; --pill-low-bg:#fef3c7; --pill-low-bd:#fde68a; --warnbg:#fff7ed; --warnbd:#fed7aa; }
+  *{box-sizing:border-box}
+  body{ margin:0; font-family:Tahoma, "Segoe UI", ui-sans-serif, system-ui, -apple-system, Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif; background:var(--bg); color:var(--fg); background-size:40px 40px }
+  .container{max-width:1152px;margin:0 auto;padding:24px;display:grid;gap:24px}
+  h1{font-size:24px;margin:0 0 6px 0} h2{font-size:18px;margin:0 0 12px 0}
+  .muted{color:var(--muted)} .small{font-size:12px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 1px 2px rgba(0,0,0,.04);padding:16px}
+  .grid{display:grid;gap:16px} .cols-2{grid-template-columns:repeat(2,minmax(0,1fr))} .cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  @media (max-width:960px){ .cols-2,.cols-3{grid-template-columns:1fr} }
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{background:#fff;border:1px solid var(--border);border-radius:12px;padding:8px 12px;cursor:pointer;transition:background .15s ease,border-color .15s ease}
+  .btn:hover{background:#f1f5f9;border-color:#cbd5e1}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--fg);color:#fff;border-color:var(--fg)}
+  input[type="number"],input[type="text"],select{padding:8px;border:1px solid var(--border);border-radius:12px;width:100%;font-family:inherit;font-size:14px;background:#fff;color:var(--fg)}
+  input[type="number"]:focus,input[type="text"]:focus,select:focus{outline:2px solid #93c5fd;outline-offset:1px}
+  label{font-size:14px}
+  .list{font-size:12px;color:#334155;line-height:1.4}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px;border-bottom:1px solid var(--border)}
+  th{color:var(--muted);font-weight:600;font-size:12px}
+  tr.hit{background:var(--pill-bg)}
+  .pill{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--pill-bg);color:var(--accent-dark);border:1px solid var(--pill-border)}
+  .pill.warn{background:var(--warnbg);color:var(--warn);border-color:var(--warnbd)}
+  .icon-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:#fff;border-radius:999px;padding:6px 10px;font-size:12px;color:var(--fg);text-decoration:none}
+  .badge{display:inline-block;font-size:20px;font-weight:700;padding:8px 16px;border-radius:12px;background:var(--pill-bg);color:var(--accent-dark);border:1px solid var(--pill-border)}
+  .badge.dim{background:#f1f5f9;color:#94a3b8;border-color:#e2e8f0}
+  .badge.warn{font-size:13px;font-weight:600;background:var(--warnbg);color:var(--warn);border-color:var(--warnbd)}
+  .hidden{display:none}
+  fieldset{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  legend{font-size:13px;font-weight:600;padding:0 6px;background:var(--card)}
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="row" style="justify-content:space-between;align-items:flex-end;">
+    <div>
+      <h1>Potency Category Classifier</h1>
+      <div class="muted small">A <a href="https://github.com/maurwhal" target="_blank" rel="noopener noreferrer"><b>Marvelous Maura Model</b></a> • by <a href="https://www.linkedin.com/in/mauralavelle/" target="_blank" rel="noopener noreferrer">Maura Lavelle</a></div>
+      <div class="small muted">Bins a NOEL, LLNA EC3, PoD, or SENS-IS result into RIFM's published Weight-of-Evidence potency categories (Extreme / Strong / Moderate / Weak / Very weak / Non-sensitizer).</div>
+    </div>
+    <div class="row">
+      <a class="icon-btn" href="index.html">&larr; Hub</a>
+      <a class="icon-btn" href="2o3.html">OECD 497 2o3</a>
+      <a class="icon-btn" href="pod.html">PoD calculator</a>
+      <button class="btn" id="btnBG">BG: Plain</button>
+      <button class="btn" id="btnReset">Reset</button>
+    </div>
+  </header>
+
+  <div class="card" style="background:var(--warnbg);border-color:var(--warnbd)">
+    <div class="small" style="color:var(--warn)"><b>Not a full WoE assessment.</b> The published categorization also weighs human LOEL, guinea pig data, structural alerts, exposure history, and data quality/confidence — this page only bins the single number or SENS-IS result you enter. Treat each result below as one input to your own weight-of-evidence judgement, not a replacement for it.</div>
+  </div>
+
+  <div class="card">
+    <h2>Material Information</h2>
+    <div class="grid cols-2">
+      <label class="grid" style="gap:4px"><span>Substance name</span><input type="text" id="matName"></label>
+      <label class="grid" style="gap:4px"><span>CAS #</span><input type="text" id="matCas"></label>
+    </div>
+  </div>
+
+  <div class="grid cols-3">
+    <fieldset>
+      <legend>Dose (NOEL / LLNA EC3 / PoD)</legend>
+      <div class="grid" style="gap:8px">
+        <label class="grid" style="gap:4px"><span>Dose (µg/cm²)</span><input type="number" id="doseUg" step="any"></label>
+        <div class="row" id="podLoadRow" class="hidden">
+          <button class="btn" id="btnLoadPod">Use PoD calculator's last result</button>
+        </div>
+        <div id="doseOut" style="margin-top:6px"><span class="badge dim">Enter a value</span></div>
+        <div class="small muted" id="doseRange"></div>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>LLNA EC3 (%)</legend>
+      <div class="grid" style="gap:8px">
+        <label class="grid" style="gap:4px"><span>LLNA EC3 (%)</span><input type="number" id="llnaPct" step="any" placeholder="leave blank if LLNA negative"></label>
+        <label class="row" style="gap:6px"><input type="checkbox" id="llnaNeg"> LLNA negative (no EC3 obtained)</label>
+        <div id="llnaOut" style="margin-top:6px"><span class="badge dim">Enter a value</span></div>
+        <div class="small muted" id="llnaRange"></div>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>SENS-IS</legend>
+      <div class="grid" style="gap:8px">
+        <label class="grid" style="gap:4px"><span>Lowest concentration testing positive</span>
+          <select id="sensisSel">
+            <option value="">— select —</option>
+            <option value="0.1">0.1%</option>
+            <option value="1">1%</option>
+            <option value="10">10%</option>
+            <option value="50">50%</option>
+            <option value="100">100% (undiluted)</option>
+            <option value="neg">Negative at all concentrations tested</option>
+          </select>
+        </label>
+        <div id="sensisOut" style="margin-top:6px"><span class="badge dim">Select a result</span></div>
+        <div class="small muted" id="sensisRange"></div>
+      </div>
+    </fieldset>
+  </div>
+
+  <div class="card">
+    <h2>Reference ranges</h2>
+    <div class="small muted" style="margin-bottom:8px">Two independently published tables — they use different boundaries because they measure different things (a general WoE dose range vs. an LLNA-specific %-to-dose conversion). Don't cross-apply one table's numbers to the other's input.</div>
+    <div class="grid cols-2">
+      <div>
+        <div class="small" style="font-weight:600;margin-bottom:4px">Dose-based WoE category (µg/cm²)</div>
+        <div style="overflow-x:auto"><table id="tblDoseRef"></table></div>
+      </div>
+      <div>
+        <div class="small" style="font-weight:600;margin-bottom:4px">LLNA EC3 (%) / SENS-IS (lowest positive %)</div>
+        <div style="overflow-x:auto"><table id="tblLlnaRef"></table></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="card">
+    <div class="small muted">Potency Category Classifier — a <a href="https://github.com/maurwhal" target="_blank" rel="noopener noreferrer"><b>Marvelous Maura Model</b></a>. All calculation is client-side; nothing is uploaded anywhere.</div>
+    <div class="small muted">Disclaimer: provided for informational purposes. Final scientific interpretation and weight-of-evidence judgement remain the responsibility of the user.</div>
+    <div class="small muted" style="margin-top:8px"><b>Sources:</b> Na M. et al., <a href="https://doi.org/10.1097/DER.0000000000000854" target="_blank" rel="noopener noreferrer">"Weight of Evidence Approach for Skin Sensitization Potency Categorization of Fragrance Ingredients"</a>, Dermatitis 33(2), 2022 (dose-range category table) · Lee I. et al., <a href="https://doi.org/10.1016/j.fct.2024.114998" target="_blank" rel="noopener noreferrer">"Predicting Points of Departure and Potency Categories for Fragrance Ingredients by Integrating OECD In Vitro Models"</a>, Food Chem. Toxicol. 193, 2024 (confirms the same category table applied to regression-model PoD output) · Na M. et al., <a href="https://doi.org/10.1016/j.yrtph.2022.105128" target="_blank" rel="noopener noreferrer">"Benchmarking Performance of SENS-IS Assay Against Weight of Evidence Skin Sensitization Potency Categories"</a>, Regul. Toxicol. Pharmacol. 130, 2022 (LLNA % and SENS-IS category tables).</div>
+  </footer>
+</div>
+
+<script>
+'use strict';
+
+// ---------- Pattern background toggle (same puzzle pattern as other pages) ----------
+(function(){
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'>
+    <rect width='40' height='40' fill='%23eaf3fb'/>
+    <path d='M0,0 h40 v40 h-40 z M20,0 v8 c2,0 3.5,1.5 3.5,3.5S22,15 20,15v10c2,0 3.5,1.5 3.5,3.5S22,32 20,32v8 M0,20 h8 c0,-2 1.5,-3.5 3.5,-3.5S15,18 15,20h10c0,-2 1.5,-3.5 3.5,-3.5S32,18 32,20h8' fill='none' stroke='%2314213d' stroke-opacity='0.10' stroke-width='1.1'/>
+  </svg>`;
+  const uri = `url("data:image/svg+xml,${svg.replace(/\n|\s{2,}/g,' ')}")`;
+  document.body.style.backgroundImage = uri;
+  document.body.style.backgroundSize = '40px 40px';
+  let on = true;
+  const b=document.getElementById('btnBG'); b.textContent='BG: Plain';
+  b.onclick = ()=>{ on=!on; b.textContent = on? 'BG: Plain' : 'BG: Pattern'; document.body.style.backgroundImage = on? uri : 'none'; };
+})();
+
+// Shared material identity across pages (2o3.html / pod.html write/read the same key)
+(function(){
+  const KEY='skinsens_material_v1';
+  function load(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ return {}; } }
+  function save(m){ try{ localStorage.setItem(KEY, JSON.stringify(m)); }catch(e){} }
+  const m = load();
+  const elName=document.getElementById('matName'), elCas=document.getElementById('matCas');
+  if(m.name) elName.value=m.name; if(m.cas) elCas.value=m.cas;
+  [elName,elCas].forEach(el=> el.addEventListener('input', ()=> save(Object.assign(load(), {name:elName.value, cas:elCas.value}))));
+})();
+
+// ---------- Category tables (published, see footer Sources) ----------
+// Dose-based WoE category: Na et al. 2022 Dermatitis Table 1 / Lee et al. 2024 FCT Table 1.
+// Ranges are published as ">low-high" (low exclusive, high inclusive).
+const DOSE_BINS = [
+  { name:'Extreme',      max:25,     label:'< 25' },
+  { name:'Strong',       max:500,    label:'> 25 – 500' },
+  { name:'Moderate',     max:2500,   label:'> 500 – 2,500' },
+  { name:'Weak',         max:10000,  label:'> 2,500 – 10,000' },
+  { name:'Very weak',    max:Infinity, label:'> 10,000' },
+];
+function classifyDose(v){
+  for (const b of DOSE_BINS) if (v <= b.max) return b.name;
+  return 'Very weak';
+}
+
+// LLNA EC3(%) category: Na M. et al. 2022 RTP (SENS-IS benchmarking paper) Table 1b.
+// Note this table has no defined "Very weak" LLNA% band (published as a dash) -
+// LLNA alone doesn't resolve Very weak from Non-sensitizer.
+const LLNA_BINS = [
+  { name:'Extreme',   max:0.1,    label:'< 0.1%' },
+  { name:'Strong',    max:1,      label:'0.1% – 1%' },
+  { name:'Moderate',  max:10,     label:'1% – 10%' },
+  { name:'Weak',      max:100,    label:'10% – 100%' },
+];
+function classifyLlnaPct(v){
+  for (const b of LLNA_BINS) if (v <= b.max) return b.name;
+  return null; // >100% is outside the published LLNA% table (no "very weak" band defined)
+}
+
+// SENS-IS category: same source, direct lookup on lowest positive concentration.
+const SENSIS_MAP = { '0.1':'Extreme', '1':'Strong', '10':'Moderate', '50':'Weak', '100':'Very weak', 'neg':'Non-sensitizer' };
+
+function fmtNum(x){ return Number(x).toLocaleString('en-US', {maximumFractionDigits:4}); }
+
+function renderBadge(elId, category, extra){
+  const el = document.getElementById(elId);
+  if (category==null){ el.innerHTML = extra || '<span class="badge dim">—</span>'; return; }
+  el.innerHTML = `<span class="badge">${category}</span>`;
+}
+
+function updateDose(){
+  const v = document.getElementById('doseUg').value;
+  const rangeEl = document.getElementById('doseRange');
+  if (v===''){ renderBadge('doseOut', null, '<span class="badge dim">Enter a value</span>'); rangeEl.textContent=''; return; }
+  const num = Number(v);
+  if (Number.isNaN(num) || num < 0){ renderBadge('doseOut', null, '<span class="badge dim">Enter a valid dose</span>'); rangeEl.textContent=''; return; }
+  const cat = classifyDose(num);
+  renderBadge('doseOut', cat);
+  rangeEl.textContent = `${fmtNum(num)} µg/cm² falls in the "${cat}" band.`;
+  highlightRef('tblDoseRef', cat);
+}
+
+function updateLlna(){
+  const negBox = document.getElementById('llnaNeg');
+  const input = document.getElementById('llnaPct');
+  const rangeEl = document.getElementById('llnaRange');
+  if (negBox.checked){
+    input.disabled = true;
+    renderBadge('llnaOut', 'Non-sensitizer');
+    rangeEl.textContent = 'LLNA negative → Non-sensitizer per the WoE scheme (assuming no other data override this).';
+    highlightRef('tblLlnaRef', 'Non-sensitizer');
+    return;
+  }
+  input.disabled = false;
+  const v = input.value;
+  if (v===''){ renderBadge('llnaOut', null, '<span class="badge dim">Enter a value</span>'); rangeEl.textContent=''; return; }
+  const num = Number(v);
+  if (Number.isNaN(num) || num < 0){ renderBadge('llnaOut', null, '<span class="badge dim">Enter a valid %</span>'); rangeEl.textContent=''; return; }
+  const cat = classifyLlnaPct(num);
+  if (cat==null){
+    renderBadge('llnaOut', null, '<span class="badge warn">Outside published LLNA% table</span>');
+    rangeEl.textContent = `${fmtNum(num)}% is above 100% or otherwise outside the published LLNA%-to-category table (no "Very weak" LLNA% band is defined) — use the dose-based table instead if you have a µg/cm² value.`;
+    return;
+  }
+  renderBadge('llnaOut', cat);
+  rangeEl.textContent = `LLNA EC3 ${fmtNum(num)}% falls in the "${cat}" band.`;
+  highlightRef('tblLlnaRef', cat);
+}
+
+function updateSensis(){
+  const sel = document.getElementById('sensisSel').value;
+  const rangeEl = document.getElementById('sensisRange');
+  if (sel===''){ renderBadge('sensisOut', null, '<span class="badge dim">Select a result</span>'); rangeEl.textContent=''; return; }
+  const cat = SENSIS_MAP[sel];
+  renderBadge('sensisOut', cat);
+  rangeEl.textContent = sel==='neg' ? 'Negative at all tested concentrations → Non-sensitizer.' : `Positive at ${sel}% (lowest tested) → "${cat}".`;
+  highlightRef('tblLlnaRef', cat);
+}
+
+function highlightRef(tblId, cat){
+  const tbl = document.getElementById(tblId);
+  Array.from(tbl.querySelectorAll('tr')).forEach(tr=>{
+    tr.classList.toggle('hit', tr.dataset.cat === cat);
+  });
+}
+
+function renderRefTables(){
+  const doseTbl = document.getElementById('tblDoseRef');
+  let h = '<thead><tr><th>Category</th><th>Range (µg/cm²)</th></tr></thead><tbody>';
+  DOSE_BINS.forEach(b=> h += `<tr data-cat="${b.name}"><td>${b.name}</td><td>${b.label}</td></tr>`);
+  h += `<tr data-cat="Non-sensitizer"><td>Non-sensitizer</td><td>Negative</td></tr>`;
+  doseTbl.innerHTML = h + '</tbody>';
+
+  const llnaTbl = document.getElementById('tblLlnaRef');
+  let h2 = '<thead><tr><th>Category</th><th>LLNA EC3 (%)</th><th>SENS-IS lowest positive</th></tr></thead><tbody>';
+  const sensisByCat = { Extreme:'0.1%', Strong:'1%', Moderate:'10%', Weak:'50%', 'Very weak':'100%' };
+  LLNA_BINS.forEach(b=> h2 += `<tr data-cat="${b.name}"><td>${b.name}</td><td>${b.label}</td><td>${sensisByCat[b.name]||'—'}</td></tr>`);
+  h2 += `<tr data-cat="Very weak"><td>Very weak</td><td>— (not defined)</td><td>100%</td></tr>`;
+  h2 += `<tr data-cat="Non-sensitizer"><td>Non-sensitizer</td><td>Negative</td><td>Negative</td></tr>`;
+  llnaTbl.innerHTML = h2 + '</tbody>';
+}
+
+// ---------- Cross-tool convenience: pick up the PoD calculator's last result ----------
+// pod.html writes its most-complete LLNA/PV result to this key (see pod.html).
+// Purely a convenience autofill; this page works fine with no other tools open.
+(function(){
+  const KEY='skinsens_last_pod_v1';
+  let stored = null;
+  try { stored = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e){}
+  const row = document.getElementById('podLoadRow');
+  if (stored && (stored.llna || stored.pv)){
+    row.classList.remove('hidden');
+    document.getElementById('btnLoadPod').onclick = ()=>{
+      const best = stored.llna || stored.pv;
+      document.getElementById('doseUg').value = best.dsa.toFixed(2);
+      updateDose();
+    };
+  }
+})();
+
+document.getElementById('doseUg').addEventListener('input', updateDose);
+document.getElementById('llnaPct').addEventListener('input', updateLlna);
+document.getElementById('llnaNeg').addEventListener('change', updateLlna);
+document.getElementById('sensisSel').addEventListener('change', updateSensis);
+
+document.getElementById('btnReset').onclick = ()=>{
+  document.getElementById('doseUg').value = '';
+  document.getElementById('llnaPct').value = '';
+  document.getElementById('llnaNeg').checked = false;
+  document.getElementById('sensisSel').value = '';
+  updateDose(); updateLlna(); updateSensis();
+};
+
+renderRefTables();
+updateDose(); updateLlna(); updateSensis();
+</script>
+</body>
+</html>

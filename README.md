@@ -2,8 +2,8 @@
 
 A browser-based toolkit for skin-sensitisation hazard and potency assessment.
 It started as the **OECD TG 497 "2-out-of-3" (2o3)** decision helper and has
-grown to include a point-of-departure calculator; more tools may be added
-over time.
+grown to include a point-of-departure calculator and a potency category
+classifier; more tools may be added over time.
 
 **Acronyms used:**
 - **BR** = Borderline Range
@@ -70,13 +70,37 @@ with an expandable Sources panel showing exactly what was found and where
 
 This is not SARA-ICE — see the hub page (`index.html`) for why.
 
+### Potency Category Classifier (`potency.html`)
+
+Bins a single input value into RIFM's published Weight-of-Evidence potency
+categories (Extreme / Strong / Moderate / Weak / Very weak / Non-sensitizer),
+using the dose-range table from Na et al. (2022, Dermatitis) and Lee et al.
+(2024, Food Chem. Toxicol.), plus the LLNA%/SENS-IS tables from Na et al.
+(2022, Regul. Toxicol. Pharmacol.). Three independent entry points, each
+using its own published boundaries (a dose-based µg/cm² table is not the
+same scale as the LLNA%-derived table, so they are not cross-applied):
+
+- **Dose (µg/cm²)** — accepts a NOEL, LLNA EC3 (converted to dose), or PoD
+  output. Includes a one-click "Use PoD calculator's last result" button
+  that autofills from whatever `pod.html` last computed (via a small shared
+  `localStorage` key — no other tool needs to be open for this page to work
+  on its own).
+- **LLNA EC3 (%)** — a separate, LLNA-specific %-to-category table.
+- **SENS-IS** — a direct lookup on the lowest concentration testing
+  positive.
+
+This is **not** a substitute for the full weight-of-evidence process
+described in those papers (which also considers LOEL, guinea pig data,
+structural alerts, exposure, and data-quality judgement) — it only bins the
+one value you give it, and says so on the page.
+
 ## How to use
 
 1. **Open the app**
    https://maurwhal.github.io/OECD497-2o3/
 
 2. **Pick a tool** from the hub, or go straight to
-   `2o3.html` or `pod.html`.
+   `2o3.html`, `pod.html`, or `potency.html`.
 
 3. **2o3 tool**: select assays, enter data (or upload a lab report PDF for
    IIVS DPRA), and review the per-assay calls, the Final 2o3 Decision, and
@@ -85,6 +109,9 @@ This is not SARA-ICE — see the hub page (`index.html`) for why.
 4. **PoD calculator**: enter MW, vapor pressure, and whichever of
    KeratinoSens/kDPRA/h-CLAT data you have, or load a worked example first
    to confirm the self-check passes.
+
+5. **Potency classifier**: enter a dose, an LLNA EC3%, or a SENS-IS result
+   (or all three, to cross-check) to get a WoE potency category.
 
 ## Privacy and Data Handling
 
