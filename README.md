@@ -57,9 +57,45 @@ Reproduces the published Natsch et al. ("Integrated Skin Sensitization
 Assessment Based on OECD Methods (III)", ALTEX, doi:10.14573/altex.2302081s3,
 Supplementary Material ESM3) regression models for estimating EC3%/PV% and
 dose-per-surface-area from KeratinoSens, kDPRA, and h-CLAT data — both the
-LLNA-trained and extended-PV-trained model families. Includes a built-in
-self-check against the paper's own DNCB and cinnamic aldehyde worked
-examples; **check that self-check panel before trusting a real result.**
+LLNA-trained and extended-PV-trained model families. Like the ESM3 workbook, it needs a **rating (1 = positive, 0 = negative)** for
+each assay that was run; an assay left as "not tested" is skipped, along with
+every model that needs it, even if numbers are typed in. KeratinoSens values
+are in µM and h-CLAT values in µg/mL, exactly as reports print them, and
+KeratinoSens can alternatively be entered in ppm (converted as ppm × 5, the
+workbook's rule). Includes a built-in self-check against five worked examples
+(DNCB and cinnamic aldehyde, plus three partial-data cases, one of them the
+workbook's own phthalide example); **check that self-check panel before
+trusting a real result.**
+
+A **point-of-departure card** applies the draft OECD TG 497 Part 3 workflow:
+with all three tests it uses EQ5 and EQ5e; with two tests it uses the matching
+pair (EQ1/1d, EQ4/4d, or EQ6/6d); and the **lower** of the LLNA-trained and
+potency-value-trained values is the PoD, shown in µg/cm² and as % at 25 mg/cm².
+An expandable note explains what the PoD is (a "most likely" approximation of the
+LLNA EC3 or human DSA04). Equations 5d and 7 are still shown (they are in the
+ESM3 workbook) but are not part of the DA. Gray text in the input boxes shows
+the default to enter when nothing was observed (4000 µM, 800 ppm, 5000 µg/mL);
+it is a hint only and is never applied automatically.
+
+Each assay has a checkbox for a result that is **inconclusive or outside the
+assay's applicability domain** (for example, an insoluble test chemical). It
+never blocks the calculation, but the PoD card then labels the PoD exploratory,
+warns that draft TG 497 Part 3 says only valid results should be used to run the
+DA for regulatory purposes, and shows a valid-tests-only PoD, or says that fewer
+than the two required valid tests remain. The potency classifier notes when an
+autofilled PoD is exploratory.
+
+Two **"Combine replicate runs"** dialogs (KeratinoSens and h-CLAT) turn per-run
+report values into the inputs. Per the draft TG 497 Part 3, multiple tests of one
+assay are combined by the **geometric mean** of the individual values. Every run
+with a calculated value counts, whatever its call (a run rated negative or
+borderline still has a measured EC1.5 or EC150/EC200, and the model was trained
+with borderline data); the default (4000 µM, 5000 µg/mL) is only for a value that
+could not be calculated because no induction or cytotoxicity was observed. A
+run's call only sets the overall rating (majority of runs), and a third run is
+requested when two runs disagree. An option counts runs with no value as the
+default instead of leaving them out; the guideline does not specify that case.
+This is separate from the arithmetic averages used for house-style cells.
 
 Also includes a **"Look up MW & vapor pressure (EPA CompTox)"** button. It asks
 for a password, then a small Cloudflare Worker (`cloudflare-worker/worker.js`)

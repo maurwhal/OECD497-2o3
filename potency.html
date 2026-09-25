@@ -278,12 +278,13 @@ function renderRefTables(){
   let stored = null;
   try { stored = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e){}
   const row = document.getElementById('podLoadRow');
-  if (stored && (stored.llna || stored.pv)){
+  if (stored && (stored.da || stored.llna || stored.pv)){
     row.classList.remove('hidden');
     document.getElementById('btnLoadPod').onclick = ()=>{
-      const best = stored.llna || stored.pv;
+      const best = stored.da || stored.llna || stored.pv;
       document.getElementById('doseUg').value = best.dsa.toFixed(2);
       updateDose();
+      if (best.exploratory) document.getElementById('doseRange').textContent += ' Autofilled from an exploratory PoD that uses an inconclusive input; not valid for regulatory use.';
     };
   }
 })();

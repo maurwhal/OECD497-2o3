@@ -22,6 +22,7 @@
   input[type="number"],input[type="text"],input[type="password"]{padding:8px;border:1px solid var(--border);border-radius:12px;width:100%}
   input[type="number"]:focus,input[type="text"]:focus,input[type="password"]:focus{outline:2px solid #93c5fd;outline-offset:1px}
   .hidden{display:none!important}
+  input::placeholder{color:#94a3b8;opacity:1}
   select{padding:8px;border:1px solid var(--border);border-radius:12px;background:#fff;color:var(--fg);font-family:inherit;font-size:14px}
   .icon-btn:hover{background:#f1f5f9}
   label{font-size:14px}
@@ -97,26 +98,60 @@
     <fieldset>
       <legend>KeratinoSens (TG 442D)</legend>
       <div class="grid" style="gap:8px">
-        <label class="grid" style="gap:4px"><span>EC1.5 (mM, per ESM3 convention — see worked examples)</span><input type="number" id="ec15" step="any"></label>
-        <label class="grid" style="gap:4px"><span>EC3.0 (mM) — conc. giving 3-fold induction</span><input type="number" id="ec3" step="any"></label>
-        <label class="grid" style="gap:4px"><span>IC50 (mM)</span><input type="number" id="ic50" step="any"></label>
-        <div class="small muted">Each model below uses whichever of these three it needs — EC1.5+IC50 covers most of them, EC3.0 only feeds Equation 7, and Equation 5e only needs EC1.5. Fill in whatever you have; a missing field only blocks the models that actually use it. No induction/cytotoxicity reached at top concentration → enter 4000 mM (the ESM3 default), not blank.</div>
+        <label class="grid" style="gap:4px"><span>Rating (required)</span><select id="ksRating"><option value="">not tested</option><option value="1">1 = positive</option><option value="0">0 = negative</option></select></label>
+        <div class="small muted">As in the ESM3 template: pick 1 (positive; borderline counts as positive) or 0 (negative) for every assay that was run. "Not tested" skips this assay and every model that needs it, even if numbers are typed below.</div>
+        <label class="row" style="gap:6px;align-items:flex-start;flex-wrap:nowrap"><input type="checkbox" id="ksInvalid" style="margin-top:3px;flex:0 0 auto"><span class="small">Result is inconclusive or outside the assay's applicability domain (e.g., insoluble)</span></label>
+        <div><button class="btn" type="button" id="btnCombineKS">Combine replicate runs (geometric mean)…</button></div>
+        <label class="grid" style="gap:4px"><span>EC1.5 (µM)</span><input type="number" id="ec15" step="any" placeholder="default 4000"></label>
+        <label class="grid" style="gap:4px"><span>EC3.0 (µM) — conc. giving 3-fold induction</span><input type="number" id="ec3" step="any" placeholder="default 4000"></label>
+        <label class="grid" style="gap:4px"><span>IC50 (µM)</span><input type="number" id="ic50" step="any" placeholder="default 4000"></label>
+        <div class="small muted">Each model below uses whichever of these three it needs — EC1.5+IC50 covers most of them, EC3.0 only feeds Equation 7, and Equation 5e only needs EC1.5. Fill in whatever you have; a missing field only blocks the models that actually use it. No induction/cytotoxicity reached at top concentration → enter 4000 µM (the ESM3 default), not blank. Enter values exactly as the report prints them (µM, not converted). The gray text in each box is the ESM3 default to enter when nothing was observed; it is only a hint and is never applied automatically.</div>
+        <div class="small" style="font-weight:600;margin-top:4px">If data not in micromolar, enter in ppm</div>
+        <div class="grid" style="gap:8px;grid-template-columns:repeat(3,minmax(0,1fr))">
+          <label class="grid" style="gap:4px"><span class="small">EC1.5 (ppm)</span><input type="number" id="ec15ppm" step="any" placeholder="default 800"></label>
+          <label class="grid" style="gap:4px"><span class="small">EC3.0 (ppm)</span><input type="number" id="ec3ppm" step="any" placeholder="default 800"></label>
+          <label class="grid" style="gap:4px"><span class="small">IC50 (ppm)</span><input type="number" id="ic50ppm" step="any" placeholder="default 800"></label>
+        </div>
+        <div class="small muted">Only used when the matching µM box above is blank. Converted as ppm × 5, the ESM3 template's rule (it assumes MW 200, for chemicals tested from a percent stock solution). Not reached → 800 ppm (= 4000 µM).</div>
       </div>
     </fieldset>
     <fieldset>
       <legend>kDPRA (TG 442C)</legend>
       <label class="grid" style="gap:4px"><span>log kmax (M⁻¹ s⁻¹)</span><input type="number" id="kmax" step="any" placeholder="non-reactive = -3.5"></label>
+      <div style="margin-top:8px">
+      <label class="row" style="gap:6px;align-items:flex-start;flex-wrap:nowrap"><input type="checkbox" id="kdpraInvalid" style="margin-top:3px;flex:0 0 auto"><span class="small">Result is inconclusive or outside the assay's applicability domain (e.g., insoluble)</span></label>
+      </div>
       <div class="small muted" style="margin-top:6px">Chemicals tested but non-reactive: enter -3.5, per ESM3.</div>
     </fieldset>
     <fieldset>
       <legend>h-CLAT (TG 442E)</legend>
       <div class="grid" style="gap:8px">
-        <label class="grid" style="gap:4px"><span>CD86 EC150 (mg/mL, per ESM3 convention)</span><input type="number" id="cd86" step="any"></label>
-        <label class="grid" style="gap:4px"><span>CD54 EC200 (mg/mL, per ESM3 convention)</span><input type="number" id="cd54" step="any"></label>
-        <label class="grid" style="gap:4px"><span>CV75 (mg/mL, per ESM3 convention)</span><input type="number" id="cv75" step="any"></label>
-        <div class="small muted">All three fields (CD86, CD54, CV75) plus MW are needed for any h-CLAT-based model below. No induction/cytotoxicity reached → enter 5000 (the ESM3 default), not blank. MIT is auto-computed as min(CD86,CD54).</div>
+        <label class="grid" style="gap:4px"><span>Rating (required)</span><select id="hclatRating"><option value="">not tested</option><option value="1">1 = positive</option><option value="0">0 = negative</option></select></label>
+        <label class="row" style="gap:6px;align-items:flex-start;flex-wrap:nowrap"><input type="checkbox" id="hclatInvalid" style="margin-top:3px;flex:0 0 auto"><span class="small">Result is inconclusive or outside the assay's applicability domain (e.g., insoluble)</span></label>
+        <div><button class="btn" type="button" id="btnCombineH">Combine replicate runs (TG 442E)…</button></div>
+        <label class="grid" style="gap:4px"><span>CD86 EC150 (µg/mL)</span><input type="number" id="cd86" step="any" placeholder="default 5000"></label>
+        <label class="grid" style="gap:4px"><span>CD54 EC200 (µg/mL)</span><input type="number" id="cd54" step="any" placeholder="default 5000"></label>
+        <label class="grid" style="gap:4px"><span>CV75 (µg/mL)</span><input type="number" id="cv75" step="any" placeholder="default 5000"></label>
+        <div class="small muted">All three fields (CD86, CD54, CV75) plus MW are needed for any h-CLAT-based model below. No induction/cytotoxicity reached → enter 5000 µg/mL (the ESM3 default), not blank. MIT is auto-computed as min(CD86,CD54). Gray text is the default to enter when nothing was observed (a hint only).</div>
       </div>
     </fieldset>
+  </div>
+
+  <div class="card hidden" id="ratingWarn" style="background:var(--warnbg);border-color:var(--warnbd)">
+    <div class="small" id="ratingWarnText" style="color:var(--warn)"></div>
+  </div>
+
+  <div class="card" id="daCard">
+    <h2>Point of departure (regression-based defined approach)</h2>
+    <div id="daOut" style="font-size:14px;line-height:1.55"></div>
+    <details style="margin-top:10px">
+      <summary class="small" style="cursor:pointer;color:var(--accent)">What is the point of departure (PoD), and how is it chosen?</summary>
+      <div class="small" style="margin-top:8px;line-height:1.55">
+        <p style="margin:0 0 6px 0">The regression-based DA combines the equations below into one finite <b>point of departure (PoD)</b> for quantitative risk assessment. It is a "most likely" approximation of the LLNA EC3, or of the human <b>DSA04</b>, the concentration expected to sensitize 4% of people in a human repeat insult patch test. It is given as a % in a vehicle applied at 25 mg/cm² (like the LLNA) or as a dose per unit area in µg/cm², using the fixed factor 250. Appropriate safety factors for the use situation are applied to the PoD in risk assessment, which is outside the scope of the guideline and of this page.</p>
+        <p style="margin:0 0 6px 0"><b>Which equations.</b> At least two tests (two key events) are required. With all three tests, the DA uses EQ5 and EQ5e. With two tests it uses the matching pair: EQ1/EQ1d (KeratinoSens + kDPRA), EQ4/EQ4d (h-CLAT + kDPRA), or EQ6/EQ6d (KeratinoSens + h-CLAT). In each case the <b>lower</b> of the LLNA-trained value and the potency-value-trained value is the PoD (the more conservative one). Equations 5d and 7, shown below from the ESM3 workbook, are not part of the DA. Where a test was run several times, the geometric mean of the individual values is used as the input. If a result is inconclusive or outside the assay's applicability domain (for example, an insoluble test chemical), tick the box under that assay: the calculation still runs, but the PoD is labeled exploratory and a valid-tests-only PoD is shown, since the DA needs at least two valid tests.</p>
+        <p style="margin:0">Source: <a href="https://www.oecd.org/content/dam/oecd/en/events/public-consultations/2025/11/second-commenting-round-on-the-draft-updated-test-guideline-on-defined-approaches-for-skin-sensitisation/draft-updated-test-guideline-497-part-3-regression-model.pdf" target="_blank" rel="noopener noreferrer">draft OECD TG 497, Part 3 "Regression-based defined approach for derivation of a point of departure"</a> (a public-consultation draft, so wording may change).</p>
+      </div>
+    </details>
   </div>
 
   <div class="card">
@@ -133,15 +168,52 @@
 
   <div class="card">
     <h2>Self-check against the ESM3 worked examples</h2>
-    <div class="small muted" style="margin-bottom:8px">Loads four worked examples internally (two with complete data, two with deliberately partial data) and compares this page's live output to values independently computed from the ESM3 formulas. If anything shows FAIL, do not trust this calculator's numbers until it's fixed.</div>
+    <div class="small muted" style="margin-bottom:8px">Loads five worked examples internally (two with complete data, three with deliberately partial data, one of them the ESM3 workbook's own blank-sheet example) and compares this page's live output to values independently computed from the ESM3 formulas. If anything shows FAIL, do not trust this calculator's numbers until it's fixed.</div>
     <div id="selfCheckOut" class="grid" style="gap:6px"></div>
   </div>
 
   <footer class="card">
     <div class="small muted">Natsch PoD Calculator — a <a href="https://github.com/maurwhal" target="_blank" rel="noopener noreferrer"><b>Marvelous Maura Model</b></a>. All calculation is client-side; nothing is uploaded anywhere.</div>
     <div class="small muted">Disclaimer: provided for informational purposes. Final scientific interpretation and unit verification against source data remain the responsibility of the user.</div>
-    <div class="small muted" style="margin-top:8px"><b>Sources:</b> Natsch A. et al., <a href="https://doi.org/10.14573/altex.2302081s3" target="_blank" rel="noopener noreferrer">"Integrated Skin Sensitization Assessment Based on OECD Methods (III): Adding Human Data to the Potency Assessment"</a>, ALTEX (Supplementary Material ESM3, the source of every equation on this page) · <a href="https://comptox.epa.gov/dashboard/" target="_blank" rel="noopener noreferrer">US EPA CompTox Chemicals Dashboard</a> via the CTX API (vapor pressure lookup).</div>
+    <div class="small muted" style="margin-top:8px"><b>Sources:</b> Natsch A. et al., <a href="https://doi.org/10.14573/altex.2302081s3" target="_blank" rel="noopener noreferrer">"Integrated Skin Sensitization Assessment Based on OECD Methods (III): Adding Human Data to the Potency Assessment"</a>, ALTEX (Supplementary Material ESM3, the source of every equation on this page) · <a href="https://comptox.epa.gov/dashboard/" target="_blank" rel="noopener noreferrer">US EPA CompTox Chemicals Dashboard</a> via the CTX API (vapor pressure lookup) · <a href="https://www.oecd.org/content/dam/oecd/en/events/public-consultations/2025/11/second-commenting-round-on-the-draft-updated-test-guideline-on-defined-approaches-for-skin-sensitisation/draft-updated-test-guideline-497-part-3-regression-model.pdf" target="_blank" rel="noopener noreferrer">draft OECD TG 497 Part 3 (regression-based DA)</a>, OECD TG 442D and 442E (replicate handling and default values).</div>
   </footer>
+</div>
+
+<div id="combineKS" class="hidden" style="position:fixed;inset:0;background:rgba(20,33,61,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px">
+  <div class="card" style="max-width:720px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 10px 30px rgba(0,0,0,.25)" role="dialog" aria-modal="true" aria-labelledby="combineKSTitle">
+    <h2 id="combineKSTitle" style="margin-bottom:6px">Combine KeratinoSens replicate runs</h2>
+    <div class="small muted" style="margin-bottom:8px">Enter each run from the report. Untick a run that is not valid (failed acceptance criteria). Values are in µM as the report prints them; use ND, blank, or &gt;2000 for "not reached". Set each run's call as the report states it (a borderline result counts in its stated direction).</div>
+    <div style="overflow-x:auto"><table style="min-width:520px">
+        <thead><tr><th>Use</th><th>Run</th><th>EC1.5 (µM)</th><th>IC50 (µM)</th><th>Run call</th></tr></thead>
+        <tbody>
+          <tr><td><input type="checkbox" class="ksInc" checked aria-label="include run"></td><td><input type="text" class="ksLbl" value="B1" style="width:64px"></td><td><input type="text" class="ksEc" placeholder="e.g. 1396 or ND" style="width:110px"></td><td><input type="text" class="ksIc" placeholder="e.g. 601 or &gt;2000" style="width:110px"></td><td><select class="ksCall"><option value="" selected>choose…</option><option value="pos">Positive</option><option value="neg">Negative</option></select></td></tr>
+          <tr><td><input type="checkbox" class="ksInc" checked aria-label="include run"></td><td><input type="text" class="ksLbl" value="B2" style="width:64px"></td><td><input type="text" class="ksEc" placeholder="e.g. 1396 or ND" style="width:110px"></td><td><input type="text" class="ksIc" placeholder="e.g. 601 or &gt;2000" style="width:110px"></td><td><select class="ksCall"><option value="" selected>choose…</option><option value="pos">Positive</option><option value="neg">Negative</option></select></td></tr>
+          <tr><td><input type="checkbox" class="ksInc" checked aria-label="include run"></td><td><input type="text" class="ksLbl" value="B3" style="width:64px"></td><td><input type="text" class="ksEc" placeholder="e.g. 1396 or ND" style="width:110px"></td><td><input type="text" class="ksIc" placeholder="e.g. 601 or &gt;2000" style="width:110px"></td><td><select class="ksCall"><option value="" selected>choose…</option><option value="pos">Positive</option><option value="neg">Negative</option></select></td></tr>
+        </tbody></table></div>
+    <label class="row" style="gap:6px;margin-top:10px"><input type="checkbox" id="ksCountDef"><span class="small">Count runs where a value was not reached as the default (4000 µM), instead of leaving those runs out</span></label>
+    <div id="combineKSOut" class="small" style="margin-top:10px;line-height:1.55"></div>
+    <div class="small muted" style="margin-top:8px"><b>Rules applied (draft OECD TG 497 Part 3, with TG 442D):</b> the DA combines multiple tests of one assay by the <i>geometric mean</i> of the individual values. Every run with a calculated value counts, whatever its call: the default 4000 µM is for when no luciferase induction (EC1.5) or no cytotoxicity (IC50) was observed at all, not for a run that was merely rated negative or borderline (the model was trained with borderline data, and the ESM3 workbook applies the default only to "no induction above threshold"). A run's call only sets the overall rating (majority of the runs, 2 of 3), and two runs that disagree call for a third run (TG 442D). At least two independent runs are expected. Geometric mean = the n-th root of the product of n values. This is for the PoD inputs only, separate from the arithmetic averages used for house-style cells.</div>
+    <div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn" id="combineKSCancel" type="button">Cancel</button><button class="btn primary" id="combineKSApply" type="button" disabled>Apply to calculator</button></div>
+  </div>
+</div>
+
+<div id="combineH" class="hidden" style="position:fixed;inset:0;background:rgba(20,33,61,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px">
+  <div class="card" style="max-width:740px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 10px 30px rgba(0,0,0,.25)" role="dialog" aria-modal="true" aria-labelledby="combineHTitle">
+    <h2 id="combineHTitle" style="margin-bottom:6px">Combine h-CLAT replicate runs</h2>
+    <div class="small muted" style="margin-bottom:8px">Enter each valid run from the report (untick a run that is invalid). Values are in µg/mL; use ND or blank for "not determined". A value written like &lt;279.1 is used as 279.1. Set each run's call as the report states it (for a borderline result, choose the direction the report uses for that run).</div>
+    <div style="overflow-x:auto"><table style="min-width:540px">
+        <thead><tr><th>Use</th><th>Run</th><th>CD86 EC150</th><th>CD54 EC200</th><th>Run call</th></tr></thead>
+        <tbody>
+          <tr><td><input type="checkbox" class="hInc" checked aria-label="include run"></td><td><input type="text" class="hLbl" value="B1" style="width:64px"></td><td><input type="text" class="hEc150" placeholder="CD86, e.g. 250 or ND" style="width:120px"></td><td><input type="text" class="hEc200" placeholder="CD54, e.g. 453.5 or ND" style="width:130px"></td><td><select class="hCall"><option value="" selected>choose…</option><option value="pos">Positive</option><option value="neg">Negative</option></select></td></tr>
+          <tr><td><input type="checkbox" class="hInc" checked aria-label="include run"></td><td><input type="text" class="hLbl" value="B2" style="width:64px"></td><td><input type="text" class="hEc150" placeholder="CD86, e.g. 250 or ND" style="width:120px"></td><td><input type="text" class="hEc200" placeholder="CD54, e.g. 453.5 or ND" style="width:130px"></td><td><select class="hCall"><option value="" selected>choose…</option><option value="pos">Positive</option><option value="neg">Negative</option></select></td></tr>
+          <tr><td><input type="checkbox" class="hInc" checked aria-label="include run"></td><td><input type="text" class="hLbl" value="B3" style="width:64px"></td><td><input type="text" class="hEc150" placeholder="CD86, e.g. 250 or ND" style="width:120px"></td><td><input type="text" class="hEc200" placeholder="CD54, e.g. 453.5 or ND" style="width:130px"></td><td><select class="hCall"><option value="" selected>choose…</option><option value="pos">Positive</option><option value="neg">Negative</option></select></td></tr>
+        </tbody></table></div>
+    <label class="grid" style="gap:4px;margin-top:10px;max-width:300px"><span class="small">CV75 (µg/mL) from the dose-finding assay (ND if not determined)</span><input type="text" id="hCv75" placeholder="e.g. 44.1 or ND"></label>
+    <label class="row" style="gap:6px;margin-top:10px"><input type="checkbox" id="hCountDef"><span class="small">Count runs where a value was not calculable as the default (5000 µg/mL), instead of leaving those runs out</span></label>
+    <div id="combineHOut" class="small" style="margin-top:10px;line-height:1.55"></div>
+    <div class="small muted" style="margin-top:8px"><b>Rules applied (draft OECD TG 497 Part 3, with TG 442E):</b> the DA combines multiple tests of one assay by the <i>geometric mean</i> of the individual values (TG 442E's own reporting rule is the median, but the DA does not call for it). Every run with a calculated EC150 or EC200 counts, whatever its call; the ESM3 default 5000 µg/mL is for when no change in the marker was observed (value not calculable), or a CV75 that was not determined. A run's call only sets the overall rating: the majority of the runs (2 of 3), with a third run needed when the first two disagree. No rule exists for combining CV75 across runs, so enter the report's single value. This is for the PoD inputs only.</div>
+    <div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn" id="combineHCancel" type="button">Cancel</button><button class="btn primary" id="combineHApply" type="button" disabled>Apply to calculator</button></div>
+  </div>
 </div>
 
 <div id="aboutCtx" class="hidden" style="position:fixed;inset:0;background:rgba(20,33,61,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px">
@@ -195,7 +267,10 @@ function lognormVP(vp){ return (vp!=null && vp>10) ? (log10(vp)-1) : 0; }
 // units (see the on-page notes + worked examples). Returns null fields when a
 // required input is missing ("not sufficient data" gating, matching ESM3).
 function computeAll(inp){
-  const { mw, vp, ec15, ec3, ic50, kmax, cd86, cd54, cv75 } = inp;
+  const { mw, vp, ec15, ec3, ic50, kmax, cd86, cd54, cv75, ksRating, hclatRating } = inp;
+  // ESM3 template: an assay counts only if its rating cell is filled (0 or 1);
+  // the 0/1 value itself is not used in any formula.
+  const rKS = ksRating!=null, rH = hclatRating!=null;
   const E5 = lognormVP(vp);
   // Gate each of EC1.5/EC3/IC50 independently rather than as an all-or-
   // nothing KS block: the equations don't all use the same subset (Eq1/5/6/
@@ -203,11 +278,11 @@ function computeAll(inp){
   // Eq5e uses EC1.5 alone) - verified against 7 real worked examples with
   // partial KS data, where e.g. Eq1 correctly computes from EC1.5+IC50 alone
   // even with EC3 left blank.
-  const haveEC15 = ec15!=null;
-  const haveEC3 = ec3!=null;
-  const haveIC50 = ic50!=null;
+  const haveEC15 = rKS && ec15!=null;
+  const haveEC3 = rKS && ec3!=null;
+  const haveIC50 = rKS && ic50!=null;
   const haveKmax = kmax!=null;
-  const haveHclat = cd86!=null && cd54!=null && cv75!=null;
+  const haveHclat = rH && cd86!=null && cd54!=null && cv75!=null;
 
   const E9 = haveEC15 ? (-log10(ec15)+log10(4000)) : null;   // LOG norm EC1.5 KS
   const E11 = haveEC3 ? (-log10(ec3)+log10(4000)) : null;    // LOG norm EC3 KS
@@ -260,6 +335,51 @@ const PV_ROWS = [
   ['eq5e','Equation 5e — KeratinoSens + kDPRA + h-CLAT (ignores cytotoxicity & vapor pressure)'],
 ];
 
+
+// ---------- Regression-based DA: pick the equations and take the lower value (draft OECD TG 497 Part 3, Figure 4.2.1) ----------
+const DA_PAIRS = [
+  { llna: 'eq5', pv: 'eq5e', label: 'all three tests (kDPRA + KeratinoSens + h-CLAT)', names: 'EQ5 / EQ5e', tests: ['kdpra', 'ks', 'hclat'] },
+  { llna: 'eq1', pv: 'eq1d', label: 'KeratinoSens + kDPRA', names: 'EQ1 / EQ1d', tests: ['ks', 'kdpra'] },
+  { llna: 'eq4', pv: 'eq4d', label: 'h-CLAT + kDPRA', names: 'EQ4 / EQ4d', tests: ['hclat', 'kdpra'] },
+  { llna: 'eq6', pv: 'eq6d', label: 'KeratinoSens + h-CLAT', names: 'EQ6 / EQ6d', tests: ['ks', 'hclat'] },
+];
+const TEST_NAMES = { ks: 'KeratinoSens', kdpra: 'kDPRA', hclat: 'h-CLAT' };
+function daPod(eqs){
+  const ok = k => eqs[k] && eqs[k].pct != null;
+  // three tests use EQ5/EQ5e; otherwise exactly one two-test pair can be available
+  const pair = DA_PAIRS.find(p => ok(p.llna) && ok(p.pv));
+  if (!pair) return null;
+  const a = eqs[pair.llna], b = eqs[pair.pv];
+  const useLlna = a.pct <= b.pct;
+  const chosen = useLlna ? a : b;
+  return { pair: pair, useLlna: useLlna, chosenKey: useLlna ? pair.llna : pair.pv, pct: chosen.pct, dsa: chosen.dsa, llna: a, pv: b };
+}
+function renderDa(res, ctx){
+  const el = document.getElementById('daOut');
+  if (!res){
+    el.innerHTML = '<span class="muted">Not enough data yet. The DA needs quantitative results from at least two tests (kDPRA, KeratinoSens, h-CLAT), with a rating chosen for KeratinoSens and h-CLAT, plus MW for the h-CLAT models.</span>';
+    return;
+  }
+  const f = (v, d) => Number(v).toFixed(d);
+  const eqName = k => k.replace('eq', 'EQ');
+  const used = res.pair.tests.filter(t => ctx.flags[t]);
+  let html = '<div style="font-size:20px;font-weight:700">' + (used.length ? 'Exploratory PoD = ' : 'PoD = ') + f(res.dsa, 2) + ' µg/cm²</div>'
+    + '<div>= ' + f(res.pct, 4) + ' % in a vehicle applied at 25 mg/cm²</div>'
+    + '<div class="small muted" style="margin-top:6px">Based on ' + res.pair.label + ': ' + eqName(res.pair.llna) + ' (LLNA-trained) = ' + f(res.llna.dsa, 2) + ' µg/cm², ' + eqName(res.pair.pv) + ' (potency-value-trained) = ' + f(res.pv.dsa, 2) + ' µg/cm². The lower one, ' + eqName(res.chosenKey) + ', is the PoD.</div>';
+  if (used.length){
+    html += '<div style="margin-top:10px;padding:10px;border:1px solid var(--warnbd);background:var(--warnbg);border-radius:12px;color:var(--warn)" class="small">'
+      + '<b>Exploratory only.</b> This PoD uses a result you flagged as inconclusive or outside the assay\'s applicability domain (' + used.map(t => TEST_NAMES[t]).join(' and ') + '). Draft TG 497 Part 3 says only valid results within each assay\'s applicability domain should be used to run the DA for regulatory purposes.';
+    if (ctx.validDa){
+      const v = ctx.validDa;
+      html += '<div style="margin-top:6px"><b>Using only the valid tests (' + v.pair.label + '): PoD = ' + f(v.dsa, 2) + ' µg/cm²</b> (' + f(v.pct, 4) + ' % at 25 mg/cm²; ' + eqName(v.chosenKey) + ' is the lower of ' + eqName(v.pair.llna) + ' and ' + eqName(v.pair.pv) + ').</div>';
+    } else {
+      html += '<div style="margin-top:6px"><b>Fewer than two valid tests remain, so the DA cannot be run for regulatory purposes</b> (it needs at least two valid tests).</div>';
+    }
+    html += '</div>';
+  }
+  el.innerHTML = html;
+}
+
 function fmt(x, d){ return (x==null || Number.isNaN(x)) ? '—' : Number(x).toFixed(d==null?4:d); }
 
 function renderTable(tblId, rows, eqs){
@@ -284,10 +404,10 @@ function renderTable(tblId, rows, eqs){
 
 // Publish the most-complete LLNA/PV result so potency.html can offer a
 // one-click autofill instead of retyping the DSA value there.
-function publishBestForPotency(bestLlna, bestPv){
+function publishBestForPotency(bestLlna, bestPv, da){
   const KEY='skinsens_last_pod_v1';
   try {
-    if (bestLlna || bestPv) localStorage.setItem(KEY, JSON.stringify({ llna: bestLlna, pv: bestPv }));
+    if (bestLlna || bestPv) localStorage.setItem(KEY, JSON.stringify({ llna: bestLlna, pv: bestPv, da: da ? { model: da.chosenKey, pct: da.pct, dsa: da.dsa, exploratory: !!da.exploratory } : null }));
     else localStorage.removeItem(KEY);
   } catch(e){}
 }
@@ -306,12 +426,32 @@ function updateVpNote(){
 }
 function setVpPa(pa){ document.getElementById('vpUnit').value = 'Pa'; setVal('vp', pa); }
 
+// ESM3 template: consolidated value = IF(µM blank, ppm x 5, µM)
+function umOrPpm(umId, ppmId){
+  const um = document.getElementById(umId).value, ppm = document.getElementById(ppmId).value;
+  if (um !== '') return Number(um);
+  return ppm === '' ? null : Number(ppm) * 5;
+}
+
+function rating(id){ const v = document.getElementById(id).value; return v==='' ? null : Number(v); }
+
+// Drop the assays flagged as inconclusive / outside their applicability domain (an unset rating or kmax removes that assay)
+function withoutFlagged(inp){
+  const c = Object.assign({}, inp);
+  if (inp.ksFlag) c.ksRating = null;
+  if (inp.hclatFlag) c.hclatRating = null;
+  if (inp.kdpraFlag) c.kmax = null;
+  return c;
+}
+
 function readInputs(){
   const num = id => { const v = document.getElementById(id).value; return v===''? null : Number(v); };
   return {
     mw: num('mw'), vp: vpToPa(),
-    ec15: num('ec15'), ec3: num('ec3'), ic50: num('ic50'),
+    ec15: umOrPpm('ec15','ec15ppm'), ec3: umOrPpm('ec3','ec3ppm'), ic50: umOrPpm('ic50','ic50ppm'),
     kmax: num('kmax'),
+    ksRating: rating('ksRating'), hclatRating: rating('hclatRating'),
+    ksFlag: document.getElementById('ksInvalid').checked, hclatFlag: document.getElementById('hclatInvalid').checked, kdpraFlag: document.getElementById('kdpraInvalid').checked,
     cd86: num('cd86'), cd54: num('cd54'), cv75: num('cv75'),
   };
 }
@@ -319,13 +459,23 @@ function readInputs(){
 function update(){
   updateVpNote();
   const inp = readInputs();
+  const msgs = [];
+  if (inp.ksRating==null && [inp.ec15, inp.ec3, inp.ic50].some(v=>v!=null)) msgs.push('KeratinoSens values are entered but no rating is selected, so every KeratinoSens-based model is skipped (as in the ESM3 template). Choose 1 (positive) or 0 (negative).');
+  if (inp.hclatRating==null && [inp.cd86, inp.cd54, inp.cv75].some(v=>v!=null)) msgs.push('h-CLAT values are entered but no rating is selected, so every h-CLAT-based model is skipped (as in the ESM3 template). Choose 1 (positive) or 0 (negative).');
+  document.getElementById('ratingWarnText').textContent = msgs.join(' ');
+  document.getElementById('ratingWarn').classList.toggle('hidden', msgs.length === 0);
   const eqs = computeAll(inp);
   const bestLlna = renderTable('tblLLNA', LLNA_ROWS, eqs);
   const bestPv = renderTable('tblPV', PV_ROWS, eqs);
-  publishBestForPotency(bestLlna, bestPv);
+  const da = daPod(eqs);
+  const flags = { ks: inp.ksFlag, kdpra: inp.kdpraFlag, hclat: inp.hclatFlag };
+  const validDa = (da && (flags.ks || flags.kdpra || flags.hclat)) ? daPod(computeAll(withoutFlagged(inp))) : null;
+  if (da) da.exploratory = da.pair.tests.some(t => flags[t]);
+  renderDa(da, { flags: flags, validDa: validDa });
+  publishBestForPotency(bestLlna, bestPv, da);
 }
 
-['mw','vp','vpUnit','ec15','ec3','ic50','kmax','cd86','cd54','cv75'].forEach(id=>{
+['mw','vp','vpUnit','ksRating','hclatRating','ksInvalid','hclatInvalid','kdpraInvalid','ec15ppm','ec3ppm','ic50ppm','ec15','ec3','ic50','kmax','cd86','cd54','cv75'].forEach(id=>{
   document.getElementById(id).addEventListener('input', update);
 });
 
@@ -336,19 +486,25 @@ function loadExample(ex){
   document.getElementById('matCas').value = ex.cas;
   setVal('mw', ex.mw); setVpPa(ex.vp);
   setVal('ec15', ex.ec15); setVal('ec3', ex.ec3); setVal('ic50', ex.ic50);
+  setVal('ec15ppm', null); setVal('ec3ppm', null); setVal('ic50ppm', null);
   setVal('kmax', ex.kmax);
+  document.getElementById('ksRating').value = ex.ksRating==null ? '' : String(ex.ksRating);
+  document.getElementById('hclatRating').value = ex.hclatRating==null ? '' : String(ex.hclatRating);
+  ['ksInvalid','hclatInvalid','kdpraInvalid'].forEach(id=> document.getElementById(id).checked = false);
   setVal('cd86', ex.cd86); setVal('cd54', ex.cd54); setVal('cv75', ex.cv75);
   update();
 }
 
-const DNCB = { name:'DNCB (2,4-dinitrochlorobenzene)', cas:'97-00-7', mw:202.6, vp:0, ec15:2.495628477, ec3:3.892464976, ic50:8.2, kmax:-0.55, cd86:1.92, cd54:2.23, cv75:5 };
-const CA = { name:'Cinnamic aldehyde', cas:'104-55-2', mw:132.16, vp:4.6, ec15:16.13, ec3:63.93, ic50:194.37, kmax:-1.35, cd86:10.2, cd54:12.3, cv75:28 };
+const DNCB = { name:'DNCB (2,4-dinitrochlorobenzene)', cas:'97-00-7', mw:202.6, vp:0, ec15:2.495628477, ec3:3.892464976, ic50:8.2, kmax:-0.55, cd86:1.92, cd54:2.23, cv75:5, ksRating:1, hclatRating:1 };
+const CA = { name:'Cinnamic aldehyde', cas:'104-55-2', mw:132.16, vp:4.6, ec15:16.13, ec3:63.93, ic50:194.37, kmax:-1.35, cd86:10.2, cd54:12.3, cv75:28, ksRating:1, hclatRating:1 };
 
 document.getElementById('btnLoadDNCB').onclick = ()=> loadExample(DNCB);
 document.getElementById('btnLoadCA').onclick = ()=> loadExample(CA);
 document.getElementById('btnReset').onclick = ()=>{
-  ['matName','matCas','mw','vp','ec15','ec3','ic50','kmax','cd86','cd54','cv75'].forEach(id=> document.getElementById(id).value='');
+  ['matName','matCas','mw','vp','ec15','ec3','ic50','ec15ppm','ec3ppm','ic50ppm','kmax','cd86','cd54','cv75'].forEach(id=> document.getElementById(id).value='');
   document.getElementById('vpUnit').value='Pa';
+  document.getElementById('ksRating').value=''; document.getElementById('hclatRating').value='';
+  ['ksInvalid','hclatInvalid','kdpraInvalid'].forEach(id=> document.getElementById(id).checked = false);
   document.getElementById('comptoxSources').classList.add('hidden');
   document.getElementById('comptoxStatus').textContent='';
   update();
@@ -469,6 +625,207 @@ document.getElementById('btnComptox').onclick = lookupComptox;
   document.addEventListener('keydown', e=>{ if (e.key === 'Escape') close(); });
 })();
 
+// ---------- Combine KeratinoSens replicate runs (OECD TG 442D rules) ----------
+const KS_DEFAULT_UM = 4000;
+
+function parseRunValue(text){
+  const t = String(text == null ? '' : text).trim().toLowerCase();
+  if (t === '' || t === 'nd' || t === 'n.d.' || t === 'n.r.' || t === 'nr' || t === 'n.i.' || t.charAt(0) === '>') return { kind: 'notreached' };
+  const lt = t.charAt(0) === '<';
+  const n = Number((lt ? t.slice(1) : t).replace(',', ''));
+  return (Number.isFinite(n) && n > 0) ? { kind: 'num', val: n, lt: lt } : { kind: 'bad' };
+}
+
+function geoMean(values){
+  return Math.exp(values.reduce((a, v) => a + Math.log(v), 0) / values.length);
+}
+
+// Combine one parameter across runs: geometric mean of the calculable values (draft TG 497 Part 3).
+// A run's call (positive/negative) does NOT decide which values count; the default is only for a value
+// that could not be calculated (no induction / no cytotoxicity observed).
+function combineParam(inc, getter, def, name, unit, countDefaults, notes){
+  const got = inc.map(getter);
+  const vals = got.filter(g => g.kind === 'num').map(g => g.val);
+  const missing = got.length - vals.length;
+  if (!vals.length) return { v: def, why: 'not calculable in any run (no induction or cytotoxicity observed), so the ESM3 default ' + def + ' ' + unit };
+  const list = vals.slice();
+  if (countDefaults) for (let i = 0; i < missing; i++) list.push(def);
+  if (missing && !countDefaults) notes.push(name + ' was not calculable in ' + missing + ' of ' + inc.length + ' run(s), so those runs were left out of the mean (tick the box below to count them as the default ' + def + ' ' + unit + ' instead). The guideline does not specify this case, so check it.');
+  const why = (list.length === 1 ? 'the only calculable value' : 'geometric mean of ' + list.join(', ')) + (countDefaults && missing ? ' (' + missing + ' run(s) with no value counted as the default ' + def + ' ' + unit + ')' : '');
+  return { v: list.length === 1 ? list[0] : geoMean(list), why: why };
+}
+
+// runs: [{ use, label, ec15: {kind,val}, ic50: {kind,val}, call: 'pos'|'neg' }]
+function combineKS(runs, opts){
+  const notes = [], errors = [];
+  const inc = runs.filter(r => r.use);
+  const n = inc.length;
+  if (n === 0) return { errors: ['Tick at least one run.'], notes: notes };
+  inc.forEach(r => { if (r.call === '') errors.push(r.label + ': choose Positive or Negative for this run.'); });
+  inc.forEach(r => { if (r.ec15.kind === 'bad') errors.push(r.label + ': EC1.5 is not a number.'); if (r.ic50.kind === 'bad') errors.push(r.label + ': IC50 is not a number.'); });
+  if (errors.length) return { errors: errors, notes: notes };
+
+  const pos = inc.filter(r => r.call === 'pos');
+  let overall;
+  if (n === 1){ overall = pos.length ? 'pos' : 'neg'; notes.push('Only one run: TG 442D expects at least two independent runs.'); }
+  else if (n === 2){ overall = pos.length === 2 ? 'pos' : (pos.length === 0 ? 'neg' : 'discordant'); }
+  else {
+    overall = pos.length * 3 >= n * 2 ? 'pos' : 'neg';
+    if (n > 3) notes.push('TG 442D describes 2 or 3 runs; used a 2-of-3 style majority for ' + n + ' runs.');
+  }
+  if (overall === 'discordant') return { overall: overall, errors: ['The two runs disagree (one positive, one negative). TG 442D calls for a third independent run before an overall result can be given.'], notes: notes };
+
+  const cd = !!(opts && opts.countDefaults);
+  const e = combineParam(inc, r => r.ec15, KS_DEFAULT_UM, 'EC1.5', 'µM', cd, notes);
+  const ic = combineParam(inc, r => r.ic50, KS_DEFAULT_UM, 'IC50', 'µM', cd, notes);
+  return { overall: overall, rating: overall === 'pos' ? 1 : 0, ec15: e.v, ec15Note: e.why, ic50: ic.v, ic50Note: ic.why, notes: notes, errors: errors };
+}
+
+(function(){
+  const dlg = document.getElementById('combineKS');
+  const out = document.getElementById('combineKSOut');
+  const applyBtn = document.getElementById('combineKSApply');
+  const rows = Array.from(dlg.querySelectorAll('tbody tr'));
+  let last = null;
+  const fmt4 = v => Number(Number(v).toPrecision(5));
+
+  function readRuns(){
+    return rows.map(tr => ({
+      use: tr.querySelector('.ksInc').checked,
+      label: tr.querySelector('.ksLbl').value || 'run',
+      ec15: parseRunValue(tr.querySelector('.ksEc').value),
+      ic50: parseRunValue(tr.querySelector('.ksIc').value),
+      call: tr.querySelector('.ksCall').value,
+      empty: tr.querySelector('.ksEc').value.trim() === '' && tr.querySelector('.ksIc').value.trim() === '',
+    })).filter(r => !r.empty || r.call !== '');
+  }
+  function refresh(){
+    const runs = readRuns();
+    last = null; applyBtn.disabled = true;
+    if (!runs.length){ out.textContent = 'Enter at least one run.'; return; }
+    const r = combineKS(runs, { countDefaults: document.getElementById('ksCountDef').checked });
+    const parts = [];
+    if (r.errors && r.errors.length) parts.push('<div style="color:var(--bad)"><b>' + r.errors.map(esc).join(' ') + '</b></div>');
+    if (r.ec15 != null){
+      parts.push('<div><b>Overall call:</b> ' + (r.rating === 1 ? 'Positive (rating 1)' : 'Negative (rating 0)') + '</div>');
+      parts.push('<div><b>EC1.5 = ' + fmt4(r.ec15) + ' µM</b> &mdash; ' + esc(r.ec15Note) + '</div>');
+      parts.push('<div><b>IC50 = ' + fmt4(r.ic50) + ' µM</b> &mdash; ' + esc(r.ic50Note) + '</div>');
+      last = r; applyBtn.disabled = false;
+    }
+    (r.notes || []).forEach(nt => parts.push('<div style="color:var(--warn)">' + esc(nt) + '</div>'));
+    out.innerHTML = parts.join('');
+  }
+  function open(){ dlg.classList.remove('hidden'); refresh(); }
+  function close(){ dlg.classList.add('hidden'); }
+  document.getElementById('btnCombineKS').onclick = open;
+  document.getElementById('combineKSCancel').onclick = close;
+  dlg.addEventListener('click', e=>{ if (e.target === dlg) close(); });
+  document.addEventListener('keydown', e=>{ if (e.key === 'Escape') close(); });
+  dlg.addEventListener('input', refresh);
+  dlg.addEventListener('change', refresh);
+  applyBtn.onclick = ()=>{
+    if (!last) return;
+    setVal('ec15', fmt4(last.ec15)); setVal('ic50', fmt4(last.ic50));
+    setVal('ec15ppm', null); setVal('ic50ppm', null);
+    document.getElementById('ksRating').value = String(last.rating);
+    close(); update();
+  };
+})();
+
+// ---------- Combine h-CLAT replicate runs (OECD TG 442E rules) ----------
+const HCLAT_DEFAULT = 5000;
+
+function medianVals(values){
+  const a = values.slice().sort((x, y) => x - y), n = a.length;
+  return n % 2 ? a[(n - 1) / 2] : (a[n / 2 - 1] + a[n / 2]) / 2;
+}
+
+// runs: [{ use, label, ec150: {kind,val}, ec200: {kind,val}, call: 'pos'|'neg' }]; cv75: parsed value
+function combineHCLAT(runs, cv75, opts){
+  const notes = [], errors = [];
+  const inc = runs.filter(r => r.use);
+  const n = inc.length;
+  if (n === 0) return { errors: ['Tick at least one run.'], notes: notes };
+  inc.forEach(r => { if (r.call === '') errors.push(r.label + ': choose Positive or Negative for this run.'); });
+  inc.forEach(r => { if (r.ec150.kind === 'bad') errors.push(r.label + ': CD86 EC150 is not a number.'); if (r.ec200.kind === 'bad') errors.push(r.label + ': CD54 EC200 is not a number.'); });
+  if (cv75.kind === 'bad') errors.push('CV75 is not a number.');
+  if (errors.length) return { errors: errors, notes: notes };
+
+  const pos = inc.filter(r => r.call === 'pos');
+  let overall;
+  if (n === 1){ overall = pos.length ? 'pos' : 'neg'; notes.push('Only one run: TG 442E expects at least two independent runs.'); }
+  else if (n === 2){ overall = pos.length === 2 ? 'pos' : (pos.length === 0 ? 'neg' : 'discordant'); }
+  else {
+    overall = pos.length * 3 >= n * 2 ? 'pos' : 'neg';
+    if (n > 3) notes.push('TG 442E describes 2 or 3 runs; used a 2-of-3 style majority for ' + n + ' runs.');
+  }
+  if (overall === 'discordant') return { overall: overall, errors: ['The two runs disagree (one positive, one negative). TG 442E calls for a third independent run before an overall result can be given.'], notes: notes };
+
+  const cd = !!(opts && opts.countDefaults);
+  if (inc.some(r => (r.ec150.kind === 'num' && r.ec150.lt) || (r.ec200.kind === 'num' && r.ec200.lt))) notes.push('A "<" value was used as its number; the true value is lower.');
+  const c86 = combineParam(inc, r => r.ec150, HCLAT_DEFAULT, 'CD86 EC150', 'µg/mL', cd, notes);
+  const c54 = combineParam(inc, r => r.ec200, HCLAT_DEFAULT, 'CD54 EC200', 'µg/mL', cd, notes);
+
+  let cv, cvWhy;
+  if (cv75.kind === 'num'){ cv = cv75.val; cvWhy = 'as reported' + (cv75.lt ? ' (a "<" value used as its number)' : ''); }
+  else { cv = HCLAT_DEFAULT; cvWhy = 'not determined, so the ESM3 default ' + HCLAT_DEFAULT + ' µg/mL'; }
+  return { overall: overall, rating: overall === 'pos' ? 1 : 0, cd86: c86.v, cd86Why: c86.why, cd54: c54.v, cd54Why: c54.why, cv75: cv, cv75Why: cvWhy, notes: notes, errors: errors };
+}
+
+(function(){
+  const dlg = document.getElementById('combineH');
+  const out = document.getElementById('combineHOut');
+  const applyBtn = document.getElementById('combineHApply');
+  const cvInput = document.getElementById('hCv75');
+  const rows = Array.from(dlg.querySelectorAll('tbody tr'));
+  let last = null;
+  const fmt4 = v => Number(Number(v).toPrecision(5));
+
+  function readRuns(){
+    return rows.map(tr => ({
+      use: tr.querySelector('.hInc').checked,
+      label: tr.querySelector('.hLbl').value || 'run',
+      ec150: parseRunValue(tr.querySelector('.hEc150').value),
+      ec200: parseRunValue(tr.querySelector('.hEc200').value),
+      call: tr.querySelector('.hCall').value,
+      empty: tr.querySelector('.hEc150').value.trim() === '' && tr.querySelector('.hEc200').value.trim() === '',
+    })).filter(r => !r.empty || r.call !== '');
+  }
+  function refresh(){
+    const runs = readRuns();
+    last = null; applyBtn.disabled = true;
+    if (!runs.length){ out.textContent = 'Enter at least one run.'; return; }
+    const r = combineHCLAT(runs, parseRunValue(cvInput.value), { countDefaults: document.getElementById('hCountDef').checked });
+    const parts = [];
+    if (r.errors && r.errors.length) parts.push('<div style="color:var(--bad)"><b>' + r.errors.map(esc).join(' ') + '</b></div>');
+    if (r.cd86 != null){
+      parts.push('<div><b>Overall call:</b> ' + (r.rating === 1 ? 'Positive (rating 1)' : 'Negative (rating 0)') + '</div>');
+      parts.push('<div><b>CD86 EC150 = ' + fmt4(r.cd86) + ' µg/mL</b> &mdash; ' + esc(r.cd86Why) + '</div>');
+      parts.push('<div><b>CD54 EC200 = ' + fmt4(r.cd54) + ' µg/mL</b> &mdash; ' + esc(r.cd54Why) + '</div>');
+      parts.push('<div><b>CV75 = ' + fmt4(r.cv75) + ' µg/mL</b> &mdash; ' + esc(r.cv75Why) + '</div>');
+      last = r; applyBtn.disabled = false;
+    }
+    (r.notes || []).forEach(nt => parts.push('<div style="color:var(--warn)">' + esc(nt) + '</div>'));
+    out.innerHTML = parts.join('');
+  }
+  function open(){ dlg.classList.remove('hidden'); refresh(); }
+  function close(){ dlg.classList.add('hidden'); }
+  document.getElementById('btnCombineH').onclick = open;
+  document.getElementById('combineHCancel').onclick = close;
+  dlg.addEventListener('click', e=>{ if (e.target === dlg) close(); });
+  document.addEventListener('keydown', e=>{ if (e.key === 'Escape') close(); });
+  dlg.addEventListener('input', refresh);
+  dlg.addEventListener('change', refresh);
+  applyBtn.onclick = ()=>{
+    if (!last) return;
+    setVal('cd86', fmt4(last.cd86)); setVal('cd54', fmt4(last.cd54)); setVal('cv75', fmt4(last.cv75));
+    document.getElementById('hclatRating').value = String(last.rating);
+    close(); update();
+  };
+})();
+
+
+
 // ---------- Self-check against independently-computed ESM3 reference values ----------
 // These reference numbers were computed directly from the ESM3 formulas (not
 // from this page's code) — see the project notes. If this page's live output
@@ -489,19 +846,24 @@ const EXPECTED = {
           eq1d:{pct:1.7830,dsa:445.7540}, eq4d:{pct:8.2989,dsa:2074.7158}, eq5d:{pct:7.8827,dsa:1970.6814}, eq6d:{pct:31.1745,dsa:7793.6337}, eq5e:{pct:7.1298,dsa:1782.4437} },
   PARTIAL2: { eq1:{pct:17.1679,dsa:4291.9860}, eq4:GATED, eq5:GATED, eq6:GATED, eq7:GATED,
           eq1d:{pct:59.0606,dsa:14765.1426}, eq4d:GATED, eq5d:GATED, eq6d:GATED, eq5e:GATED },
+  PARTIAL3: { eq1:GATED, eq4:GATED, eq5:GATED, eq6:{pct:21.9248,dsa:5481.1987}, eq7:{pct:29.4098,dsa:7352.4545},
+          eq1d:GATED, eq4d:GATED, eq5d:GATED, eq6d:{pct:12.3277,dsa:3081.9358}, eq5e:GATED },
 };
 // EC3 and hCLAT/kDPRA are deliberately left out here (undefined) to match
 // the source worked examples exactly.
-const PARTIAL1 = { name:'(partial KS data — no EC3.0)', mw:349.47, vp:0.0000052, ec15:24.8333, ic50:259.3333, kmax:-1.06, cd86:5000, cd54:5000, cv75:44.1 };
-const PARTIAL2 = { name:'(no h-CLAT data)', mw:222.37, vp:2.2876, ec15:4000, ic50:45.1, kmax:-3.5 };
+const PARTIAL1 = { name:'(partial KS data — no EC3.0)', mw:349.47, vp:0.0000052, ec15:24.8333, ic50:259.3333, kmax:-1.06, cd86:5000, cd54:5000, cv75:44.1, ksRating:1, hclatRating:0 };
+const PARTIAL2 = { name:'(no h-CLAT data)', mw:222.37, vp:2.2876, ec15:4000, ic50:45.1, kmax:-3.5, ksRating:1 };
+// From the ESM3 workbook's own blank-sheet example (phthalide, CAS 87-41-2): no kDPRA, so only
+// Equations 6, 7 and 6d calculate. Expected values are the workbook's saved Excel results.
+const PARTIAL3 = { name:'Phthalide, CAS 87-41-2 (no kDPRA; ESM3 workbook example)', mw:134.13, vp:0.14763, ec15:669.7, ec3:4000, ic50:4000, cd86:299.5, cd54:631.8, cv75:647.7, ksRating:1, hclatRating:1 };
 
 function runSelfCheck(){
   const out = document.getElementById('selfCheckOut');
   out.innerHTML = '';
-  const cases = [['DNCB', DNCB], ['CA', CA], ['PARTIAL1', PARTIAL1], ['PARTIAL2', PARTIAL2]];
+  const cases = [['DNCB', DNCB], ['CA', CA], ['PARTIAL1', PARTIAL1], ['PARTIAL2', PARTIAL2], ['PARTIAL3', PARTIAL3]];
   let allPass = true;
   cases.forEach(([key, ex])=>{
-    const inp = { mw:ex.mw, vp:ex.vp, ec15:ex.ec15, ec3:ex.ec3, ic50:ex.ic50, kmax:ex.kmax, cd86:ex.cd86, cd54:ex.cd54, cv75:ex.cv75 };
+    const inp = { mw:ex.mw, vp:ex.vp, ec15:ex.ec15, ec3:ex.ec3, ic50:ex.ic50, kmax:ex.kmax, cd86:ex.cd86, cd54:ex.cd54, cv75:ex.cv75, ksRating:ex.ksRating, hclatRating:ex.hclatRating };
     const eqs = computeAll(inp);
     const exp = EXPECTED[key];
     const row = document.createElement('div');
