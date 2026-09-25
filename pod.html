@@ -22,6 +22,8 @@
   input[type="number"],input[type="text"],input[type="password"]{padding:8px;border:1px solid var(--border);border-radius:12px;width:100%}
   input[type="number"]:focus,input[type="text"]:focus,input[type="password"]:focus{outline:2px solid #93c5fd;outline-offset:1px}
   .hidden{display:none!important}
+  .helpnote{display:none}
+  body.showhelp .helpnote{display:block}
   input::placeholder{color:#94a3b8;opacity:1}
   select{padding:8px;border:1px solid var(--border);border-radius:12px;background:#fff;color:var(--fg);font-family:inherit;font-size:14px}
   .icon-btn:hover{background:#f1f5f9}
@@ -94,25 +96,29 @@
     </div>
   </div>
 
+  <div class="row" style="justify-content:flex-end;margin-bottom:-12px">
+    <button class="btn" type="button" id="btnHelp" aria-pressed="false">Show input notes</button>
+  </div>
+
   <div class="grid cols-3">
     <fieldset>
       <legend>KeratinoSens (TG 442D)</legend>
       <div class="grid" style="gap:8px">
         <label class="grid" style="gap:4px"><span>Rating (required)</span><select id="ksRating"><option value="">not tested</option><option value="1">1 = positive</option><option value="0">0 = negative</option></select></label>
-        <div class="small muted">As in the ESM3 template: pick 1 (positive; borderline counts as positive) or 0 (negative) for every assay that was run. "Not tested" skips this assay and every model that needs it, even if numbers are typed below.</div>
+        <div class="small muted helpnote">As in the ESM3 template: pick 1 (positive; borderline counts as positive) or 0 (negative) for every assay that was run. "Not tested" skips this assay and every model that needs it, even if numbers are typed below.</div>
         <label class="row" style="gap:6px;align-items:flex-start;flex-wrap:nowrap"><input type="checkbox" id="ksInvalid" style="margin-top:3px;flex:0 0 auto"><span class="small">Result is inconclusive or outside the assay's applicability domain (e.g., insoluble)</span></label>
         <div><button class="btn" type="button" id="btnCombineKS">Combine replicate runs (geometric mean)…</button></div>
         <label class="grid" style="gap:4px"><span>EC1.5 (µM)</span><input type="number" id="ec15" step="any" placeholder="default 4000"></label>
         <label class="grid" style="gap:4px"><span>EC3.0 (µM) — conc. giving 3-fold induction</span><input type="number" id="ec3" step="any" placeholder="default 4000"></label>
         <label class="grid" style="gap:4px"><span>IC50 (µM)</span><input type="number" id="ic50" step="any" placeholder="default 4000"></label>
-        <div class="small muted">Each model below uses whichever of these three it needs — EC1.5+IC50 covers most of them, EC3.0 only feeds Equation 7, and Equation 5e only needs EC1.5. Fill in whatever you have; a missing field only blocks the models that actually use it. No induction/cytotoxicity reached at top concentration → enter 4000 µM (the ESM3 default), not blank. Enter values exactly as the report prints them (µM, not converted). The gray text in each box is the ESM3 default to enter when nothing was observed; it is only a hint and is never applied automatically.</div>
+        <div class="small muted helpnote">Each model below uses whichever of these three it needs — EC1.5+IC50 covers most of them, EC3.0 only feeds Equation 7, and Equation 5e only needs EC1.5. Fill in whatever you have; a missing field only blocks the models that actually use it. No induction/cytotoxicity reached at top concentration → enter 4000 µM (the ESM3 default), not blank. Enter values exactly as the report prints them (µM, not converted). The gray text in each box is the ESM3 default to enter when nothing was observed; it is only a hint and is never applied automatically.</div>
         <div class="small" style="font-weight:600;margin-top:4px">If data not in micromolar, enter in ppm</div>
         <div class="grid" style="gap:8px;grid-template-columns:repeat(3,minmax(0,1fr))">
           <label class="grid" style="gap:4px"><span class="small">EC1.5 (ppm)</span><input type="number" id="ec15ppm" step="any" placeholder="default 800"></label>
           <label class="grid" style="gap:4px"><span class="small">EC3.0 (ppm)</span><input type="number" id="ec3ppm" step="any" placeholder="default 800"></label>
           <label class="grid" style="gap:4px"><span class="small">IC50 (ppm)</span><input type="number" id="ic50ppm" step="any" placeholder="default 800"></label>
         </div>
-        <div class="small muted">Only used when the matching µM box above is blank. Converted as ppm × 5, the ESM3 template's rule (it assumes MW 200, for chemicals tested from a percent stock solution). Not reached → 800 ppm (= 4000 µM).</div>
+        <div class="small muted helpnote">Only used when the matching µM box above is blank. Converted as ppm × 5, the ESM3 template's rule (it assumes MW 200, for chemicals tested from a percent stock solution). Not reached → 800 ppm (= 4000 µM).</div>
       </div>
     </fieldset>
     <fieldset>
@@ -132,7 +138,7 @@
         <label class="grid" style="gap:4px"><span>CD86 EC150 (µg/mL)</span><input type="number" id="cd86" step="any" placeholder="default 5000"></label>
         <label class="grid" style="gap:4px"><span>CD54 EC200 (µg/mL)</span><input type="number" id="cd54" step="any" placeholder="default 5000"></label>
         <label class="grid" style="gap:4px"><span>CV75 (µg/mL)</span><input type="number" id="cv75" step="any" placeholder="default 5000"></label>
-        <div class="small muted">All three fields (CD86, CD54, CV75) plus MW are needed for any h-CLAT-based model below. No induction/cytotoxicity reached → enter 5000 µg/mL (the ESM3 default), not blank. MIT is auto-computed as min(CD86,CD54). Gray text is the default to enter when nothing was observed (a hint only).</div>
+        <div class="small muted helpnote">All three fields (CD86, CD54, CV75) plus MW are needed for any h-CLAT-based model below. No induction/cytotoxicity reached → enter 5000 µg/mL (the ESM3 default), not blank. MIT is auto-computed as min(CD86,CD54). Gray text is the default to enter when nothing was observed (a hint only).</div>
       </div>
     </fieldset>
   </div>
@@ -823,6 +829,22 @@ function combineHCLAT(runs, cv75, opts){
     close(); update();
   };
 })();
+
+// Show / hide the long explanatory notes under the input boxes (remembered in this browser)
+(function(){
+  const KEY = 'skinsens_showhelp_v1';
+  const btn = document.getElementById('btnHelp');
+  function apply(on){
+    document.body.classList.toggle('showhelp', on);
+    btn.textContent = on ? 'Hide input notes' : 'Show input notes';
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+  let on = false;
+  try { on = localStorage.getItem(KEY) === '1'; } catch(e){}
+  apply(on);
+  btn.onclick = ()=>{ on = !on; apply(on); try { localStorage.setItem(KEY, on ? '1' : '0'); } catch(e){} };
+})();
+
 
 
 
