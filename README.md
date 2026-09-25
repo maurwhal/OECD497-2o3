@@ -40,9 +40,9 @@ Also includes:
   paragraph.
 - A canvas-based **"Explain this call"** view per assay showing the
   threshold/borderline band and where the entered value falls.
-- **RIFM house-style cells** — a separate panel that renders DPRA/
+- **MML Style Excel Blurb** — a separate panel that renders DPRA/
   KeratinoSens/h-CLAT/U-SENS/kDPRA results in the `Call (label value, ...)`
-  grammar used by RIFM's High-EC3 review process, from a dedicated set of
+  grammar used by the MML High-EC3 review process, from a dedicated set of
   "for house-style cell" input fields (kept separate from the RFI%/SI%
   fields used for the hazard call, since those are different quantities).
 - **PDF upload** for lab reports: detects lab and assay type from known
@@ -68,12 +68,19 @@ with an expandable Sources panel showing exactly what was found and where
 (with links). This is the one feature in the toolkit that sends anything
 (the CAS number) to a third party — see `PRIVACY.md`.
 
+A second button, **"Look up vapor pressure (EPA CompTox)"**, queries EPA's
+CTX API using your own free API key (typed into the page, stored only in your
+browser's local storage, never in the code). It uses the median of EPA's
+experimental vapor pressure records when any exist, otherwise the median of
+EPA's predicted values, clearly labeled as predicted, with every record and
+its source listed.
+
 This is not SARA-ICE — see the hub page (`index.html`) for why.
 
 ### Potency Category Classifier (`potency.html`)
 
-Bins a single input value into RIFM's published Weight-of-Evidence potency
-categories (Extreme / Strong / Moderate / Weak / Very weak / Non-sensitizer),
+Bins a single input value into the published Potency Categories
+([Na et al. 2022](https://journals.sagepub.com/doi/full/10.1097/DER.0000000000000854): Extreme / Strong / Moderate / Weak / Very weak / Non-sensitizer),
 using the dose-range table from Na et al. (2022, Dermatitis) and Lee et al.
 (2024, Food Chem. Toxicol.), plus the LLNA%/SENS-IS tables from Na et al.
 (2022, Regul. Toxicol. Pharmacol.). Three independent entry points, each
@@ -104,7 +111,7 @@ one value you give it, and says so on the page.
 
 3. **2o3 tool**: select assays, enter data (or upload a lab report PDF for
    IIVS DPRA), and review the per-assay calls, the Final 2o3 Decision, and
-   the RIFM house-style cells.
+   the MML Style Excel Blurb.
 
 4. **PoD calculator**: enter MW, vapor pressure, and whichever of
    KeratinoSens/kDPRA/h-CLAT data you have, or load a worked example first

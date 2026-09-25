@@ -130,7 +130,7 @@
   </div>
 
   <div class="card" id="houseStyleCard">
-    <h2>RIFM house‑style cells</h2>
+    <h2>MML Style Excel Blurb</h2>
     <div class="small muted" style="margin-bottom:8px">Formatted per the High‑EC3 house‑style legend (Call (label value, label value, ...)). Uses the single-value fields below each assay (marked "for house‑style cell") — separate from the Report Interpreter's multi-run entry, which feeds the hazard call above.</div>
     <div class="grid" id="houseStyleOut"></div>
   </div>
@@ -224,7 +224,7 @@
       <button class="btn" id="btnCloseInt">Close</button>
     </div>
     <div id="intBody" class="grid" style="gap:10px"></div>
-    <div class="small muted" style="margin-top:6px">Applying updates the assay call above and the RIFM house-style cells further down the page — that's the copy-paste destination now, so there's no separate Excel blurb here.</div>
+    <div class="small muted" style="margin-top:6px">Applying updates the assay call above and the MML Style Excel Blurb further down the page — that's the copy-paste destination.</div>
     <div class="row" style="justify-content:flex-end;gap:8px;margin-top:8px">
       <button class="btn" id="btnCalcApply">Apply to 2‑out‑of‑3</button>
     </div>
@@ -675,7 +675,7 @@ function update(){
   updateDpraAutoMean();
 }
 
-// ---------------- House-style output (RIFM High-EC3 legend) ----------------
+// ---------------- House-style output (MML High-EC3 legend) ----------------
 // Uses the dedicated "for house-style cell" fields above, which are distinct
 // from the RFI%/SI% fields used for the hazard call (different units/meanings
 // — never conflate a % induction value with a µg/mL concentration).
@@ -1179,7 +1179,7 @@ document.getElementById('btnBR').onclick = ()=>{ modalBack.classList.remove('hid
 document.getElementById('btnCloseBR').onclick = ()=>{ modalBack.classList.add('hidden'); };
 modalBack.addEventListener('click', (e)=>{ if (e.target===modalBack) modalBack.classList.add('hidden'); });
 
-// ---------- PDF upload (known RIFM lab-report formats) ----------
+// ---------- PDF upload (known lab-report formats) ----------
 (function(){
   const btn = document.getElementById('btnUploadPdf');
   const input = document.getElementById('pdfInput');
