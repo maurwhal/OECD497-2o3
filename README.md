@@ -61,19 +61,16 @@ LLNA-trained and extended-PV-trained model families. Includes a built-in
 self-check against the paper's own DNCB and cinnamic aldehyde worked
 examples; **check that self-check panel before trusting a real result.**
 
-Also includes an optional **"Look up MW & vapor pressure (PubChem)"**
-button that resolves the entered CAS number on PubChem and fills those two
-fields from PubChem's computed MW and experimental vapor pressure data,
-with an expandable Sources panel showing exactly what was found and where
-(with links). This is the one feature in the toolkit that sends anything
-(the CAS number) to a third party — see `PRIVACY.md`.
-
-A second button, **"Look up MW & vapor pressure (EPA CompTox)"**, queries EPA's
-CTX API using your own free API key (typed into the page, stored only in your
-browser's local storage, never in the code). It uses the median of EPA's
-experimental vapor pressure records when any exist, otherwise the median of
-EPA's predicted values, clearly labeled as predicted, with every record and
-its source listed.
+Also includes a **"Look up MW & vapor pressure (EPA CompTox)"** button. It asks
+for a password, then a small Cloudflare Worker (`cloudflare-worker/worker.js`)
+calls the EPA CompTox CTX API on the page's behalf and returns the molecular
+weight (EPA average mass) and vapor pressure (median of EPA's experimental
+records, otherwise the median of EPA's predicted values, clearly labeled as
+predicted), with every record and its source listed. A Worker is needed because
+EPA's server sends a duplicated CORS header on successful replies, which
+browsers refuse to read; the EPA API key lives only inside the Worker, never in
+this site's code. There is also an **"Open CompTox in new tab"** button for
+looking a chemical up by hand.
 
 This is not SARA-ICE — see the hub page (`index.html`) for why.
 
@@ -125,8 +122,7 @@ one value you give it, and says so on the page.
 See `PRIVACY.md`. In short: everything runs in your browser, nothing is
 uploaded anywhere, except (a) the 2o3 page's PDF-upload feature loads the
 pdf.js library from a CDN on first use (the PDF itself is never uploaded),
-and (b) the PoD calculator's PubChem lookup button sends the CAS number you
-entered to PubChem to retrieve MW/vapor pressure data.
+and (b) the PoD calculator's CompTox lookup button sends the CAS number you entered, plus the password, to a password-protected Cloudflare Worker that retrieves MW/vapor pressure data from EPA.
 
 ## Notes
 

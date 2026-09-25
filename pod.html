@@ -59,25 +59,15 @@
     <h2>Material Information</h2>
     <div class="grid cols-3">
       <label class="grid" style="gap:4px"><span>Substance name</span><input type="text" id="matName"></label>
-      <label class="grid" style="gap:4px"><span>CAS #</span><input type="text" id="matCas" placeholder="required for PubChem lookup"></label>
+      <label class="grid" style="gap:4px"><span>CAS #</span><input type="text" id="matCas" placeholder="for the CompTox lookup"></label>
       <label class="grid" style="gap:4px"><span>MW (g/mol)</span><input type="number" id="mw" placeholder="required"></label>
     </div>
     <label class="grid" style="gap:4px;margin-top:10px;max-width:320px"><span>Vapor pressure (Pa)</span><input type="number" id="vp" placeholder="e.g. 4.6 (0 if negligible/unknown)"></label>
-    <div class="row" style="margin-top:12px">
-      <button class="btn" id="btnPubchem">Look up MW &amp; vapor pressure (PubChem)</button>
-      <span class="small muted" id="pubchemStatus"></span>
-    </div>
-    <details id="pubchemSources" class="hidden" style="margin-top:8px">
-      <summary class="small" style="cursor:pointer;color:var(--accent)">Sources</summary>
-      <div id="pubchemSourcesBody" class="small" style="margin-top:8px;line-height:1.5"></div>
-    </details>
-    <div class="small muted" style="margin-top:6px">Looks up the compound on PubChem by CAS number. This needs internet access (unlike the rest of this calculator) and pulls from whatever experimental data PubChem has indexed — not every chemical has vapor pressure data, and where several sources disagree, only the first is auto-filled. Always check the Sources panel before trusting the filled values.</div>
     <div class="row" style="margin-top:12px">
       <button class="btn" id="btnComptox">Look up MW &amp; vapor pressure (EPA CompTox)</button>
       <span class="small muted" id="comptoxStatus"></span>
     </div>
     <div class="row" style="margin-top:12px">
-      <button class="btn" id="btnOpenPubchem">Open PubChem in new tab</button>
       <button class="btn" id="btnOpenComptox">Open CompTox in new tab</button>
       <span class="small muted" id="openTabStatus"></span>
     </div>
@@ -86,14 +76,7 @@
       <summary class="small" style="cursor:pointer;color:var(--accent)">CompTox sources</summary>
       <div id="comptoxSourcesBody" class="small" style="margin-top:8px;line-height:1.5"></div>
     </details>
-    <details style="margin-top:8px">
-      <summary class="small" style="cursor:pointer;color:var(--accent)">CompTox API key</summary>
-      <div class="row" style="margin-top:8px">
-        <input type="password" id="comptoxKey" placeholder="paste your free CTX API key" style="max-width:360px" autocomplete="off">
-        <button class="btn" id="btnComptoxKeyClear">Forget key</button>
-      </div>
-      <div class="small muted" style="margin-top:6px">Free key from EPA (email ccte_api@epa.gov). It is saved only in this browser on this device, never in the page's code, and is sent only to EPA's CompTox server when you click the lookup button. Uses experimental vapor pressure when EPA has it (median of all records), otherwise the median of EPA's predicted values, clearly labeled.</div>
-    </details>
+    <div class="small muted" style="margin-top:8px">The CompTox lookup uses an EPA API key held by the site owner, so it asks for a password. It fills MW from EPA's average mass, and vapor pressure as the median of EPA's experimental records (or, if there are none, EPA's predicted values, clearly labeled). Every record is listed under "CompTox sources". Your CAS # and the password are sent to a small server that calls EPA for you; nothing else is.</div>
     <div class="row" style="margin-top:12px">
       <button class="btn" id="btnLoadDNCB">Load worked example: DNCB</button>
       <button class="btn" id="btnLoadCA">Load worked example: Cinnamic aldehyde</button>
@@ -147,7 +130,7 @@
   <footer class="card">
     <div class="small muted">Natsch PoD Calculator — a <a href="https://github.com/maurwhal" target="_blank" rel="noopener noreferrer"><b>Marvelous Maura Model</b></a>. All calculation is client-side; nothing is uploaded anywhere.</div>
     <div class="small muted">Disclaimer: provided for informational purposes. Final scientific interpretation and unit verification against source data remain the responsibility of the user.</div>
-    <div class="small muted" style="margin-top:8px"><b>Sources:</b> Natsch A. et al., <a href="https://doi.org/10.14573/altex.2302081s3" target="_blank" rel="noopener noreferrer">"Integrated Skin Sensitization Assessment Based on OECD Methods (III): Adding Human Data to the Potency Assessment"</a>, ALTEX (Supplementary Material ESM3, the source of every equation on this page) · <a href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noopener noreferrer">PubChem</a> (MW/vapor pressure lookup) · <a href="https://comptox.epa.gov/dashboard/" target="_blank" rel="noopener noreferrer">US EPA CompTox Chemicals Dashboard</a> via the CTX API (vapor pressure lookup).</div>
+    <div class="small muted" style="margin-top:8px"><b>Sources:</b> Natsch A. et al., <a href="https://doi.org/10.14573/altex.2302081s3" target="_blank" rel="noopener noreferrer">"Integrated Skin Sensitization Assessment Based on OECD Methods (III): Adding Human Data to the Potency Assessment"</a>, ALTEX (Supplementary Material ESM3, the source of every equation on this page) · <a href="https://comptox.epa.gov/dashboard/" target="_blank" rel="noopener noreferrer">US EPA CompTox Chemicals Dashboard</a> via the CTX API (vapor pressure lookup).</div>
   </footer>
 </div>
 
@@ -325,262 +308,112 @@ document.getElementById('btnLoadDNCB').onclick = ()=> loadExample(DNCB);
 document.getElementById('btnLoadCA').onclick = ()=> loadExample(CA);
 document.getElementById('btnReset').onclick = ()=>{
   ['matName','matCas','mw','vp','ec15','ec3','ic50','kmax','cd86','cd54','cv75'].forEach(id=> document.getElementById(id).value='');
-  document.getElementById('pubchemSources').classList.add('hidden');
-  document.getElementById('pubchemStatus').textContent='';
   document.getElementById('comptoxSources').classList.add('hidden');
   document.getElementById('comptoxStatus').textContent='';
   document.getElementById('openTabStatus').textContent='';
   update();
 };
 
-// ---------- PubChem lookup (MW + experimental vapor pressure, with sources) ----------
-// Uses PubChem's public PUG-REST/PUG-View APIs. Needs internet access, unlike
-// the rest of this calculator. Never silently guesses a unit conversion it
-// isn't confident about - if vapor pressure can't be confidently parsed to
-// Pa, the raw string is shown in Sources for manual entry instead.
-const PUBCHEM_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug';
-const PUBCHEM_VIEW_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug_view';
-
-function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
-
-// PubChem returns 503 with a JSON Fault body (e.g. PUGVIEW.ServerBusy /
-// "Too many requests or server too busy") when it's rate-limiting or under
-// load - this is routine and usually transient, not a real failure, so
-// retry a couple of times with backoff before giving up. On final failure,
-// surface PubChem's own Fault message instead of a bare "HTTP 503".
-async function pubchemFetchJSON(url, attempt){
-  attempt = attempt || 1;
-  const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-  if (res.ok) return res.json();
-  let faultMsg = null;
-  try {
-    const body = await res.json();
-    if (body && body.Fault) faultMsg = `${body.Fault.Code || ''}: ${body.Fault.Message || ''}`.trim();
-  } catch(e) { /* body wasn't JSON, or already consumed - fall through */ }
-  const retryable = (res.status === 503 || res.status === 429) && attempt < 3;
-  if (retryable) {
-    await sleep(attempt * 1200);
-    return pubchemFetchJSON(url, attempt + 1);
-  }
-  throw new Error(faultMsg || ('HTTP ' + res.status));
-}
-
-async function resolveCidFromCas(cas){
-  // CAS numbers are indexed in PubChem as a synonym/registry id, not a
-  // dedicated field, so try the xref RegistryID endpoint first, then fall
-  // back to a plain name search (CAS numbers are valid PubChem "names" too).
-  try {
-    const j = await pubchemFetchJSON(`${PUBCHEM_BASE}/compound/xref/RegistryID/${encodeURIComponent(cas)}/cids/JSON`);
-    const cid = j?.IdentifierList?.CID?.[0];
-    if (cid) return cid;
-  } catch(e) { /* fall through to name search */ }
-  const j2 = await pubchemFetchJSON(`${PUBCHEM_BASE}/compound/name/${encodeURIComponent(cas)}/cids/JSON`);
-  const cid2 = j2?.IdentifierList?.CID?.[0];
-  if (!cid2) throw new Error('No PubChem CID found for CAS ' + cas);
-  return cid2;
-}
-
-function findSectionsByHeading(root, heading, out){
-  out = out || [];
-  if (!root) return out;
-  const sections = root.Section || (root.Record && root.Record.Section) || [];
-  for (const sec of sections){
-    if (sec.TOCHeading === heading) out.push(sec);
-    findSectionsByHeading(sec, heading, out);
-  }
-  return out;
-}
-
-function parseVaporPressureToPa(str){
-  if (!str) return null;
-  const s = String(str);
-  // Scientific-notation style used by some legacy sources, e.g. "1.4X10-1 mm Hg"
-  let m = s.match(/([\d.]+)\s*[xX]\s*10\s*(-?\d+)/);
-  let num = null;
-  if (m){
-    num = parseFloat(m[1]) * Math.pow(10, parseInt(m[2],10));
-  } else {
-    m = s.match(/([\d.]+(?:[eE]-?\d+)?)/);
-    if (m) num = parseFloat(m[1]);
-  }
-  if (num==null || Number.isNaN(num)) return null;
-  const low = s.toLowerCase();
-  let factor = null;
-  if (low.includes('mmhg') || low.includes('mm hg') || low.includes('torr')) factor = 133.322;
-  else if (low.includes('kpa')) factor = 1000;
-  else if (low.includes('bar')) factor = 100000;
-  else if (low.includes('atm')) factor = 101325;
-  else if (low.includes(' pa') || low.endsWith('pa') || low.includes('pascal')) factor = 1;
-  if (factor==null) return null; // unrecognized unit - don't guess
-  return num * factor;
-}
-
-async function lookupPubChem(){
-  const status = document.getElementById('pubchemStatus');
-  const sourcesBox = document.getElementById('pubchemSources');
-  const sourcesBody = document.getElementById('pubchemSourcesBody');
-  const cas = document.getElementById('matCas').value.trim();
-  if (!cas){ status.textContent = 'Enter a CAS # first.'; return; }
-  status.textContent = 'Looking up ' + cas + ' on PubChem...';
-  sourcesBox.classList.add('hidden');
-  sourcesBody.innerHTML = '';
-  try {
-    const cid = await resolveCidFromCas(cas);
-    const compoundUrl = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}`;
-    const sourceLines = [`<div>PubChem CID <a href="${compoundUrl}" target="_blank" rel="noopener noreferrer">${cid}</a> (resolved from CAS ${cas})</div>`];
-
-    // Molecular weight (PubChem's own computed property)
-    const propJson = await pubchemFetchJSON(`${PUBCHEM_BASE}/compound/cid/${cid}/property/MolecularWeight/JSON`);
-    const mwVal = propJson?.PropertyTable?.Properties?.[0]?.MolecularWeight;
-    if (mwVal){
-      setVal('mw', mwVal);
-      sourceLines.push(`<div><b>MW</b>: ${mwVal} g/mol — PubChem computed property, CID ${cid}</div>`);
-    }
-
-    // Experimental vapor pressure, via PUG View (nested Section tree + a
-    // top-level Reference list keyed by ReferenceNumber)
-    let vpApplied = false;
-    try {
-      const view = await pubchemFetchJSON(`${PUBCHEM_VIEW_BASE}/data/compound/${cid}/JSON`);
-      const refs = {};
-      (view?.Record?.Reference || []).forEach(r=> refs[r.ReferenceNumber] = r);
-      const vpSections = findSectionsByHeading(view.Record, 'Vapor Pressure', []);
-      const entries = [];
-      vpSections.forEach(sec=>{
-        (sec.Information || []).forEach(info=>{
-          const strs = (info.Value && info.Value.StringWithMarkup) || [];
-          strs.forEach(sw=>{
-            const ref = refs[info.ReferenceNumber];
-            entries.push({ text: sw.String, source: ref ? ref.SourceName : null, url: ref ? ref.URL : null });
-          });
-        });
-      });
-      if (entries.length){
-        sourceLines.push('<div style="margin-top:6px"><b>Vapor pressure — found ' + entries.length + ' record(s):</b></div>');
-        entries.forEach((e,i)=>{
-          const pa = parseVaporPressureToPa(e.text);
-          if (i===0 && pa!=null){ setVal('vp', pa.toFixed(6).replace(/0+$/,'').replace(/\.$/,'')); vpApplied = true; }
-          sourceLines.push(`<div style="margin-left:8px">${i===0?'&#9654; ':''}${e.text}${pa!=null?` (&asymp; ${pa.toFixed(3)} Pa)`:' (unit not recognized — enter manually)'} ${e.source? '&mdash; ' + e.source : ''} ${e.url? `<a href="${e.url}" target="_blank" rel="noopener noreferrer">source</a>`:''}</div>`);
-        });
-      } else {
-        sourceLines.push('<div style="margin-top:6px">No experimental vapor pressure record found on PubChem for this compound — enter it manually if you have it.</div>');
-      }
-    } catch(e){
-      sourceLines.push('<div style="margin-top:6px">Could not retrieve experimental property data (vapor pressure) from PubChem: ' + e.message + '</div>');
-    }
-
-    sourcesBody.innerHTML = sourceLines.join('');
-    sourcesBox.classList.remove('hidden');
-    sourcesBox.open = true;
-    status.textContent = mwVal ? `Found MW${vpApplied? ' and vapor pressure':''} for CID ${cid} — see Sources below.` : 'Found the compound but no molecular weight property was returned — see Sources below.';
-    update();
-  } catch(err){
-    console.error(err);
-    const msg = (err && err.message) || 'unknown error';
-    const busy = /ServerBusy|too many requests|server too busy/i.test(msg);
-    status.textContent = busy
-      ? 'PubChem is busy right now (already retried automatically) — wait a bit and click the button again, or enter MW/vapor pressure manually.'
-      : `PubChem lookup failed: ${msg}. This needs internet access; check the CAS number, or enter values manually.`;
-  }
-}
-document.getElementById('btnPubchem').onclick = lookupPubChem;
-
-// ---------- EPA CompTox (CTX API) vapor pressure lookup ----------
-// The user's own free CTX API key is typed into the page and kept only in this
-// browser's localStorage; it is never part of the page source.
-const CTX_BASE = 'https://comptox.epa.gov/ctx-api';
-const CTX_KEY_STORE = 'skinsens_ctx_key_v1';
-const MMHG_TO_PA = 133.322;
-
-(function(){
-  const el = document.getElementById('comptoxKey');
-  try { el.value = localStorage.getItem(CTX_KEY_STORE) || ''; } catch(e){}
-  el.addEventListener('input', ()=>{ try { localStorage.setItem(CTX_KEY_STORE, el.value.trim()); } catch(e){} });
-  document.getElementById('btnComptoxKeyClear').onclick = ()=>{
-    el.value = '';
-    try { localStorage.removeItem(CTX_KEY_STORE); } catch(e){}
-  };
-})();
-
-async function ctxGet(path, key){
-  // Key goes in the query string, not a header: a custom header forces a CORS
-  // preflight that EPA's server rejects, so browsers block the call.
-  const res = await fetch(CTX_BASE + path + '?x-api-key=' + encodeURIComponent(key));
-  if (res.status === 401 || res.status === 403) throw new Error('EPA rejected the API key (HTTP ' + res.status + ')');
-  if (res.status === 404) return [];
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  return res.json();
-}
-
-function medianOf(arr){
-  const a = arr.slice().sort((x,y)=>x-y), n = a.length;
-  return n % 2 ? a[(n-1)/2] : (a[n/2-1] + a[n/2]) / 2;
-}
+// ---------- EPA CompTox lookup, via a password-protected Cloudflare Worker ----------
+// EPA's server sends a duplicated CORS header on successful replies, so browsers
+// cannot read them directly. The Worker calls EPA on this page's behalf; the EPA
+// API key lives only inside the Worker, never in this page.
+const CTX_WORKER_URL = 'https://ctx-proxy.mauralavelletrackstar.workers.dev';
+const CTX_PW_STORE = 'skinsens_ctx_pw_v1'; // sessionStorage: forgotten when the tab closes
 
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function askCtxPassword(note){
+  return new Promise(resolve=>{
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(20,33,61,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px';
+    const box = document.createElement('div');
+    box.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;max-width:440px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.25)';
+    box.innerHTML = '<h2 style="margin:0 0 8px 0">Password required</h2>'
+      + '<div class="small" style="line-height:1.5;margin-bottom:10px">This feature uses a Computational Toxicology and Exposure (CTX) API key contained by Maura Lavelle. Please enter password to utilize.</div>'
+      + (note ? '<div class="small" style="color:var(--bad,#9f1239);margin-bottom:8px">' + esc(note) + '</div>' : '')
+      + '<input type="password" id="ctxPwInput" autocomplete="off" style="margin-bottom:12px">'
+      + '<div class="row" style="justify-content:flex-end"><button class="btn" id="ctxPwCancel">Cancel</button><button class="btn primary" id="ctxPwOk">Unlock</button></div>';
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    const input = box.querySelector('#ctxPwInput');
+    input.focus();
+    function done(v){ overlay.remove(); resolve(v); }
+    box.querySelector('#ctxPwOk').onclick = ()=> done(input.value);
+    box.querySelector('#ctxPwCancel').onclick = ()=> done(null);
+    input.addEventListener('keydown', e=>{ if (e.key === 'Enter') done(input.value); if (e.key === 'Escape') done(null); });
+  });
+}
+
+async function callCtxWorker(cas, pw){
+  const res = await fetch(CTX_WORKER_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: pw, cas: cas }),
+  });
+  let data = null;
+  try { data = await res.json(); } catch(e){}
+  return { status: res.status, data: data };
+}
 
 async function lookupComptox(){
   const status = document.getElementById('comptoxStatus');
   const box = document.getElementById('comptoxSources');
   const body = document.getElementById('comptoxSourcesBody');
   const cas = document.getElementById('matCas').value.trim();
-  const key = document.getElementById('comptoxKey').value.trim();
   if (!cas){ status.textContent = 'Enter a CAS # first.'; return; }
-  if (!key){ status.textContent = 'Paste your CTX API key under "CompTox API key" first.'; return; }
+
+  let pw = null;
+  try { pw = sessionStorage.getItem(CTX_PW_STORE); } catch(e){}
+  if (!pw){
+    pw = await askCtxPassword();
+    if (pw == null || pw === ''){ status.textContent = 'Cancelled (no password entered).'; return; }
+  }
+
   status.textContent = 'Looking up ' + cas + ' on EPA CompTox...';
   box.classList.add('hidden'); body.innerHTML = '';
   try {
-    const hits = await ctxGet('/chemical/search/equal/' + encodeURIComponent(cas), key);
-    if (!hits.length){ status.textContent = 'CompTox has no chemical for CAS ' + cas + '.'; return; }
-    const chem = hits[0];
-    const dashUrl = 'https://comptox.epa.gov/dashboard/chemical/details/' + encodeURIComponent(chem.dtxsid);
-    const lines = [`<div>${esc(chem.preferredName)} — <a href="${dashUrl}" target="_blank" rel="noopener noreferrer">${esc(chem.dtxsid)}</a> (resolved from CAS ${esc(cas)})</div>`];
-
-    let mwFilled = null;
-    try {
-      const det = await ctxGet('/chemical/detail/search/by-dtxsid/' + encodeURIComponent(chem.dtxsid), key);
-      const avg = det && det.averageMass;
-      if (avg != null && avg > 0){
-        mwFilled = Number(Number(avg).toFixed(3));
-        setVal('mw', mwFilled);
-        lines.push(`<div style="margin-top:6px"><b>MW</b>: ${mwFilled} g/mol — CompTox average mass${det.molFormula ? ' (' + esc(det.molFormula) + ')' : ''}</div>`);
-      }
-    } catch(e){ lines.push('<div style="margin-top:6px">Could not retrieve molecular weight from CompTox: ' + esc(e.message) + '</div>'); }
-
-    const exp = (await ctxGet('/chemical/property/experimental/search/by-dtxsid/' + encodeURIComponent(chem.dtxsid), key))
-      .filter(r => r.propName === 'Vapor Pressure' && r.propValue != null && r.propUnit === 'mmHg');
-    let paVal = null, basis = '';
-    if (exp.length){
-      paVal = medianOf(exp.map(r => r.propValue)) * MMHG_TO_PA;
-      basis = 'experimental';
-      lines.push(`<div style="margin-top:6px"><b>Experimental vapor pressure — ${exp.length} record(s), median used:</b></div>`);
-      exp.forEach(r=>{
-        const t = r.expDetailsTemperatureC != null ? ` at ${esc(r.expDetailsTemperatureC)} °C` : ' (temperature not stated)';
-        lines.push(`<div style="margin-left:8px">${esc(Number(r.propValue).toPrecision(4))} mmHg (&asymp; ${(r.propValue*MMHG_TO_PA).toFixed(3)} Pa)${t} &mdash; ${esc(r.publicSourceName || r.sourceName)}</div>`);
-      });
-    } else {
-      const pred = (await ctxGet('/chemical/property/predicted/search/by-dtxsid/' + encodeURIComponent(chem.dtxsid), key))
-        .filter(r => r.propName === 'Vapor Pressure' && r.propValue != null && r.propUnit === 'mmHg');
-      if (pred.length){
-        paVal = medianOf(pred.map(r => r.propValue)) * MMHG_TO_PA;
-        basis = 'PREDICTED (no experimental value on file)';
-        lines.push(`<div style="margin-top:6px"><b>No experimental vapor pressure. Predicted values — ${pred.length} model(s), median used:</b></div>`);
-        pred.forEach(r=> lines.push(`<div style="margin-left:8px">${esc(Number(r.propValue).toPrecision(4))} mmHg (&asymp; ${(r.propValue*MMHG_TO_PA).toFixed(3)} Pa) &mdash; ${esc(r.modelName)} (${esc(r.sourceName)})</div>`));
-      } else {
-        lines.push('<div style="margin-top:6px">CompTox has no experimental or predicted vapor pressure for this chemical — enter it manually if you have it.</div>');
-      }
+    const r = await callCtxWorker(cas, pw);
+    if (r.status === 401){
+      try { sessionStorage.removeItem(CTX_PW_STORE); } catch(e){}
+      status.textContent = 'Incorrect password. Click the button to try again.';
+      return;
     }
-    if (paVal != null){
-      setVal('vp', Number(paVal.toPrecision(4)));
-      lines.push(`<div style="margin-top:6px">Filled <b>${Number(paVal.toPrecision(4))} Pa</b> (${esc(basis)}).</div>`);
+    try { sessionStorage.setItem(CTX_PW_STORE, pw); } catch(e){}
+    const d = r.data;
+    if (r.status === 404){ status.textContent = 'CompTox has no chemical for CAS ' + cas + '.'; return; }
+    if (!d || !d.ok) throw new Error((d && d.error) || ('HTTP ' + r.status));
+
+    const lines = ['<div>' + esc(d.name) + ' &mdash; <a href="' + esc(d.url) + '" target="_blank" rel="noopener noreferrer">' + esc(d.dtxsid) + '</a> (resolved from CAS ' + esc(cas) + ')</div>'];
+    let mwFilled = null, vpFilled = null;
+    if (d.mw != null){
+      mwFilled = Number(Number(d.mw).toFixed(3));
+      setVal('mw', mwFilled);
+      lines.push('<div style="margin-top:6px"><b>MW</b>: ' + mwFilled + ' g/mol &mdash; CompTox average mass</div>');
+    } else {
+      lines.push('<div style="margin-top:6px">CompTox returned no molecular weight for this chemical.</div>');
+    }
+    const vp = d.vp || {};
+    if (vp.pa != null){
+      vpFilled = Number(Number(vp.pa).toPrecision(4));
+      setVal('vp', vpFilled);
+      const label = vp.basis === 'experimental' ? 'Experimental vapor pressure' : 'No experimental value on file. PREDICTED vapor pressure';
+      lines.push('<div style="margin-top:6px"><b>' + label + ' &mdash; ' + vp.n + ' record(s), median used:</b></div>');
+      (vp.records || []).forEach(function(rec){
+        const t = rec.tempC != null ? ' at ' + esc(rec.tempC) + ' &deg;C' : (vp.basis === 'experimental' ? ' (temperature not stated)' : '');
+        lines.push('<div style="margin-left:8px">' + esc(Number(rec.mmHg).toPrecision(4)) + ' mmHg (&asymp; ' + Number(rec.pa).toFixed(3) + ' Pa)' + t + ' &mdash; ' + esc(rec.source) + '</div>');
+      });
+      lines.push('<div style="margin-top:6px">Filled <b>' + vpFilled + ' Pa</b> (' + (vp.basis === 'experimental' ? 'experimental' : 'PREDICTED') + ').</div>');
+    } else {
+      lines.push('<div style="margin-top:6px">CompTox has no experimental or predicted vapor pressure for this chemical. Enter it manually if you have it.</div>');
     }
     body.innerHTML = lines.join('');
     box.classList.remove('hidden'); box.open = true;
-    status.textContent = (mwFilled != null ? 'MW filled. ' : '') + (paVal != null ? `Vapor pressure filled from CompTox (${basis.split(' ')[0].toLowerCase()}) — see sources below.` : 'No vapor pressure found on CompTox — see sources below.');
+    status.textContent = (mwFilled != null ? 'MW filled. ' : '') + (vpFilled != null ? 'Vapor pressure filled (' + (vp.basis === 'experimental' ? 'experimental' : 'PREDICTED') + '). ' : 'No vapor pressure found. ') + 'See sources below.';
     update();
   } catch(err){
     console.error(err);
-    status.textContent = 'CompTox lookup failed: ' + ((err && err.message) || 'unknown error') + '. This needs internet access and a valid CTX API key.';
+    status.textContent = 'CompTox lookup failed: ' + ((err && err.message) || 'unknown error') + '. This needs internet access.';
   }
 }
 document.getElementById('btnComptox').onclick = lookupComptox;
@@ -592,7 +425,6 @@ function openSourceTab(makeUrl){
   st.textContent = '';
   window.open(makeUrl(encodeURIComponent(cas)), '_blank', 'noopener');
 }
-document.getElementById('btnOpenPubchem').onclick = ()=> openSourceTab(c => 'https://pubchem.ncbi.nlm.nih.gov/#query=' + c);
 document.getElementById('btnOpenComptox').onclick = ()=> openSourceTab(c => 'https://comptox.epa.gov/dashboard/dsstoxdb/results?search=' + c);
 
 // ---------- Self-check against independently-computed ESM3 reference values ----------
