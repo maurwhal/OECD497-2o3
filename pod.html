@@ -76,6 +76,12 @@
       <button class="btn" id="btnComptox">Look up MW &amp; vapor pressure (EPA CompTox)</button>
       <span class="small muted" id="comptoxStatus"></span>
     </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="btnOpenPubchem">Open PubChem in new tab</button>
+      <button class="btn" id="btnOpenComptox">Open CompTox in new tab</button>
+      <span class="small muted" id="openTabStatus"></span>
+    </div>
+    <div class="small muted" style="margin-top:6px">No automatic lookup, so no API key needed: opens the chemical's page for the CAS # above so you can read MW and vapor pressure yourself and type them in. Works even when the automatic lookups above are busy or blocked.</div>
     <details id="comptoxSources" class="hidden" style="margin-top:8px">
       <summary class="small" style="cursor:pointer;color:var(--accent)">CompTox sources</summary>
       <div id="comptoxSourcesBody" class="small" style="margin-top:8px;line-height:1.5"></div>
@@ -323,6 +329,7 @@ document.getElementById('btnReset').onclick = ()=>{
   document.getElementById('pubchemStatus').textContent='';
   document.getElementById('comptoxSources').classList.add('hidden');
   document.getElementById('comptoxStatus').textContent='';
+  document.getElementById('openTabStatus').textContent='';
   update();
 };
 
@@ -577,6 +584,16 @@ async function lookupComptox(){
   }
 }
 document.getElementById('btnComptox').onclick = lookupComptox;
+// ---------- Open the source pages in a new tab (no fetch, no key) ----------
+function openSourceTab(makeUrl){
+  const st = document.getElementById('openTabStatus');
+  const cas = document.getElementById('matCas').value.trim();
+  if (!cas){ st.textContent = 'Enter a CAS # first.'; return; }
+  st.textContent = '';
+  window.open(makeUrl(encodeURIComponent(cas)), '_blank', 'noopener');
+}
+document.getElementById('btnOpenPubchem').onclick = ()=> openSourceTab(c => 'https://pubchem.ncbi.nlm.nih.gov/#query=' + c);
+document.getElementById('btnOpenComptox').onclick = ()=> openSourceTab(c => 'https://comptox.epa.gov/dashboard/dsstoxdb/results?search=' + c);
 
 // ---------- Self-check against independently-computed ESM3 reference values ----------
 // These reference numbers were computed directly from the ESM3 formulas (not
