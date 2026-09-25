@@ -56,7 +56,7 @@ Also includes:
 Reproduces the published Natsch et al. ("Integrated Skin Sensitization
 Assessment Based on OECD Methods (III)", ALTEX, doi:10.14573/altex.2302081s3,
 Supplementary Material ESM3) regression models for estimating EC3%/PV% and
-dose-per-skin-area from KeratinoSens, kDPRA, and h-CLAT data — both the
+dose-per-surface-area from KeratinoSens, kDPRA, and h-CLAT data — both the
 LLNA-trained and extended-PV-trained model families. Includes a built-in
 self-check against the paper's own DNCB and cinnamic aldehyde worked
 examples; **check that self-check panel before trusting a real result.**
@@ -69,8 +69,10 @@ records, otherwise the median of EPA's predicted values, clearly labeled as
 predicted), with every record and its source listed. A Worker is needed because
 EPA's server sends a duplicated CORS header on successful replies, which
 browsers refuse to read; the EPA API key lives only inside the Worker, never in
-this site's code. There is also an **"Open CompTox in new tab"** button for
-looking a chemical up by hand.
+this site's code. The vapor pressure box has a unit dropdown (Pa, mmHg/Torr,
+kPa, atm, bar); whatever you pick is converted to Pa, which is what the
+equations use. An "About CompTox lookup" button in the page header explains
+how the lookup works.
 
 This is not SARA-ICE — see the hub page (`index.html`) for why.
 

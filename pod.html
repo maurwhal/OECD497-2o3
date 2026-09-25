@@ -21,7 +21,8 @@
   .btn.primary{background:var(--fg);color:#fff;border-color:var(--fg)}
   input[type="number"],input[type="text"],input[type="password"]{padding:8px;border:1px solid var(--border);border-radius:12px;width:100%}
   input[type="number"]:focus,input[type="text"]:focus,input[type="password"]:focus{outline:2px solid #93c5fd;outline-offset:1px}
-  .hidden{display:none}
+  .hidden{display:none!important}
+  select{padding:8px;border:1px solid var(--border);border-radius:12px;background:#fff;color:var(--fg);font-family:inherit;font-size:14px}
   .icon-btn:hover{background:#f1f5f9}
   label{font-size:14px}
   .list{font-size:12px;color:#334155;line-height:1.4}
@@ -50,6 +51,7 @@
     <div class="row">
       <a class="icon-btn" href="index.html">&larr; Hub</a>
       <a class="icon-btn" href="2o3.html">OECD 497 2o3</a>
+      <button class="btn" id="btnAboutCtx">About CompTox lookup</button>
       <button class="btn" id="btnBG">BG: Plain</button>
       <button class="btn" id="btnReset">Reset</button>
     </div>
@@ -62,16 +64,24 @@
       <label class="grid" style="gap:4px"><span>CAS #</span><input type="text" id="matCas" placeholder="for the CompTox lookup"></label>
       <label class="grid" style="gap:4px"><span>MW (g/mol)</span><input type="number" id="mw" placeholder="required"></label>
     </div>
-    <label class="grid" style="gap:4px;margin-top:10px;max-width:320px"><span>Vapor pressure (Pa)</span><input type="number" id="vp" placeholder="e.g. 4.6 (0 if negligible/unknown)"></label>
+    <div class="grid" style="gap:4px;margin-top:10px;max-width:440px">
+      <span style="font-size:14px">Vapor pressure</span>
+      <div class="row" style="flex-wrap:nowrap">
+        <input type="number" id="vp" step="any" placeholder="e.g. 4.6 (0 if negligible/unknown)">
+        <select id="vpUnit" aria-label="Vapor pressure unit" style="width:120px;flex:0 0 auto">
+          <option value="Pa" selected>Pa</option>
+          <option value="mmHg">mmHg / Torr</option>
+          <option value="kPa">kPa</option>
+          <option value="atm">atm</option>
+          <option value="bar">bar</option>
+        </select>
+      </div>
+      <div class="small muted" id="vpNote">The equations use Pa; pick the unit your value is in and it is converted for you.</div>
+    </div>
     <div class="row" style="margin-top:12px">
       <button class="btn" id="btnComptox">Look up MW &amp; vapor pressure (EPA CompTox)</button>
       <span class="small muted" id="comptoxStatus"></span>
     </div>
-    <div class="row" style="margin-top:12px">
-      <button class="btn" id="btnOpenComptox">Open CompTox in new tab</button>
-      <span class="small muted" id="openTabStatus"></span>
-    </div>
-    <div class="small muted" style="margin-top:6px">No automatic lookup, so no API key needed: opens the chemical's page for the CAS # above so you can read MW and vapor pressure yourself and type them in. Works even when the automatic lookups above are busy or blocked.</div>
     <details id="comptoxSources" class="hidden" style="margin-top:8px">
       <summary class="small" style="cursor:pointer;color:var(--accent)">CompTox sources</summary>
       <div id="comptoxSourcesBody" class="small" style="margin-top:8px;line-height:1.5"></div>
@@ -111,7 +121,7 @@
 
   <div class="card">
     <h2>Results — models trained on LLNA data (EC3)</h2>
-    <div class="small muted" style="margin-bottom:8px">pED = model's linear predictor; EC3% = MW / 10^pED; DSA = EC3% × 250 (dose per skin area, µg/cm²).</div>
+    <div class="small muted" style="margin-bottom:8px">pED = model's linear predictor; EC3% = MW / 10^pED; DSA (dose per surface area) = EC3% × 250, in µg/cm².</div>
     <div style="overflow-x:auto"><table id="tblLLNA"></table></div>
   </div>
 
@@ -132,6 +142,21 @@
     <div class="small muted">Disclaimer: provided for informational purposes. Final scientific interpretation and unit verification against source data remain the responsibility of the user.</div>
     <div class="small muted" style="margin-top:8px"><b>Sources:</b> Natsch A. et al., <a href="https://doi.org/10.14573/altex.2302081s3" target="_blank" rel="noopener noreferrer">"Integrated Skin Sensitization Assessment Based on OECD Methods (III): Adding Human Data to the Potency Assessment"</a>, ALTEX (Supplementary Material ESM3, the source of every equation on this page) · <a href="https://comptox.epa.gov/dashboard/" target="_blank" rel="noopener noreferrer">US EPA CompTox Chemicals Dashboard</a> via the CTX API (vapor pressure lookup).</div>
   </footer>
+</div>
+
+<div id="aboutCtx" class="hidden" style="position:fixed;inset:0;background:rgba(20,33,61,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px">
+  <div class="card" style="max-width:640px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 10px 30px rgba(0,0,0,.25)" role="dialog" aria-modal="true" aria-labelledby="aboutCtxTitle">
+    <h2 id="aboutCtxTitle" style="margin-bottom:8px">About the CompTox lookup</h2>
+    <div style="font-size:13px;line-height:1.55">
+      <p style="margin:0 0 8px 0"><b>What it is.</b> The EPA CompTox Chemicals Dashboard is a public database of chemical identifiers and properties. EPA's Computational Toxicology and Exposure (CTX) APIs let a program pull that data automatically instead of looking each chemical up by hand. <a href="https://www.epa.gov/comptox-tools/computational-toxicology-and-exposure-apis" target="_blank" rel="noopener noreferrer">More about the CTX APIs (EPA)</a></p>
+      <p style="margin:0 0 8px 0"><b>What the button fills in.</b> Molecular weight (EPA's average mass) and vapor pressure, for the CAS # you entered. Both feed the regression equations above.</p>
+      <p style="margin:0 0 8px 0"><b>How vapor pressure is chosen.</b> If EPA has experimental records, the value used is their median. If it has none, the value used is the median of EPA's predicted (model) values, and the page says PREDICTED. EPA reports mmHg; the page converts to Pa (1 mmHg = 133.322 Pa). Every record, its source, and its temperature (when EPA gives one) are listed under "CompTox sources" so you can judge them yourself.</p>
+      <p style="margin:0 0 8px 0"><b>How it works.</b> This page sends the CAS # and the password to a small server (a Cloudflare Worker). The server adds an EPA API key, asks EPA, and sends the answer back. A server is needed because EPA's replies carry a duplicated browser-permission header that browsers refuse to read directly. The EPA key stays on that server and is never in this page's code.</p>
+      <p style="margin:0 0 8px 0"><b>Why a password.</b> The EPA key is one person's free key, so the password keeps other visitors from using it up. It is remembered only until you close the tab.</p>
+      <p style="margin:0 0 8px 0"><b>Check before relying on it.</b> These are values from public databases, not a substitute for your own data. Predicted values are model estimates, records can disagree, and some have no stated temperature. If the lookup is unavailable, look the chemical up on the CompTox Dashboard yourself and type the values in, choosing the unit in the vapor pressure box.</p>
+    </div>
+    <div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn primary" id="btnAboutCtxClose">Close</button></div>
+  </div>
 </div>
 
 <script>
@@ -246,7 +271,7 @@ function renderTable(tblId, rows, eqs){
   if (eqs['eq5'] && eqs['eq5'].pED!=null && rows.some(r=>r[0]==='eq5')) bestKey='eq5';
   if (eqs['eq5d'] && eqs['eq5d'].pED!=null && rows.some(r=>r[0]==='eq5d')) bestKey='eq5d';
 
-  let html = '<thead><tr><th>Model</th><th>pED</th><th>EC3 / PV (%)</th><th>DSA (µg/cm²)</th></tr></thead><tbody>';
+  let html = '<thead><tr><th>Model</th><th>pED</th><th>EC3 / PV (%)</th><th>DSA, dose per surface area (µg/cm²)</th></tr></thead><tbody>';
   rows.forEach(([key,label])=>{
     const r = eqs[key];
     const gated = r.pED==null;
@@ -267,10 +292,24 @@ function publishBestForPotency(bestLlna, bestPv){
   } catch(e){}
 }
 
+const VP_FACTORS = { Pa:1, mmHg:133.322368, kPa:1000, atm:101325, bar:100000 }; // to Pa (mmHg = Torr = 101325/760)
+function vpToPa(){
+  const raw = document.getElementById('vp').value;
+  if (raw === '') return null;
+  return Number(raw) * VP_FACTORS[document.getElementById('vpUnit').value];
+}
+function updateVpNote(){
+  const unit = document.getElementById('vpUnit').value, pa = vpToPa();
+  document.getElementById('vpNote').textContent = (unit === 'Pa' || pa == null)
+    ? 'The equations use Pa; pick the unit your value is in and it is converted for you.'
+    : '= ' + Number(pa.toPrecision(6)) + ' Pa (this converted value is what the equations use)';
+}
+function setVpPa(pa){ document.getElementById('vpUnit').value = 'Pa'; setVal('vp', pa); }
+
 function readInputs(){
   const num = id => { const v = document.getElementById(id).value; return v===''? null : Number(v); };
   return {
-    mw: num('mw'), vp: num('vp'),
+    mw: num('mw'), vp: vpToPa(),
     ec15: num('ec15'), ec3: num('ec3'), ic50: num('ic50'),
     kmax: num('kmax'),
     cd86: num('cd86'), cd54: num('cd54'), cv75: num('cv75'),
@@ -278,6 +317,7 @@ function readInputs(){
 }
 
 function update(){
+  updateVpNote();
   const inp = readInputs();
   const eqs = computeAll(inp);
   const bestLlna = renderTable('tblLLNA', LLNA_ROWS, eqs);
@@ -285,7 +325,7 @@ function update(){
   publishBestForPotency(bestLlna, bestPv);
 }
 
-['mw','vp','ec15','ec3','ic50','kmax','cd86','cd54','cv75'].forEach(id=>{
+['mw','vp','vpUnit','ec15','ec3','ic50','kmax','cd86','cd54','cv75'].forEach(id=>{
   document.getElementById(id).addEventListener('input', update);
 });
 
@@ -294,7 +334,7 @@ function setVal(id,v){ document.getElementById(id).value = (v===undefined||v===n
 function loadExample(ex){
   document.getElementById('matName').value = ex.name;
   document.getElementById('matCas').value = ex.cas;
-  setVal('mw', ex.mw); setVal('vp', ex.vp);
+  setVal('mw', ex.mw); setVpPa(ex.vp);
   setVal('ec15', ex.ec15); setVal('ec3', ex.ec3); setVal('ic50', ex.ic50);
   setVal('kmax', ex.kmax);
   setVal('cd86', ex.cd86); setVal('cd54', ex.cd54); setVal('cv75', ex.cv75);
@@ -308,9 +348,9 @@ document.getElementById('btnLoadDNCB').onclick = ()=> loadExample(DNCB);
 document.getElementById('btnLoadCA').onclick = ()=> loadExample(CA);
 document.getElementById('btnReset').onclick = ()=>{
   ['matName','matCas','mw','vp','ec15','ec3','ic50','kmax','cd86','cd54','cv75'].forEach(id=> document.getElementById(id).value='');
+  document.getElementById('vpUnit').value='Pa';
   document.getElementById('comptoxSources').classList.add('hidden');
   document.getElementById('comptoxStatus').textContent='';
-  document.getElementById('openTabStatus').textContent='';
   update();
 };
 
@@ -396,7 +436,7 @@ async function lookupComptox(){
     const vp = d.vp || {};
     if (vp.pa != null){
       vpFilled = Number(Number(vp.pa).toPrecision(4));
-      setVal('vp', vpFilled);
+      setVpPa(vpFilled);
       const label = vp.basis === 'experimental' ? 'Experimental vapor pressure' : 'No experimental value on file. PREDICTED vapor pressure';
       lines.push('<div style="margin-top:6px"><b>' + label + ' &mdash; ' + vp.n + ' record(s), median used:</b></div>');
       (vp.records || []).forEach(function(rec){
@@ -417,15 +457,17 @@ async function lookupComptox(){
   }
 }
 document.getElementById('btnComptox').onclick = lookupComptox;
-// ---------- Open the source pages in a new tab (no fetch, no key) ----------
-function openSourceTab(makeUrl){
-  const st = document.getElementById('openTabStatus');
-  const cas = document.getElementById('matCas').value.trim();
-  if (!cas){ st.textContent = 'Enter a CAS # first.'; return; }
-  st.textContent = '';
-  window.open(makeUrl(encodeURIComponent(cas)), '_blank', 'noopener');
-}
-document.getElementById('btnOpenComptox').onclick = ()=> openSourceTab(c => 'https://comptox.epa.gov/dashboard/dsstoxdb/results?search=' + c);
+
+// "About CompTox lookup" explainer dialog
+(function(){
+  const dlg = document.getElementById('aboutCtx');
+  const open = ()=> dlg.classList.remove('hidden');
+  const close = ()=> dlg.classList.add('hidden');
+  document.getElementById('btnAboutCtx').onclick = open;
+  document.getElementById('btnAboutCtxClose').onclick = close;
+  dlg.addEventListener('click', e=>{ if (e.target === dlg) close(); });
+  document.addEventListener('keydown', e=>{ if (e.key === 'Escape') close(); });
+})();
 
 // ---------- Self-check against independently-computed ESM3 reference values ----------
 // These reference numbers were computed directly from the ESM3 formulas (not
