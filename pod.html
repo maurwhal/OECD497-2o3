@@ -496,7 +496,9 @@ const MMHG_TO_PA = 133.322;
 })();
 
 async function ctxGet(path, key){
-  const res = await fetch(CTX_BASE + path, { headers: { 'Accept':'application/json', 'x-api-key': key } });
+  // Key goes in the query string, not a header: a custom header forces a CORS
+  // preflight that EPA's server rejects, so browsers block the call.
+  const res = await fetch(CTX_BASE + path + '?x-api-key=' + encodeURIComponent(key));
   if (res.status === 401 || res.status === 403) throw new Error('EPA rejected the API key (HTTP ' + res.status + ')');
   if (res.status === 404) return [];
   if (!res.ok) throw new Error('HTTP ' + res.status);
