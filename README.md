@@ -68,7 +68,7 @@ with an expandable Sources panel showing exactly what was found and where
 (with links). This is the one feature in the toolkit that sends anything
 (the CAS number) to a third party — see `PRIVACY.md`.
 
-A second button, **"Look up vapor pressure (EPA CompTox)"**, queries EPA's
+A second button, **"Look up MW & vapor pressure (EPA CompTox)"**, queries EPA's
 CTX API using your own free API key (typed into the page, stored only in your
 browser's local storage, never in the code). It uses the median of EPA's
 experimental vapor pressure records when any exist, otherwise the median of

@@ -73,7 +73,7 @@
     </details>
     <div class="small muted" style="margin-top:6px">Looks up the compound on PubChem by CAS number. This needs internet access (unlike the rest of this calculator) and pulls from whatever experimental data PubChem has indexed — not every chemical has vapor pressure data, and where several sources disagree, only the first is auto-filled. Always check the Sources panel before trusting the filled values.</div>
     <div class="row" style="margin-top:12px">
-      <button class="btn" id="btnComptox">Look up vapor pressure (EPA CompTox)</button>
+      <button class="btn" id="btnComptox">Look up MW &amp; vapor pressure (EPA CompTox)</button>
       <span class="small muted" id="comptoxStatus"></span>
     </div>
     <details id="comptoxSources" class="hidden" style="margin-top:8px">
@@ -529,6 +529,17 @@ async function lookupComptox(){
     const dashUrl = 'https://comptox.epa.gov/dashboard/chemical/details/' + encodeURIComponent(chem.dtxsid);
     const lines = [`<div>${esc(chem.preferredName)} — <a href="${dashUrl}" target="_blank" rel="noopener noreferrer">${esc(chem.dtxsid)}</a> (resolved from CAS ${esc(cas)})</div>`];
 
+    let mwFilled = null;
+    try {
+      const det = await ctxGet('/chemical/detail/search/by-dtxsid/' + encodeURIComponent(chem.dtxsid), key);
+      const avg = det && det.averageMass;
+      if (avg != null && avg > 0){
+        mwFilled = Number(Number(avg).toFixed(3));
+        setVal('mw', mwFilled);
+        lines.push(`<div style="margin-top:6px"><b>MW</b>: ${mwFilled} g/mol — CompTox average mass${det.molFormula ? ' (' + esc(det.molFormula) + ')' : ''}</div>`);
+      }
+    } catch(e){ lines.push('<div style="margin-top:6px">Could not retrieve molecular weight from CompTox: ' + esc(e.message) + '</div>'); }
+
     const exp = (await ctxGet('/chemical/property/experimental/search/by-dtxsid/' + encodeURIComponent(chem.dtxsid), key))
       .filter(r => r.propName === 'Vapor Pressure' && r.propValue != null && r.propUnit === 'mmHg');
     let paVal = null, basis = '';
@@ -558,7 +569,7 @@ async function lookupComptox(){
     }
     body.innerHTML = lines.join('');
     box.classList.remove('hidden'); box.open = true;
-    status.textContent = paVal != null ? `Vapor pressure filled from CompTox (${basis.split(' ')[0].toLowerCase()}) — see sources below.` : 'No vapor pressure found on CompTox — see sources below.';
+    status.textContent = (mwFilled != null ? 'MW filled. ' : '') + (paVal != null ? `Vapor pressure filled from CompTox (${basis.split(' ')[0].toLowerCase()}) — see sources below.` : 'No vapor pressure found on CompTox — see sources below.');
     update();
   } catch(err){
     console.error(err);
