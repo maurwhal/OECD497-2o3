@@ -62,10 +62,10 @@ each assay that was run; an assay left as "not tested" is skipped, along with
 every model that needs it, even if numbers are typed in. KeratinoSens values
 are in µM and h-CLAT values in µg/mL, exactly as reports print them, and
 KeratinoSens can alternatively be entered in ppm (converted as ppm × 5, the
-workbook's rule). Includes a built-in self-check against five worked examples
-(DNCB and cinnamic aldehyde, plus three partial-data cases, one of them the
-workbook's own phthalide example); **check that self-check panel before
-trusting a real result.**
+workbook's rule). Includes a built-in self-check against the published ESM3
+worked examples (DNCB and cinnamic aldehyde, plus five variants of them with
+one assay's input removed, to test which equations need which inputs);
+**check that self-check panel before trusting a real result.**
 
 A **point-of-departure card** applies the draft OECD TG 497 Part 3 workflow:
 with all three tests it uses EQ5 and EQ5e; with two tests it uses the matching

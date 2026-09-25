@@ -174,7 +174,7 @@
 
   <div class="card">
     <h2>Self-check against the ESM3 worked examples</h2>
-    <div class="small muted" style="margin-bottom:8px">Loads five worked examples internally (two with complete data, three with deliberately partial data, one of them the ESM3 workbook's own blank-sheet example) and compares this page's live output to values independently computed from the ESM3 formulas. If anything shows FAIL, do not trust this calculator's numbers until it's fixed.</div>
+    <div class="small muted" style="margin-bottom:8px">Runs seven checks from the published DNCB and cinnamic aldehyde worked examples (the two originals, plus five variants with one assay's input removed to test which equations need which inputs) and compares this page's live output to values independently computed from the ESM3 formulas. If anything shows FAIL, do not trust this calculator's numbers until it's fixed.</div>
     <div id="selfCheckOut" class="grid" style="gap:6px"></div>
   </div>
 
@@ -848,52 +848,57 @@ function combineHCLAT(runs, cv75, opts){
 
 
 
-// ---------- Self-check against independently-computed ESM3 reference values ----------
-// These reference numbers were computed directly from the ESM3 formulas (not
-// from this page's code) — see the project notes. If this page's live output
-// stops matching them, something in the port above is wrong.
+// ---------- Self-check against the published ESM3 worked examples ----------
+// Reference numbers for DNCB and cinnamic aldehyde are the saved results of the published ESM3
+// workbook (Natsch, ALTEX 2023). If this page's live output stops matching them, something in
+// the port above is wrong.
 //
-// PARTIAL1/PARTIAL2 are real worked examples (not this project's own) with
-// deliberately incomplete data, specifically to exercise the per-field
-// gating logic (which equation needs which of EC1.5/EC3/IC50/kDPRA/h-CLAT) -
-// DNCB and CA both have full data, so they never touch that gating at all.
-// 'gated' means that equation is expected to report not-sufficient-data.
+// The variants remove one assay's input at a time from those same two examples, to exercise the
+// per-equation gating (which equation needs which of EC1.5 / EC3.0 / IC50 / kDPRA / h-CLAT).
+// An equation's result does not change when an input it never uses is removed, so each variant
+// expects the same workbook numbers for the equations that can still be calculated, and 'gated'
+// (not sufficient data) for the rest.
 const GATED = 'gated';
 const EXPECTED = {
   DNCB: { eq1:{pct:0.1800,dsa:44.9996}, eq4:{pct:0.1916,dsa:47.9066}, eq5:{pct:0.1647,dsa:41.1713}, eq6:{pct:0.2586,dsa:64.6576}, eq7:{pct:0.1364,dsa:34.1020},
           eq1d:{pct:0.2282,dsa:57.0406}, eq4d:{pct:0.1813,dsa:45.3247}, eq5d:{pct:0.2088,dsa:52.2023}, eq6d:{pct:0.3332,dsa:83.2943}, eq5e:{pct:0.1713,dsa:42.8173} },
   CA:   { eq1:{pct:1.0155,dsa:253.8726}, eq4:{pct:0.8055,dsa:201.3731}, eq5:{pct:0.7975,dsa:199.3846}, eq6:{pct:1.1127,dsa:278.1676}, eq7:{pct:0.9172,dsa:229.3122},
           eq1d:{pct:0.7823,dsa:195.5873}, eq4d:{pct:0.6701,dsa:167.5172}, eq5d:{pct:0.5585,dsa:139.6314}, eq6d:{pct:0.7800,dsa:195.0069}, eq5e:{pct:0.6405,dsa:160.1181} },
-  PARTIAL1: { eq1:{pct:2.4262,dsa:606.5399}, eq4:{pct:4.1463,dsa:1036.5713}, eq5:{pct:4.5185,dsa:1129.6264}, eq6:{pct:12.1403,dsa:3035.0672}, eq7:GATED,
-          eq1d:{pct:1.7830,dsa:445.7540}, eq4d:{pct:8.2989,dsa:2074.7158}, eq5d:{pct:7.8827,dsa:1970.6814}, eq6d:{pct:31.1745,dsa:7793.6337}, eq5e:{pct:7.1298,dsa:1782.4437} },
-  PARTIAL2: { eq1:{pct:17.1679,dsa:4291.9860}, eq4:GATED, eq5:GATED, eq6:GATED, eq7:GATED,
-          eq1d:{pct:59.0606,dsa:14765.1426}, eq4d:GATED, eq5d:GATED, eq6d:GATED, eq5e:GATED },
-  PARTIAL3: { eq1:GATED, eq4:GATED, eq5:GATED, eq6:{pct:21.9248,dsa:5481.1987}, eq7:{pct:29.4098,dsa:7352.4545},
-          eq1d:GATED, eq4d:GATED, eq5d:GATED, eq6d:{pct:12.3277,dsa:3081.9358}, eq5e:GATED },
 };
-// EC3 and hCLAT/kDPRA are deliberately left out here (undefined) to match
-// the source worked examples exactly.
-const PARTIAL1 = { name:'(partial KS data — no EC3.0)', mw:349.47, vp:0.0000052, ec15:24.8333, ic50:259.3333, kmax:-1.06, cd86:5000, cd54:5000, cv75:44.1, ksRating:1, hclatRating:0 };
-const PARTIAL2 = { name:'(no h-CLAT data)', mw:222.37, vp:2.2876, ec15:4000, ic50:45.1, kmax:-3.5, ksRating:1 };
-// From the ESM3 workbook's own blank-sheet example (phthalide, CAS 87-41-2): no kDPRA, so only
-// Equations 6, 7 and 6d calculate. Expected values are the workbook's saved Excel results.
-const PARTIAL3 = { name:'Phthalide, CAS 87-41-2 (no kDPRA; ESM3 workbook example)', mw:134.13, vp:0.14763, ec15:669.7, ec3:4000, ic50:4000, cd86:299.5, cd54:631.8, cv75:647.7, ksRating:1, hclatRating:1 };
+function derive(baseKey, keep){
+  const o = {};
+  Object.keys(EXPECTED[baseKey]).forEach(k => { o[k] = keep.includes(k) ? EXPECTED[baseKey][k] : GATED; });
+  return o;
+}
+const SELF_CHECK_CASES = [
+  { name:'DNCB (ESM3 worked example)', ex: DNCB, exp: EXPECTED.DNCB },
+  { name:'Cinnamic aldehyde (ESM3 worked example)', ex: CA, exp: EXPECTED.CA },
+  { name:'DNCB without EC3.0 (only Equation 7 uses it)', ex: Object.assign({}, DNCB, { ec3: undefined }),
+    exp: derive('DNCB', ['eq1','eq4','eq5','eq6','eq1d','eq4d','eq5d','eq6d','eq5e']) },
+  { name:'DNCB without IC50', ex: Object.assign({}, DNCB, { ic50: undefined }),
+    exp: derive('DNCB', ['eq4','eq4d','eq5e']) },
+  { name:'DNCB without kDPRA', ex: Object.assign({}, DNCB, { kmax: undefined }),
+    exp: derive('DNCB', ['eq6','eq7','eq6d']) },
+  { name:'Cinnamic aldehyde without h-CLAT', ex: Object.assign({}, CA, { cd86: undefined, cd54: undefined, cv75: undefined, hclatRating: undefined }),
+    exp: derive('CA', ['eq1','eq1d']) },
+  { name:'Cinnamic aldehyde without KeratinoSens', ex: Object.assign({}, CA, { ec15: undefined, ec3: undefined, ic50: undefined, ksRating: undefined }),
+    exp: derive('CA', ['eq4','eq4d']) },
+];
 
 function runSelfCheck(){
   const out = document.getElementById('selfCheckOut');
   out.innerHTML = '';
-  const cases = [['DNCB', DNCB], ['CA', CA], ['PARTIAL1', PARTIAL1], ['PARTIAL2', PARTIAL2], ['PARTIAL3', PARTIAL3]];
   let allPass = true;
-  cases.forEach(([key, ex])=>{
+  SELF_CHECK_CASES.forEach(c=>{
+    const ex = c.ex;
     const inp = { mw:ex.mw, vp:ex.vp, ec15:ex.ec15, ec3:ex.ec3, ic50:ex.ic50, kmax:ex.kmax, cd86:ex.cd86, cd54:ex.cd54, cv75:ex.cv75, ksRating:ex.ksRating, hclatRating:ex.hclatRating };
     const eqs = computeAll(inp);
-    const exp = EXPECTED[key];
     const row = document.createElement('div');
     let rowPass = true;
     const parts = [];
-    Object.keys(exp).forEach(eqKey=>{
+    Object.keys(c.exp).forEach(eqKey=>{
       const got = eqs[eqKey];
-      const want = exp[eqKey];
+      const want = c.exp[eqKey];
       let ok;
       if (want === GATED) {
         ok = got.pct == null;
@@ -904,7 +909,7 @@ function runSelfCheck(){
       parts.push(`${eqKey}:${ok?'OK':'FAIL('+(got.pct==null?'gated':fmt(got.pct))+' vs '+(want===GATED?'gated':want.pct)+')'}`);
     });
     allPass = allPass && rowPass;
-    row.innerHTML = `<span class="pill ${rowPass?'pass':'fail'}">${rowPass?'PASS':'FAIL'}</span> ${ex.name} — ${parts.join(', ')}`;
+    row.innerHTML = `<span class="pill ${rowPass?'pass':'fail'}">${rowPass?'PASS':'FAIL'}</span> ${c.name} — ${parts.join(', ')}`;
     out.appendChild(row);
   });
   return allPass;
