@@ -114,20 +114,21 @@ both routed through a small password-protected Cloudflare Worker
 directly from a browser (see below), and both fill both fields:
 
 - **"Look up MW & vapor pressure (EPA EPI Suite)"** — uses EPI Suite's own
-  computed molecular weight and its "Selected" MPBPVP calculated estimate
-  for vapor pressure (episuite.dev, EPA's web successor to the EPI Suite
-  desktop tool).
+  computed molecular weight and the median of its curated experimental
+  literature values for vapor pressure, falling back to its "Selected"
+  MPBPVP calculated estimate only when it has no experimental value on file
+  (episuite.dev, EPA's web successor to the EPI Suite desktop tool).
 - **"Look up MW & vapor pressure (EPA CompTox)"** — uses CompTox's average
-  mass for MW, and the median of EPA's *predicted* (model) vapor pressure
-  values, falling back to the median of EPA's experimental records only when
-  no predicted value is on file.
+  mass for MW, and the median of EPA's *experimental* vapor pressure
+  records, falling back to the median of EPA's predicted (model) values only
+  when no experimental record is on file.
 
-Both prefer a **calculated** value over an experimental one, by house
-preference, for consistency across materials — CompTox by falling back to
-experimental only when nothing predicted exists; EPI Suite by never using its
-experimental literature value at all. Look up both for the same CAS # and
-each one's sources panel shows how its MW and vapor pressure compare to the
-other's. Every record and its source are listed under "CompTox sources" or
+Both prefer an **experimental** value over a calculated one, by house
+preference, for consistency across materials — a real measurement is used
+whenever one is available, with the model estimate only as a fallback. Look
+up both for the same CAS # and each one's sources panel shows how its MW and
+vapor pressure compare to the other's. Every record and its source are
+listed under "CompTox sources" or
 "EPI Suite sources". A Worker is needed because CompTox's server sends a
 duplicated CORS header on successful replies (which browsers refuse to read)
 and EPI Suite's server sends no CORS header at all (which browsers block

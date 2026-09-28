@@ -17,9 +17,9 @@
 //           "source" defaults to "comptox" if omitted.
 // Reply (comptox): { ok, cas, name, dtxsid, url, mw, vp: { pa, basis, n, records[] } }
 // Reply (episuite): { ok, cas, name, mw, url, vp: { pa, basis, n, records[] } }
-//   vp.basis is 'calculated' (EPI Suite's own "Selected" MPBPVP estimate) or
-//   'experimental' — calculated is always preferred; experimental is not used
-//   for EPI Suite since a calculated value is essentially always available.
+//   vp.basis is 'experimental' (EPI Suite's own curated literature values) or
+//   'calculated' (its "Selected" MPBPVP estimate) — experimental is always
+//   preferred, same as CompTox; calculated is used only as a fallback.
 
 const CTX_BASE = 'https://comptox.epa.gov/ctx-api';
 const EPISUITE_BASE = 'https://episuite.dev/api';
@@ -86,31 +86,31 @@ async function lookupComptox(cas, env) {
   const mw = detail && detail.averageMass ? Number(detail.averageMass) : null;
 
   let vp = { pa: null, basis: null, n: 0, records: [] };
-  const pred = vpRows(await epaGet('/chemical/property/predicted/search/by-dtxsid/' + id, env));
-  if (pred.length) {
+  const exp = vpRows(await epaGet('/chemical/property/experimental/search/by-dtxsid/' + id, env));
+  if (exp.length) {
     vp = {
-      pa: median(pred.map((r) => r.propValue)) * MMHG_TO_PA,
-      basis: 'calculated',
-      n: pred.length,
-      records: pred.map((r) => ({
+      pa: median(exp.map((r) => r.propValue)) * MMHG_TO_PA,
+      basis: 'experimental',
+      n: exp.length,
+      records: exp.map((r) => ({
         pa: r.propValue * MMHG_TO_PA,
         mmHg: r.propValue,
-        tempC: null,
-        source: (r.modelName || '') + (r.sourceName ? ' (' + r.sourceName + ')' : ''),
+        tempC: r.expDetailsTemperatureC == null ? null : r.expDetailsTemperatureC,
+        source: r.publicSourceName || r.sourceName || '',
       })),
     };
   } else {
-    const exp = vpRows(await epaGet('/chemical/property/experimental/search/by-dtxsid/' + id, env));
-    if (exp.length) {
+    const pred = vpRows(await epaGet('/chemical/property/predicted/search/by-dtxsid/' + id, env));
+    if (pred.length) {
       vp = {
-        pa: median(exp.map((r) => r.propValue)) * MMHG_TO_PA,
-        basis: 'experimental',
-        n: exp.length,
-        records: exp.map((r) => ({
+        pa: median(pred.map((r) => r.propValue)) * MMHG_TO_PA,
+        basis: 'calculated',
+        n: pred.length,
+        records: pred.map((r) => ({
           pa: r.propValue * MMHG_TO_PA,
           mmHg: r.propValue,
-          tempC: r.expDetailsTemperatureC == null ? null : r.expDetailsTemperatureC,
-          source: r.publicSourceName || r.sourceName || '',
+          tempC: null,
+          source: (r.modelName || '') + (r.sourceName ? ' (' + r.sourceName + ')' : ''),
         })),
       };
     }
@@ -128,9 +128,11 @@ async function lookupComptox(cas, env) {
 }
 
 // EPI Suite (episuite.dev, EPA's own web successor to the EPI Suite desktop
-// app) always reports a calculated MPBPVP estimate ("Selected", the best of
-// its Antoine/Grain/Mackay/SubCooled sub-models); that is always used here,
-// per house preference for calculated over experimental. No API key needed.
+// app) reports both a curated set of experimental literature values and a
+// calculated MPBPVP estimate ("Selected", the best of its Antoine/Grain/
+// Mackay/SubCooled sub-models). Experimental is preferred, same as CompTox;
+// calculated is used only when EPI Suite has no experimental value on file.
+// No API key needed.
 async function lookupEpiSuite(cas, env) {
   const res = await fetch(EPISUITE_BASE + '/submit?cas=' + encodeURIComponent(cas));
   if (res.status === 404) return { ok: false, cas, error: 'Not found in EPI Suite' };
@@ -138,18 +140,34 @@ async function lookupEpiSuite(cas, env) {
   const data = await res.json();
 
   const vpBlock = data.vaporPressure || {};
-  const est = vpBlock.estimatedValue || {};
-  const models = Array.isArray(est.model) ? est.model : [];
-  const selected = models.find((m) => m.type === 'Selected') || (est.pa != null ? est : null);
-
   let vp = { pa: null, basis: null, n: 0, records: [] };
-  if (selected && selected.pa != null) {
+
+  const expVals = (Array.isArray(vpBlock.experimentalValues) ? vpBlock.experimentalValues : [])
+    .filter((r) => r.units === 'mmHg' && r.value != null);
+  if (expVals.length) {
     vp = {
-      pa: selected.pa,
-      basis: 'calculated',
-      n: models.length || 1,
-      records: models.map((m) => ({ pa: m.pa, mmHg: m.mmHg, tempC: null, source: m.type + ' (MPBPVP)' })),
+      pa: median(expVals.map((r) => r.value)) * MMHG_TO_PA,
+      basis: 'experimental',
+      n: expVals.length,
+      records: expVals.map((r) => ({
+        pa: r.value * MMHG_TO_PA,
+        mmHg: r.value,
+        tempC: r.temperatureC == null ? null : r.temperatureC,
+        source: [r.author, r.year].filter(Boolean).join(' ') || r.source || '',
+      })),
     };
+  } else {
+    const est = vpBlock.estimatedValue || {};
+    const models = Array.isArray(est.model) ? est.model : [];
+    const selected = models.find((m) => m.type === 'Selected') || (est.pa != null ? est : null);
+    if (selected && selected.pa != null) {
+      vp = {
+        pa: selected.pa,
+        basis: 'calculated',
+        n: models.length || 1,
+        records: models.map((m) => ({ pa: m.pa, mmHg: m.mmHg, tempC: null, source: m.type + ' (MPBPVP)' })),
+      };
+    }
   }
 
   const chem = data.chemicalProperties || {};
