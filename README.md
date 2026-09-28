@@ -67,6 +67,17 @@ worked examples (DNCB and cinnamic aldehyde, plus five variants of them with
 one assay's input removed, to test which equations need which inputs);
 **check that self-check panel before trusting a real result.**
 
+A **"Log this material"** panel builds a running list, in this browser only, of
+every material you add, in the same 30 columns as a `PoD Log.xlsx` file (one
+material per row: Substance Name through Eq 5e). "Add current material to
+log" appends a row; "Copy log for Excel" copies every logged row, tab-
+separated, ready to paste into the spreadsheet starting at the first blank
+row; "Copy this material only" copies just the current material without
+saving it; individual rows can be removed, and the whole log cleared. Nothing
+is written to any file automatically. There's also a "Print this material"
+button using the browser's own print dialog, with a print stylesheet that
+hides the buttons and only keeps the material's inputs and results.
+
 A **point-of-departure card** applies the draft OECD TG 497 Part 3 workflow:
 with all three tests it uses EQ5 and EQ5e; with two tests it uses the matching
 pair (EQ1/1d, EQ4/4d, or EQ6/6d); and the **lower** of the LLNA-trained and

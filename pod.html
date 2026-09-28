@@ -25,6 +25,11 @@
   .helpnote{display:none}
   body.showhelp .helpnote{display:block}
   input::placeholder{color:#94a3b8;opacity:1}
+  @media print {
+    header, #daCard .row, .btn, #aboutCtx, #combineKS, #combineH, #logStatus, #tblLog, #logCopyBox, footer .small:last-child { display:none !important; }
+    body { background:#fff !important; }
+    .card, fieldset { box-shadow:none !important; border:1px solid #ccc !important; break-inside:avoid; }
+  }
   select{padding:8px;border:1px solid var(--border);border-radius:12px;background:#fff;color:var(--fg);font-family:inherit;font-size:14px}
   .icon-btn:hover{background:#f1f5f9}
   label{font-size:14px}
@@ -176,6 +181,21 @@
     <h2>Self-check against the ESM3 worked examples</h2>
     <div class="small muted" style="margin-bottom:8px">Runs seven checks from the published DNCB and cinnamic aldehyde worked examples (the two originals, plus five variants with one assay's input removed to test which equations need which inputs) and compares this page's live output to values independently computed from the ESM3 formulas. If anything shows FAIL, do not trust this calculator's numbers until it's fixed.</div>
     <div id="selfCheckOut" class="grid" style="gap:6px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Log this material</h2>
+    <div class="small muted" style="margin-bottom:8px">Builds a running list of materials in this browser, in the same 30 columns as your <code>PoD Log.xlsx</code> (Substance Name through Eq 5e). Nothing is written to any file automatically &mdash; copy the list below and paste it into Excel yourself, starting at the first blank row. The list stays only in this browser (this computer, this browser profile) until you clear it; it is not uploaded anywhere.</div>
+    <div class="row">
+      <button class="btn primary" type="button" id="btnLogAdd">Add current material to log</button>
+      <button class="btn" type="button" id="btnLogCopyAll">Copy log for Excel</button>
+      <button class="btn" type="button" id="btnLogCopyOne">Copy this material only</button>
+      <button class="btn" type="button" id="btnLogClear">Clear log</button>
+      <button class="btn" type="button" id="btnLogPrint">Print this material</button>
+    </div>
+    <div class="small muted" id="logStatus" style="margin-top:6px"></div>
+    <div style="overflow-x:auto;margin-top:10px"><table id="tblLog"></table></div>
+    <textarea id="logCopyBox" class="hidden" style="position:absolute;left:-9999px" aria-hidden="true"></textarea>
   </div>
 
   <footer class="card">
@@ -488,6 +508,7 @@ function update(){
 function setVal(id,v){ document.getElementById(id).value = (v===undefined||v===null)?'':v; }
 
 function loadExample(ex){
+  mwSource = 'manual'; vpSource = 'manual';
   document.getElementById('matName').value = ex.name;
   document.getElementById('matCas').value = ex.cas;
   setVal('mw', ex.mw); setVpPa(ex.vp);
@@ -513,6 +534,7 @@ document.getElementById('btnReset').onclick = ()=>{
   ['ksInvalid','hclatInvalid','kdpraInvalid'].forEach(id=> document.getElementById(id).checked = false);
   document.getElementById('comptoxSources').classList.add('hidden');
   document.getElementById('comptoxStatus').textContent='';
+  mwSource = 'manual'; vpSource = 'manual';
   update();
 };
 
@@ -590,7 +612,7 @@ async function lookupComptox(){
     let mwFilled = null, vpFilled = null;
     if (d.mw != null){
       mwFilled = Number(Number(d.mw).toFixed(3));
-      setVal('mw', mwFilled);
+      setVal('mw', mwFilled); mwSource = 'CompTox (EPA)';
       lines.push('<div style="margin-top:6px"><b>MW</b>: ' + mwFilled + ' g/mol &mdash; CompTox average mass</div>');
     } else {
       lines.push('<div style="margin-top:6px">CompTox returned no molecular weight for this chemical.</div>');
@@ -598,7 +620,7 @@ async function lookupComptox(){
     const vp = d.vp || {};
     if (vp.pa != null){
       vpFilled = Number(Number(vp.pa).toPrecision(4));
-      setVpPa(vpFilled);
+      setVpPa(vpFilled); vpSource = 'CompTox (EPA)';
       const label = vp.basis === 'experimental' ? 'Experimental vapor pressure' : 'No experimental value on file. PREDICTED vapor pressure';
       lines.push('<div style="margin-top:6px"><b>' + label + ' &mdash; ' + vp.n + ' record(s), median used:</b></div>');
       (vp.records || []).forEach(function(rec){
@@ -630,6 +652,111 @@ document.getElementById('btnComptox').onclick = lookupComptox;
   dlg.addEventListener('click', e=>{ if (e.target === dlg) close(); });
   document.addEventListener('keydown', e=>{ if (e.key === 'Escape') close(); });
 })();
+
+// ---------- Log this material (matches the 30 columns of PoD Log.xlsx) ----------
+// Column order (PoD sheet, row 2 headers):
+//  A Substance Name | B CAS # | C MW (g/mol) | D Source | E Vapor Pressure | F Unit | G Source |
+//  H Rating (KS) | I Inconclusive? | J EC1.5 (uM) | K EC3.0 (uM) | L IC50 (uM) | M log kmax |
+//  N Inconclusive? (kDPRA) | O Rating (h-CLAT) | P Inconclusive? | Q CD86 EC150 | R CD54 EC200 |
+//  S CV75 | T PoD (ug/cm2) | U-Y Eq 1,4,5,6,7 (LLNA, ug/cm2) | Z-AD Eq 1d,4d,5d,6d,5e (PV, ug/cm2)
+const LOG_KEY = 'skinsens_pod_log_v1';
+let mwSource = 'manual', vpSource = 'manual';
+
+function loadLog(){ try { return JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); } catch(e){ return []; } }
+function saveLog(rows){ try { localStorage.setItem(LOG_KEY, JSON.stringify(rows)); } catch(e){} }
+
+function eqCell(eqs, key){ const r = eqs[key]; return (r && r.dsa != null) ? Number(r.dsa).toFixed(2) : ''; }
+function checkCell(id){ return document.getElementById(id).checked ? 'Yes' : ''; }
+function fieldCell(id){ const v = document.getElementById(id).value; return v === '' ? '' : v; }
+function numCell(v){ return v == null ? '' : v; }
+
+function collectRow(){
+  const inp = readInputs();
+  const eqs = computeAll(inp);
+  const da = daPod(eqs);
+  if (da){
+    const flags = { ks: inp.ksFlag, kdpra: inp.kdpraFlag, hclat: inp.hclatFlag };
+    da.exploratory = da.pair.tests.some(t => flags[t]);
+  }
+  const podCell = da ? (Number(da.dsa).toFixed(2) + (da.exploratory ? ' (exploratory)' : '')) : '';
+  return [
+    fieldCell('matName'), fieldCell('matCas'), fieldCell('mw'), mwSource,
+    fieldCell('vp'), document.getElementById('vpUnit').value, vpSource,
+    fieldCell('ksRating'), checkCell('ksInvalid'), numCell(inp.ec15), numCell(inp.ec3), numCell(inp.ic50),
+    fieldCell('kmax'), checkCell('kdpraInvalid'),
+    fieldCell('hclatRating'), checkCell('hclatInvalid'), fieldCell('cd86'), fieldCell('cd54'), fieldCell('cv75'),
+    podCell,
+    eqCell(eqs, 'eq1'), eqCell(eqs, 'eq4'), eqCell(eqs, 'eq5'), eqCell(eqs, 'eq6'), eqCell(eqs, 'eq7'),
+    eqCell(eqs, 'eq1d'), eqCell(eqs, 'eq4d'), eqCell(eqs, 'eq5d'), eqCell(eqs, 'eq6d'), eqCell(eqs, 'eq5e'),
+  ];
+}
+
+function tsvSafe(v){ return String(v == null ? '' : v).replace(/[\t\n\r]/g, ' '); }
+function rowsToTsv(rows){ return rows.map(r => r.cells.map(tsvSafe).join('\t')).join('\n'); }
+
+async function copyText(text){
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch(e){
+    try {
+      const box = document.getElementById('logCopyBox');
+      box.value = text; box.classList.remove('hidden');
+      box.focus(); box.select();
+      const ok = document.execCommand('copy');
+      box.classList.add('hidden');
+      return ok;
+    } catch(e2){ return false; }
+  }
+}
+
+function renderLogTable(){
+  const rows = loadLog();
+  const tbl = document.getElementById('tblLog');
+  if (!rows.length){ tbl.innerHTML = '<tbody><tr><td class="small muted">Nothing logged yet in this browser.</td></tr></tbody>'; return; }
+  let html = '<thead><tr><th>Substance</th><th>CAS #</th><th>PoD (µg/cm²)</th><th>Added</th><th></th></tr></thead><tbody>';
+  rows.forEach((r, i)=>{
+    const c = r.cells;
+    html += `<tr><td>${esc(c[0] || '(unnamed)')}</td><td>${esc(c[1])}</td><td>${esc(c[19])}</td><td class="small muted">${esc(r.when)}</td><td><button class="btn" type="button" data-logdel="${i}" style="padding:2px 8px;font-size:12px">Remove</button></td></tr>`;
+  });
+  tbl.innerHTML = html + '</tbody>';
+  tbl.querySelectorAll('[data-logdel]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const rows2 = loadLog();
+      rows2.splice(Number(btn.getAttribute('data-logdel')), 1);
+      saveLog(rows2); renderLogTable();
+    };
+  });
+}
+
+document.getElementById('btnLogAdd').onclick = ()=>{
+  const rows = loadLog();
+  rows.push({ cells: collectRow(), when: new Date().toLocaleString() });
+  saveLog(rows); renderLogTable();
+  document.getElementById('logStatus').textContent = 'Added. ' + rows.length + ' material(s) in the log.';
+};
+document.getElementById('btnLogCopyAll').onclick = async ()=>{
+  const rows = loadLog();
+  const status = document.getElementById('logStatus');
+  if (!rows.length){ status.textContent = 'Nothing logged yet — click "Add current material to log" first.'; return; }
+  const ok = await copyText(rowsToTsv(rows));
+  status.textContent = ok ? ('Copied ' + rows.length + ' row(s) — paste into the PoD sheet starting at the first blank row.') : 'Could not copy automatically; select and copy the text box that appeared.';
+};
+document.getElementById('btnLogCopyOne').onclick = async ()=>{
+  const ok = await copyText(collectRow().map(tsvSafe).join('\t'));
+  document.getElementById('logStatus').textContent = ok ? 'Copied this material as one row — paste into the PoD sheet.' : 'Could not copy automatically; select and copy the text box that appeared.';
+};
+document.getElementById('btnLogClear').onclick = ()=>{
+  if (!loadLog().length){ return; }
+  if (!confirm('Clear the ' + loadLog().length + ' logged material(s) in this browser? This cannot be undone.')) return;
+  saveLog([]); renderLogTable();
+  document.getElementById('logStatus').textContent = 'Log cleared.';
+};
+document.getElementById('btnLogPrint').onclick = ()=> window.print();
+renderLogTable();
+
+// Track where MW and vapor pressure came from, for the log's Source columns.
+document.getElementById('mw').addEventListener('input', ()=>{ mwSource = 'manual'; });
+document.getElementById('vp').addEventListener('input', ()=>{ vpSource = 'manual'; });
+
 
 // ---------- Combine KeratinoSens replicate runs (OECD TG 442D rules) ----------
 const KS_DEFAULT_UM = 4000;
