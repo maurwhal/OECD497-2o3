@@ -108,18 +108,30 @@ requested when two runs disagree. An option counts runs with no value as the
 default instead of leaving them out; the guideline does not specify that case.
 This is separate from the arithmetic averages used for house-style cells.
 
-Also includes a **"Look up MW & vapor pressure (EPA CompTox)"** button. It asks
-for a password, then a small Cloudflare Worker (`cloudflare-worker/worker.js`)
-calls the EPA CompTox CTX API on the page's behalf and returns the molecular
-weight (EPA average mass) and vapor pressure (median of EPA's experimental
-records, otherwise the median of EPA's predicted values, clearly labeled as
-predicted), with every record and its source listed. A Worker is needed because
-EPA's server sends a duplicated CORS header on successful replies, which
-browsers refuse to read; the EPA API key lives only inside the Worker, never in
-this site's code. The vapor pressure box has a unit dropdown (Pa, mmHg/Torr,
-kPa, atm, bar); whatever you pick is converted to Pa, which is what the
-equations use. An "About CompTox lookup" button in the page header explains
-how the lookup works.
+Also includes two vapor pressure lookup buttons, both routed through a small
+password-protected Cloudflare Worker (`cloudflare-worker/worker.js`) because
+neither EPA source can be called directly from a browser (see below):
+
+- **"Look up MW & vapor pressure (EPA CompTox)"** — also fills molecular
+  weight (EPA average mass). Uses the median of EPA's *predicted* (model)
+  vapor pressure values, falling back to the median of EPA's experimental
+  records only when no predicted value is on file.
+- **"Look up vapor pressure (EPA EPI Suite)"** — uses EPI Suite's own
+  "Selected" MPBPVP calculated estimate (episuite.dev, EPA's web successor to
+  the EPI Suite desktop tool). Does not fill MW.
+
+Both prefer a **calculated** value over an experimental one, by house
+preference, for consistency across materials — CompTox by falling back to
+experimental only when nothing predicted exists; EPI Suite by never using its
+experimental literature value at all. Every record and its source are listed
+under "CompTox sources" or "EPI Suite sources". A Worker is needed because
+CompTox's server sends a duplicated CORS header on successful replies (which
+browsers refuse to read) and EPI Suite's server sends no CORS header at all
+(which browsers block outright); the CompTox API key lives only inside the
+Worker, never in this site's code (EPI Suite needs no key). The vapor
+pressure box has a unit dropdown (Pa, mmHg/Torr, kPa, atm, bar); whatever you
+pick is converted to Pa, which is what the equations use. An "About vapor
+pressure lookups" button in the page header explains how both work.
 
 This is not SARA-ICE — see the hub page (`index.html`) for why.
 
@@ -171,7 +183,7 @@ one value you give it, and says so on the page.
 See `PRIVACY.md`. In short: everything runs in your browser, nothing is
 uploaded anywhere, except (a) the 2o3 page's PDF-upload feature loads the
 pdf.js library from a CDN on first use (the PDF itself is never uploaded),
-and (b) the PoD calculator's CompTox lookup button sends the CAS number you entered, plus the password, to a password-protected Cloudflare Worker that retrieves MW/vapor pressure data from EPA.
+and (b) the PoD calculator's two vapor pressure lookup buttons send the CAS number you entered, plus the password, to a password-protected Cloudflare Worker that retrieves MW/vapor pressure data from EPA (CompTox or EPI Suite).
 
 ## Notes
 

@@ -59,7 +59,7 @@
     <div class="row">
       <a class="icon-btn" href="index.html">&larr; Hub</a>
       <a class="icon-btn" href="2o3.html">OECD 497 2o3</a>
-      <button class="btn" id="btnAboutCtx">About CompTox lookup</button>
+      <button class="btn" id="btnAboutCtx">About vapor pressure lookups</button>
       <button class="btn" id="btnBG">BG: Plain</button>
       <button class="btn" id="btnReset">Reset</button>
     </div>
@@ -90,9 +90,18 @@
       <button class="btn" id="btnComptox">Look up MW &amp; vapor pressure (EPA CompTox)</button>
       <span class="small muted" id="comptoxStatus"></span>
     </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="btnEpiSuite">Look up vapor pressure (EPA EPI Suite)</button>
+      <span class="small muted" id="episuiteStatus"></span>
+    </div>
+    <div class="small muted" style="margin-top:6px">Both buttons fill the vapor pressure field with a <b>calculated</b> value, preferred over any experimental value on file (house preference; see "About CompTox lookup"). CompTox and EPI Suite use different estimation models, so they will not always agree &mdash; whichever button you click last is the value used below.</div>
     <details id="comptoxSources" class="hidden" style="margin-top:8px">
       <summary class="small" style="cursor:pointer;color:var(--accent)">CompTox sources</summary>
       <div id="comptoxSourcesBody" class="small" style="margin-top:8px;line-height:1.5"></div>
+    </details>
+    <details id="episuiteSources" class="hidden" style="margin-top:8px">
+      <summary class="small" style="cursor:pointer;color:var(--accent)">EPI Suite sources</summary>
+      <div id="episuiteSourcesBody" class="small" style="margin-top:8px;line-height:1.5"></div>
     </details>
     <div class="small muted" style="margin-top:8px">The CompTox lookup uses an EPA API key held by the site owner, so it asks for a password. It fills MW from EPA's average mass, and vapor pressure as the median of EPA's experimental records (or, if there are none, EPA's predicted values, clearly labeled). Every record is listed under "CompTox sources". Your CAS # and the password are sent to a small server that calls EPA for you; nothing else is.</div>
     <div class="row" style="margin-top:12px">
@@ -244,11 +253,12 @@
 
 <div id="aboutCtx" class="hidden" style="position:fixed;inset:0;background:rgba(20,33,61,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px">
   <div class="card" style="max-width:640px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 10px 30px rgba(0,0,0,.25)" role="dialog" aria-modal="true" aria-labelledby="aboutCtxTitle">
-    <h2 id="aboutCtxTitle" style="margin-bottom:8px">About the CompTox lookup</h2>
+    <h2 id="aboutCtxTitle" style="margin-bottom:8px">About the vapor pressure lookups</h2>
     <div style="font-size:13px;line-height:1.55">
       <p style="margin:0 0 8px 0"><b>What it is.</b> The EPA CompTox Chemicals Dashboard is a public database of chemical identifiers and properties. EPA's Computational Toxicology and Exposure (CTX) APIs let a program pull that data automatically instead of looking each chemical up by hand. <a href="https://www.epa.gov/comptox-tools/computational-toxicology-and-exposure-apis" target="_blank" rel="noopener noreferrer">More about the CTX APIs (EPA)</a></p>
       <p style="margin:0 0 8px 0"><b>What the button fills in.</b> Molecular weight (EPA's average mass) and vapor pressure, for the CAS # you entered. Both feed the regression equations above.</p>
-      <p style="margin:0 0 8px 0"><b>How vapor pressure is chosen.</b> If EPA has experimental records, the value used is their median. If it has none, the value used is the median of EPA's predicted (model) values, and the page says PREDICTED. EPA reports mmHg; the page converts to Pa (1 mmHg = 133.322 Pa). Every record, its source, and its temperature (when EPA gives one) are listed under "CompTox sources" so you can judge them yourself.</p>
+      <p style="margin:0 0 8px 0"><b>Two sources, both calculated-first.</b> "Look up MW &amp; vapor pressure (EPA CompTox)" uses the median of CompTox's predicted (model) vapor pressure values; it falls back to the median of CompTox's experimental records only when no predicted value is on file. "Look up vapor pressure (EPA EPI Suite)" uses EPI Suite's own "Selected" MPBPVP calculated estimate (the best of its Antoine/Grain/Mackay/SubCooled sub-models) and does not use EPI Suite's experimental literature value at all. This is a deliberate house preference: calculated values are always used over experimental ones, for consistency across materials. EPA reports mmHg; the page converts to Pa (1 mmHg = 133.322 Pa). Every record and its source are listed under "CompTox sources" or "EPI Suite sources" so you can judge them yourself.</p>
+      <p style="margin:0 0 8px 0"><b>About EPI Suite.</b> EPA's own EPI Suite page directs users to episuite.dev as "the beta version of our web-based program of EPI-Suite" while the desktop download (v4.11) has technical problems. This live tool reports itself as MPBPWIN v1.44, the current version of the same MPBPVP estimation method &mdash; not literally the same build as any "EPI Suite v4.11" value already on file elsewhere, so treat a value from here as an independent calculation, not a citation-for-citation match. <a href="https://episuite.dev/" target="_blank" rel="noopener noreferrer">episuite.dev</a></p>
       <p style="margin:0 0 8px 0"><b>How it works.</b> This page sends the CAS # and the password to a small server (a Cloudflare Worker). The server adds an EPA API key, asks EPA, and sends the answer back. A server is needed because EPA's replies carry a duplicated browser-permission header that browsers refuse to read directly. The EPA key stays on that server and is never in this page's code.</p>
       <p style="margin:0 0 8px 0"><b>Why a password.</b> The EPA key is one person's free key, so the password keeps other visitors from using it up. It is remembered only until you close the tab.</p>
       <p style="margin:0 0 8px 0"><b>Check before relying on it.</b> These are values from public databases, not a substitute for your own data. Predicted values are model estimates, records can disagree, and some have no stated temperature. If the lookup is unavailable, look the chemical up on the CompTox Dashboard yourself and type the values in, choosing the unit in the vapor pressure box.</p>
@@ -569,21 +579,27 @@ function askCtxPassword(note){
   });
 }
 
-async function callCtxWorker(cas, pw){
+async function callCtxWorker(cas, pw, source){
   const res = await fetch(CTX_WORKER_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password: pw, cas: cas }),
+    body: JSON.stringify({ password: pw, cas: cas, source: source }),
   });
   let data = null;
   try { data = await res.json(); } catch(e){}
   return { status: res.status, data: data };
 }
 
-async function lookupComptox(){
-  const status = document.getElementById('comptoxStatus');
-  const box = document.getElementById('comptoxSources');
-  const body = document.getElementById('comptoxSourcesBody');
+const LOOKUP_SOURCES = {
+  comptox: { statusId: 'comptoxStatus', boxId: 'comptoxSources', bodyId: 'comptoxSourcesBody', label: 'EPA CompTox', sourceKey: 'CompTox (EPA)', fillsMw: true },
+  episuite: { statusId: 'episuiteStatus', boxId: 'episuiteSources', bodyId: 'episuiteSourcesBody', label: 'EPA EPI Suite', sourceKey: 'EPI Suite (EPA)', fillsMw: false },
+};
+
+async function lookupVp(source){
+  const cfg = LOOKUP_SOURCES[source];
+  const status = document.getElementById(cfg.statusId);
+  const box = document.getElementById(cfg.boxId);
+  const body = document.getElementById(cfg.bodyId);
   const cas = document.getElementById('matCas').value.trim();
   if (!cas){ status.textContent = 'Enter a CAS # first.'; return; }
 
@@ -594,10 +610,10 @@ async function lookupComptox(){
     if (pw == null || pw === ''){ status.textContent = 'Cancelled (no password entered).'; return; }
   }
 
-  status.textContent = 'Looking up ' + cas + ' on EPA CompTox...';
+  status.textContent = 'Looking up ' + cas + ' on ' + cfg.label + '...';
   box.classList.add('hidden'); body.innerHTML = '';
   try {
-    const r = await callCtxWorker(cas, pw);
+    const r = await callCtxWorker(cas, pw, source);
     if (r.status === 401){
       try { sessionStorage.removeItem(CTX_PW_STORE); } catch(e){}
       status.textContent = 'Incorrect password. Click the button to try again.';
@@ -605,42 +621,48 @@ async function lookupComptox(){
     }
     try { sessionStorage.setItem(CTX_PW_STORE, pw); } catch(e){}
     const d = r.data;
-    if (r.status === 404){ status.textContent = 'CompTox has no chemical for CAS ' + cas + '.'; return; }
+    if (r.status === 404){ status.textContent = cfg.label + ' has no chemical for CAS ' + cas + '.'; return; }
     if (!d || !d.ok) throw new Error((d && d.error) || ('HTTP ' + r.status));
 
-    const lines = ['<div>' + esc(d.name) + ' &mdash; <a href="' + esc(d.url) + '" target="_blank" rel="noopener noreferrer">' + esc(d.dtxsid) + '</a> (resolved from CAS ' + esc(cas) + ')</div>'];
+    const idText = d.dtxsid || 'chemical page';
+    const lines = ['<div>' + esc(d.name || cas) + ' &mdash; <a href="' + esc(d.url) + '" target="_blank" rel="noopener noreferrer">' + esc(idText) + '</a> (resolved from CAS ' + esc(cas) + ')</div>'];
     let mwFilled = null, vpFilled = null;
-    if (d.mw != null){
-      mwFilled = Number(Number(d.mw).toFixed(3));
-      setVal('mw', mwFilled); mwSource = 'CompTox (EPA)';
-      lines.push('<div style="margin-top:6px"><b>MW</b>: ' + mwFilled + ' g/mol &mdash; CompTox average mass</div>');
-    } else {
-      lines.push('<div style="margin-top:6px">CompTox returned no molecular weight for this chemical.</div>');
+    if (cfg.fillsMw){
+      if (d.mw != null){
+        mwFilled = Number(Number(d.mw).toFixed(3));
+        setVal('mw', mwFilled); mwSource = cfg.sourceKey;
+        lines.push('<div style="margin-top:6px"><b>MW</b>: ' + mwFilled + ' g/mol &mdash; ' + esc(cfg.label) + ' average mass</div>');
+      } else {
+        lines.push('<div style="margin-top:6px">' + esc(cfg.label) + ' returned no molecular weight for this chemical.</div>');
+      }
+    } else if (d.mw != null){
+      lines.push('<div style="margin-top:6px"><b>MW per ' + esc(cfg.label) + '</b>: ' + Number(d.mw).toFixed(3) + ' g/mol (shown for reference; not filled in above &mdash; use the CompTox button to fill MW)</div>');
     }
     const vp = d.vp || {};
     if (vp.pa != null){
       vpFilled = Number(Number(vp.pa).toPrecision(4));
-      setVpPa(vpFilled); vpSource = 'CompTox (EPA)';
-      const label = vp.basis === 'experimental' ? 'Experimental vapor pressure' : 'No experimental value on file. PREDICTED vapor pressure';
+      setVpPa(vpFilled); vpSource = cfg.sourceKey;
+      const label = vp.basis === 'experimental' ? 'No calculated value on file. Experimental vapor pressure used instead' : 'Calculated vapor pressure (preferred over experimental)';
       lines.push('<div style="margin-top:6px"><b>' + label + ' &mdash; ' + vp.n + ' record(s), median used:</b></div>');
       (vp.records || []).forEach(function(rec){
         const t = rec.tempC != null ? ' at ' + esc(rec.tempC) + ' &deg;C' : (vp.basis === 'experimental' ? ' (temperature not stated)' : '');
         lines.push('<div style="margin-left:8px">' + esc(Number(rec.mmHg).toPrecision(4)) + ' mmHg (&asymp; ' + Number(rec.pa).toFixed(3) + ' Pa)' + t + ' &mdash; ' + esc(rec.source) + '</div>');
       });
-      lines.push('<div style="margin-top:6px">Filled <b>' + vpFilled + ' Pa</b> (' + (vp.basis === 'experimental' ? 'experimental' : 'PREDICTED') + ').</div>');
+      lines.push('<div style="margin-top:6px">Filled <b>' + vpFilled + ' Pa</b> (' + (vp.basis === 'experimental' ? 'experimental' : 'calculated') + ').</div>');
     } else {
-      lines.push('<div style="margin-top:6px">CompTox has no experimental or predicted vapor pressure for this chemical. Enter it manually if you have it.</div>');
+      lines.push('<div style="margin-top:6px">' + esc(cfg.label) + ' has no vapor pressure value for this chemical. Enter it manually if you have it.</div>');
     }
     body.innerHTML = lines.join('');
     box.classList.remove('hidden'); box.open = true;
-    status.textContent = (mwFilled != null ? 'MW filled. ' : '') + (vpFilled != null ? 'Vapor pressure filled (' + (vp.basis === 'experimental' ? 'experimental' : 'PREDICTED') + '). ' : 'No vapor pressure found. ') + 'See sources below.';
+    status.textContent = (mwFilled != null ? 'MW filled. ' : '') + (vpFilled != null ? 'Vapor pressure filled (' + (vp.basis === 'experimental' ? 'experimental' : 'calculated') + '). ' : 'No vapor pressure found. ') + 'See sources below.';
     update();
   } catch(err){
     console.error(err);
-    status.textContent = 'CompTox lookup failed: ' + ((err && err.message) || 'unknown error') + '. This needs internet access.';
+    status.textContent = cfg.label + ' lookup failed: ' + ((err && err.message) || 'unknown error') + '. This needs internet access.';
   }
 }
-document.getElementById('btnComptox').onclick = lookupComptox;
+document.getElementById('btnComptox').onclick = ()=> lookupVp('comptox');
+document.getElementById('btnEpiSuite').onclick = ()=> lookupVp('episuite');
 
 // "About CompTox lookup" explainer dialog
 (function(){
